@@ -35,7 +35,7 @@ The following steps are required to setup and run the flask app locally.
 > Please make sure the terminal has the virtual name before every command:
 
 ```
- (<virtual-environment-name>) username
+ (<virtual-environment-name>) command_line
 ```
 
 ### Install all the required dependencies
@@ -52,9 +52,7 @@ The following 2 commands can be used to start the flask app:
 
 ```
  flask run
-```
-
-```
+ # or 
  python<version> run.py
 ```
 
