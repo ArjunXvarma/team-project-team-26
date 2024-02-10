@@ -36,3 +36,12 @@
 # typescript
 /frontend/*.tsbuildinfo
 /frontend/next-env.d.ts
+
+# Backend
+backend/app/views.py
+backend/app.db
+
+# Virtual Environment
+/virtual_env
+
+backend/app/__pycache__
