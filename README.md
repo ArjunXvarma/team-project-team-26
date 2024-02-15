@@ -22,13 +22,14 @@ The following steps are required to setup and run the flask app locally.
 ### Create a Virtual Environment
 
 ```
- source <virtual-environment-name>/bin/activate
+python<version> -m venv <virtual-environment-name>
+ 
 ```
 
 ### Activate the Virtual Enviroment
 
 ```
- python<version> -m venv <virtual-environment-name>
+source <virtual-environment-name>/bin/activate
 ```
 
 > [!IMPORTANT]
@@ -51,9 +52,7 @@ The following command will download all the required dependencies for running th
 The following 2 commands can be used to start the flask app:
 
 ```
- flask run
- # or 
- python<version> run.py
+python<version> run.py
 ```
 
 ## Database Operations
