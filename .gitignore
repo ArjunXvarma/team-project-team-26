@@ -45,3 +45,4 @@ backend/app.db
 /virtual_env
 
 backend/app/__pycache__
+backend/__pycache__/config.cpython-312.pyc
