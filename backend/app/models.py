@@ -8,11 +8,11 @@ user_roles = db.Table('user_roles',
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    hashed_password = db.Column(db.String(300), nullable=False)
-    email = db.Column(db.String(80), nullable=False, unique=True)
     first_name = db.Column(db.String(80), nullable=False)
     last_name = db.Column(db.String(80))
+    email = db.Column(db.String(80), nullable=False, unique=True)
     date_of_birth = db.Column(db.DateTime, nullable=False)
+    hashed_password = db.Column(db.String(300), nullable=False)
     # Establish relationship with roles
     roles = db.relationship('Role', secondary=user_roles, 
                             backref=db.backref('users', lazy='dynamic'))
