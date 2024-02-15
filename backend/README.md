@@ -2,8 +2,6 @@
 
 ### Getting Started
 
-**Authentication**: This version of the application requires authentication and it is handled by Auth0 in the frontend when requests are made to the Backend API.
-
 ## Error Handling
 
 Errors are returned as JSON objects in the following format, with an example below for code error ``400``:
@@ -24,7 +22,6 @@ The API will return the following error types when requests fail:
 401: Unauthorized
 404: Resource Not Found
 405: Method Not Allowed
-422: Not Processable
 500: Internal Server Error
 ````
 
