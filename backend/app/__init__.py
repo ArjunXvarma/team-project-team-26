@@ -2,15 +2,9 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from sqlalchemy import func
-from datetime import datetime, timedelta, timezone
-from flask_jwt_extended import ( 
-    create_access_token,get_jwt,
-    get_jwt_identity,
-    unset_jwt_cookies, 
-    jwt_required, 
-    JWTManager,
-)
+from datetime import timedelta
+from flask_jwt_extended import JWTManager
+
 
 # Initialising the flask app
 app = Flask(__name__)
