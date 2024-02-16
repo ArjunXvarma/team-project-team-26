@@ -1,6 +1,7 @@
 from app import app, db, models
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_bcrypt import Bcrypt
+from typing import Tuple
 from datetime import datetime, timedelta, timezone
 from flask_jwt_extended import (
     create_access_token, get_jwt, get_jwt_identity,
@@ -31,7 +32,7 @@ class AuthenticationRoutes:
     """
 
     @app.route("/signup", methods=["POST"])
-    def signup() -> json:
+    def signup() -> Tuple[Response, int]:
         """
         Registers a new user.
 
@@ -113,7 +114,7 @@ class AuthenticationRoutes:
         }), 200
 
     @app.route("/login", methods=["POST"])
-    def login() -> json:
+    def login() -> Tuple[Response, int]:
         """
         Logs in the user.
 
@@ -220,7 +221,7 @@ class AuthenticationRoutes:
 
     @jwt_required()
     @app.route("/logout", methods=["POST"])
-    def logout() -> json:
+    def logout() -> Tuple[Response, int]:
         """
         Logs out the user.
 
