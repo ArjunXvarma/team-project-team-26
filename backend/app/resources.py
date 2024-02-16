@@ -13,21 +13,71 @@ bcrypt = Bcrypt(app)
 class AuthenticationRoutes:
     """
     Class for handling authentication routes.
+
+    Attributes
+    ----------
+    None
+
+    Methods
+    -------
+    signup() -> json:
+        Registers a new user.
+    login() -> json:
+        Logs in the user with the supplied credentials.
+    refresh_expiring_jwts(response) -> Response:
+        Refreshes expiring JWTs.
+    logout() -> json:
+        Logs out the user.
     """
 
     @app.route("/signup", methods=["POST"])
     def signup() -> json:
         """
         Registers a new user.
+
+        Parameters
+        ----------
+        first_name : str
+            First name of the user.
+        last_name : str
+            Last name of the user (Optional parameter).
+        email : str
+            Email address of the user.
+        password : str
+            User supplied password for the account.
+        email : str
+            Email address of the user.
+
+        Returns
+        -------
+        json
+            A JSON response indicating success or failure of the registration process.
+            If successful, returns:
+                - "return_code": 1
+                - "id": The ID of the newly registered user.
+                - "name": The full name of the user.
+                - "access_token": The access token(JWT) for the user's session.
+            If unsuccessful, returns:
+                - "return_code": 0
+                - "error": Details about the error encountered during registration.
+        
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Registration successful.
+        400 : Bad Request
+            Missing required fields or incorrect data format.
+        409 : Conflict
+            User with the provided email already exists.
         """
         data = request.json
         if not data:
-            return jsonify({"error": "No JSON Data found"}), 409
+            return jsonify({"return_code": 0,"error": "No JSON Data found"}), 400
 
-        password = data.get("password")
-        email = data.get("email")
         first_name = data.get("first_name")
         last_name = data.get("last_name")
+        email = data.get("email")
+        password = data.get("password")
         date_of_birth_str = data.get("date_of_birth")
 
         # Check if any required fields are missing
@@ -66,17 +116,48 @@ class AuthenticationRoutes:
     def login() -> json:
         """
         Logs in the user.
+
+        Parameters
+        ----------
+        email : str
+            Email address of the user.
+        password : str
+            User-supplied password for the account.
+
+        Returns
+        -------
+        json
+            A JSON response indicating success or failure of the login process.
+            If successful, returns:
+                - "return_code": 2
+                - "id": The ID of the logged-in user.
+                - "name": The full name of the user.
+                - "session_token": The session token(JWT) for the user's session.
+            If unsuccessful, returns:
+                - "return_code": 0 or 1
+                - "error": Details about the error encountered during login.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Login successful.
+        400 : Bad Request
+            Missing required fields or incorrect data format.
+        401 : Unauthorized
+            Incorrect password.
+        404 : Not Found
+            User with the provided email not found.
         """
         data = request.json
         if not data:
-            return jsonify({"error": "No JSON Data found"}), 400
+            return jsonify({"return_code": 0,"error": "No JSON Data found"}), 400
 
         password = data.get("password")
         email = data.get("email")
 
         # Check if any required fields are missing
         if not all([password, email]):
-            return jsonify({"error": "Missing Required Fields"}), 400
+            return jsonify({"return_code": 0,"error": "Missing Required Fields"}), 400
 
         user = models.User.query.filter_by(email=email).first()
         if user is None:
@@ -98,6 +179,30 @@ class AuthenticationRoutes:
     def refresh_expiring_jwts(response):
         """
         Refreshes expiring JWTs.
+
+        Parameters
+        ----------
+        response : Response
+            The response object to be modified.
+
+        Returns
+        -------
+        Response
+            The modified response object with the updated access token.
+
+        Notes
+        -----
+        This function checks if the JWT (JSON Web Token) in the response is expiring soon.
+        If so, it generates a new access token and updates the response with the new token.
+        This helps to keep the user's session active.
+
+        Exceptions
+        ----------
+        RuntimeError
+            Raised when an unexpected error occurs during JWT refreshment.
+        KeyError
+            Raised when the 'exp' key is not found in the JWT payload.
+
         """
         try:
             exp_timestamp = get_jwt()["exp"]
@@ -118,6 +223,16 @@ class AuthenticationRoutes:
     def logout() -> json:
         """
         Logs out the user.
+
+        Returns
+        -------
+        json
+            A JSON response indicating success of the logout process.
+
+        Notes
+        -----
+        This function logs out the user by clearing the JWT (JSON Web Token) cookies.
+        After successful logout, the user will no longer be authenticated for protected routes.
         """
         response = jsonify({"msg": "logout successful"})
         unset_jwt_cookies(response)
