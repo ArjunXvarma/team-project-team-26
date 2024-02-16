@@ -32,7 +32,7 @@ class AuthenticationRoutes:
 
         # Check if any required fields are missing
         if not all([password, email, first_name, last_name, date_of_birth_str]):
-            return jsonify({"error": "Missing Required Fields"}), 400
+            return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
 
         user_exists = models.User.query.filter_by(email=email).first()
         if user_exists:
@@ -86,10 +86,11 @@ class AuthenticationRoutes:
             return jsonify({"return_code":1, "error": "Incorrect password, please try again"}), 401
        
         access_token = create_access_token(identity=email)
+        full_user_name = (user.first_name+" "+user.last_name)
         return jsonify({
             "return_code": 2,
             "id": user.id,
-            "name": (user.first_name+user.last_name),
+            "name": full_user_name,
             "session_token": access_token,
         }), 200
 
@@ -121,4 +122,3 @@ class AuthenticationRoutes:
         response = jsonify({"msg": "logout successful"})
         unset_jwt_cookies(response)
         return response
-

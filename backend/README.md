@@ -63,6 +63,13 @@ If user does not exist in the database:
     "name": "<FULL NAME OF USER>",
 } 200 OK
 ````
+If required parameters are missing:
+````json
+
+{
+    "return_code":0,
+    "error": "User Already Exists"
+}, 409 CONFLICT
 
 #### POST ``/login``
 - General:
@@ -82,7 +89,7 @@ If user credentials are correct:
 ````json
 
 {
-    "email": "peter.parker@gmail.com",
+    "name": "Peter Parker",
     "id": 3,
     "return_code": 2,
     "session_token": "<JWT_TOKEN>"
