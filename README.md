@@ -1,3 +1,7 @@
+## Current Status of tests
+[![Automated Testing config for continuous integration (CI)](https://github.com/uol-feps-soc-comp2913-2324s2-classroom/team-project-team-26/actions/workflows/ci.yaml/badge.svg?branch=shubham-dev)](https://github.com/uol-feps-soc-comp2913-2324s2-classroom/team-project-team-26/actions/workflows/ci.yaml)
+
+
 ## Run Next.js Server
 
 First, run the development server:
