@@ -1,15 +1,17 @@
-# This workflow will install Python dependencies, lint and check for syntax errors run with a single version of Python
-# After that the workflow will also run all unit tests via pytest with a single version of Python
 
 name: Unit Test on PUSH
 
 on:
   push:
-    branches-ignore: [ main ]
+  pull_request:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python 3.x
