@@ -70,6 +70,7 @@ If required parameters are missing:
     "return_code":0,
     "error": "User Already Exists"
 }, 409 CONFLICT
+````
 
 #### POST ``/login``
 - General:
@@ -128,4 +129,3 @@ If user is logged in.
     "msg": "logout successful"
 }, 200 OK
 ````
-  
