@@ -1,8 +1,8 @@
 "use client";
-
+import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "@mantine/form";
-import { Input, PasswordInput, Button, Divider, TextInput } from "@mantine/core";
+import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 
 export default function Login() {
   const form = useForm({
@@ -38,25 +38,27 @@ export default function Login() {
             <form onClick={submit} className="w-full flex flex-col gap-3 items-center">
               <TextInput
                 type="email"
-                className="w-full text-white"
                 placeholder="Email"
+                className="w-full text-white"
                 {...form.getInputProps("email")}
               />
               <PasswordInput
-                placeholder="Password"
                 className="w-full"
+                placeholder="Password"
                 {...form.getInputProps("password")}
               />
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
-                <Button className="bg-secondary" type="submit">
+                <Button className="bg-secondary w-full" type="submit">
                   Login
                 </Button>
                 <Divider label="or"></Divider>
-                <Button color="white" variant="outline">
-                  Create Account
-                </Button>
               </div>
             </form>
+            <Link href={"/signup"} className="flex w-full justify-center">
+              <Button className="w-48" color="white" variant="outline" onClick={() => {}}>
+                Create Account
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
