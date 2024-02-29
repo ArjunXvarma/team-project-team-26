@@ -1,2 +1,0 @@
-# add frontend code here
-# remove this after initial setup

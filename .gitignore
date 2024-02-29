@@ -1,2 +1,56 @@
 # Ignore macOS system files
 **/.DS_Store
+
+### Frontend
+# dependencies
+/frontend/node_modules
+/frontend/.pnp
+/frontend/.pnp.js
+/frontend/.yarn/install-state.gz
+
+# testing
+/frontend/coverage
+
+# next.js
+/frontend/.next/
+/frontend/out/
+
+# production
+/frontend/build
+
+# misc
+/frontend/.DS_Store
+/frontend/*.pem
+
+# debug
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+
+# local env files
+/frontend/.env*.local
+
+# vercel
+/frontend/.vercel
+
+# typescript
+/frontend/*.tsbuildinfo
+/frontend/next-env.d.ts
+
+# Backend
+backend/app/views.py
+backend/app.db
+
+# Virtual Environment
+/virtual_env
+/.venv
+
+/backend/app/__pycache__
+/backend/__pycache__
+/.pytest_cache
+/backend/tests/*
+!backend/tests/test_project.py
+!backend/tests/__init__.py
+!backend/tests/conftest.py
+ignore.py
+backend/README.md
