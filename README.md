@@ -58,13 +58,17 @@ The following 2 commands can be used to start the flask app:
 ```
 python<version> run.py
 ```
+or 
+```
+flask run
+```
 
 ## Database Operations
 The following commands can be used to create a new database or update the database.
 
 ### Create an empty database
 
-The following command will create a new database having the tables defined in the models.py
+The following command will create a new database using the tables defined in models.py
 
 ```
  python<version> db_create.py
@@ -72,7 +76,7 @@ The following command will create a new database having the tables defined in th
 
 ### Update the database structure
 
-The following commands will update the database with the new changes as defined in the models.py.
+The following commands will update the database with the new changes as defined in models.py.
 
 ```
  1. flask db init
