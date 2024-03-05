@@ -28,8 +28,8 @@ export default function Login() {
 
   return (
     <main>
-      <div className="flex w-full h-full">
-        <div className="w-full h-screen flex items-center justify-center">
+      <div className="flex md:flex-row flex:col w-full h-full">
+        <div className="w-full h-screen md:flex items-center justify-center hidden">
           <Image src="/runner.png" alt="Runner Image" width={600} height={400} />
         </div>
         <div className="w-full h-screen flex items-center justify-center bg-primary">
@@ -48,7 +48,11 @@ export default function Login() {
                 {...form.getInputProps("password")}
               />
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
-                <Button className="bg-secondary w-full" type="submit">
+                <Button
+                  type="submit"
+                  className="bg-secondary w-full"
+                  style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
+                >
                   Login
                 </Button>
                 <Divider label="or"></Divider>
