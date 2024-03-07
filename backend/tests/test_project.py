@@ -1,5 +1,5 @@
 from app import models, app, db
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token
 import pytest
@@ -171,3 +171,168 @@ class TestGPSRoutes:
         }
         response = client.put("/update_journey/1", json=journey_update_data)
         assert response.status_code == 401
+
+
+class TestSubscriptionRoutes:
+    """Class for testing subscription routes functionality."""
+
+    def test_buy_subscription_success(self, client, app, clean_db):
+        """Test buying a subscription successfully."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['access_token']
+
+        # Attempt to buy a subscription
+        response = client.post("/buy_subscription", json={
+            "subscription_type": "Basic",
+            "duration": "Monthly",
+            "mode_of_payment": "Credit Card"
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert response.json['return_code'] == 1
+        assert response.json['message'] == "Subscription purchased successfully"
+
+    def test_buy_subscription_missing_fields(self, client, app, clean_db):
+        """Test buying a subscription with missing fields."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['access_token']
+
+        # Attempt to buy a subscription with missing fields
+        response = client.post("/buy_subscription", json={
+            "subscription_type": "Basic",
+            # Missing 'duration' and 'mode_of_payment'
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+        assert response.json['return_code'] == 0
+        assert response.json['error'] == "Missing Required Fields"
+
+    def test_buy_subscription_invalid_duration(self, client, app, clean_db):
+        """Test buying a subscription with an invalid duration."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['access_token']
+
+        # Attempt to buy a subscription with an invalid duration
+        response = client.post("/buy_subscription", json={
+            "subscription_type": "Basic",
+            "duration": "Yearly",  # Invalid duration
+            "mode_of_payment": "Credit Card"
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+        assert response.json['return_code'] == 0
+        assert response.json['error'] == "Invalid duration"
+
+    def test_buy_subscription_invalid_mode_of_payment(self, client, app, clean_db):
+        """Test buying a subscription with an invalid mode of payment."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['access_token']
+
+        # Attempt to buy a subscription with an invalid mode of payment
+        response = client.post("/buy_subscription", json={
+            "subscription_type": "Basic",
+            "duration": "Monthly",
+            "mode_of_payment": "Cash"  # Invalid mode of payment
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+        assert response.json['return_code'] == 0
+        assert response.json['error'] == "Invalid mode of payment"
+
+    def test_cancel_subscription_success(self, client, app, clean_db):
+        """Test canceling a subscription successfully."""
+        # First, create a user and a subscription
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        subscription = models.Subscription(
+            user_id=user.id,
+            subscription_type="Basic",
+            duration="Monthly",
+            start_date=datetime.utcnow() - timedelta(days=30),
+            end_date=datetime.utcnow() + timedelta(days=30),
+            mode_of_payment="Credit Card",
+            is_active=True,
+            auto_renew=True
+        )
+        clean_db.session.add(user)
+        clean_db.session.add(subscription)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['access_token']
+
+        # Attempt to cancel the subscription
+        response = client.delete("/cancel_subscription", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert response.json['return_code'] == 1
+        assert "Subscription cancelled" in response.json['message']

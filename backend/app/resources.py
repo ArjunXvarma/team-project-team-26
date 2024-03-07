@@ -520,7 +520,7 @@ class SubscriptionRoutes:
         duration = data.get("duration")
         mode_of_payment = data.get("mode_of_payment")
         
-        # Check if any required fields are missing
+        
         if not all([subscription_type, duration, mode_of_payment]):
             return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
 
@@ -541,7 +541,6 @@ class SubscriptionRoutes:
         if mode_of_payment not in constants.VALID_PAYMENT_METHODS:
             return jsonify({"return_code": 0, "error": "Invalid mode of payment"}), 400
 
-        # Create new subscription with auto_renew set to True by default
         new_subscription = models.Subscription(
             user_id=user_id,
             subscription_type=subscription_type,
@@ -582,7 +581,6 @@ class SubscriptionRoutes:
             subscription.auto_renew = False
             message = "Auto-renew disabled successfully."
         else:
-            # Deactivate the subscription if the current date is on or after the end date
             subscription.is_active = False
             subscription.auto_renew = False
             message = "Subscription cancelled and auto-renew disabled successfully."
@@ -629,7 +627,6 @@ class SubscriptionRoutes:
         if not user.subscription or not user.subscription.is_active:
             return jsonify({"return_code": 0, "error": "User does not have an active subscription"}), 400
 
-        # Calculate start and end dates based on duration
         start_date = datetime.now()
         if duration.lower() == 'monthly':
             end_date = start_date + timedelta(days=30)
@@ -658,13 +655,10 @@ class SubscriptionRoutes:
         subscriptions_to_renew = models.Subscription.query.filter(models.Subscription.end_date == current_date, models.Subscription.auto_renew == True).all()
 
         for subscription in subscriptions_to_renew:
-            # Update end date based on duration
             if subscription.duration.lower() == 'monthly':
                 subscription.end_date += timedelta(days=30)
             elif subscription.duration.lower() == 'annually':
                 subscription.end_date += timedelta(days=365)
-
-        # Commit changes to the database
         db.session.commit()
 
     def deactivate_expired_subscriptions():
@@ -677,10 +671,8 @@ class SubscriptionRoutes:
         subscriptions_to_deactivate = models.Subscription.query.filter(models.Subscription.end_date == current_date, models.Subscription.auto_renew == False).all()
 
         for subscription in subscriptions_to_deactivate:
-            # Deactivate the subscription
             subscription.is_active = False
 
-        # Commit changes to the database
         db.session.commit()
 
 
