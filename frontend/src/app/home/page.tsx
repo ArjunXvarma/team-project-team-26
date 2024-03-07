@@ -9,7 +9,7 @@ import { SlDrop } from "react-icons/sl";
 import BarChart from '../components/page';
 
 
-export default function Dashboard(){
+export default function Home(){
  
     return (
         <main> 

@@ -26,7 +26,7 @@ export default function Landing(){
                 <div className="ml-24 py-40">
                     <h1 className="text-4xl font-serif font-medium underline">Heading</h1>
                     <p className="text-xl font-serif ">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eu dui non diam eleifend egestas id a ligula.</p>
-                    <Link href={"/"} className="flex w-full py-10">
+                    <Link href={"/membership"} className="flex w-full py-10">
                     <Button variant="filled" color="rgba(0, 133, 57, 1)" size="md" radius="xl">Join Now</Button>
                     </Link>
                 </div>
