@@ -60,6 +60,7 @@ class AuthenticationRoutes:
                 - "return_code": 1
                 - "id": The ID of the newly registered user.
                 - "name": The full name of the user.
+                - "access_token": The access token(JWT) for the user's session.
             If unsuccessful, returns:
                 - "return_code": 0
                 - "error": Details about the error encountered during registration.
@@ -106,15 +107,14 @@ class AuthenticationRoutes:
         db.session.add(new_user)
         db.session.commit()
 
-        access_token = create_access_token(identity=email, expires_delta=timedelta(days=1))
+        access_token = create_access_token(identity=email)
         full_user_name = (new_user.first_name+" "+new_user.last_name)
-        response = jsonify({
+        return jsonify({
             "return_code": 1,
             "id": new_user.id,
             "name": full_user_name,
-        })
-        response.set_cookie('access_token', value=access_token, httponly=True, expires=datetime.now() + timedelta(days=1))
-        return response, 200
+            "access_token": access_token,
+        }), 200
 
     @app.route("/login", methods=["POST"])
     def login() -> Tuple[Response, int]:
@@ -136,6 +136,7 @@ class AuthenticationRoutes:
                 - "return_code": 2
                 - "id": The ID of the logged-in user.
                 - "name": The full name of the user.
+                - "session_token": The session token(JWT) for the user's session.
             If unsuccessful, returns:
                 - "return_code": 0 or 1
                 - "error": Details about the error encountered during login.
@@ -153,31 +154,30 @@ class AuthenticationRoutes:
         """
         data = request.json
         if not data:
-            return jsonify({"return_code": 0, "error": "No JSON Data found"}), 400
+            return jsonify({"return_code": 0,"error": "No JSON Data found"}), 400
 
         password = data.get("password")
         email = data.get("email")
 
         # Check if any required fields are missing
         if not all([password, email]):
-            return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
+            return jsonify({"return_code": 0,"error": "Missing Required Fields"}), 400
 
         user = models.User.query.filter_by(email=email).first()
         if user is None:
-            return jsonify({"return_code": 0, "error": "User Not found with the given Email"}), 404
-            
+            return jsonify({"return_code":0, "error": "User Not found with the given Email"}), 404
+        
         if not bcrypt.check_password_hash(user.hashed_password, password):
-            return jsonify({"return_code": 1, "error": "Incorrect password, please try again"}), 401
-
-        access_token = create_access_token(identity=email, expires_delta=timedelta(days=1))
+            return jsonify({"return_code":1, "error": "Incorrect password, please try again"}), 401
+       
+        access_token = create_access_token(identity=email)
         full_user_name = (user.first_name+" "+user.last_name)
-        response = jsonify({
+        return jsonify({
             "return_code": 2,
             "id": user.id,
             "name": full_user_name,
-        })
-        response.set_cookie('access_token', value=access_token, httponly=True, expires=datetime.now() + timedelta(days=1))
-        return response, 200
+            "session_token": access_token,
+        }), 200
 
     @app.after_request
     def refresh_expiring_jwts(response):
@@ -240,7 +240,7 @@ class AuthenticationRoutes:
         """
         response = jsonify({"msg": "logout successful"})
         unset_jwt_cookies(response)
-        return response, 200
+        return response
     
 
 class GPSRoutes:
