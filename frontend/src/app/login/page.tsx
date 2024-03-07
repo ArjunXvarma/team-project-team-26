@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import Cookie from "js-cookie";
 import { useState } from "react";
 import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
@@ -26,6 +27,11 @@ export default function Login() {
     const emailRegex: RegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(form.values.email)) {
       form.setFieldError("email", "Enter a valid email address");
+      exitCode = 1;
+    }
+
+    if (form.values.password.length === 0) {
+      form.setFieldError("password", "Enter password");
       exitCode = 1;
     }
 
@@ -65,7 +71,7 @@ export default function Login() {
           icon: <IoMdCheckmarkCircleOutline />,
           message: "Logging you in",
         });
-
+        Cookie.set("token", loginResponse.session_token!);
         router.push("/");
       }
     } catch (error) {
@@ -90,7 +96,7 @@ export default function Login() {
         <div className="w-full h-screen flex items-center justify-center bg-primary">
           <div className="w-96 flex flex-col items-center gap-10">
             <h1 className="text-4xl font-black text-white">Login</h1>
-            <form onClick={submit} className="w-full flex flex-col gap-3 items-center">
+            <form className="w-full flex flex-col gap-3 items-center">
               <TextInput
                 type="email"
                 placeholder="Email"
@@ -104,7 +110,7 @@ export default function Login() {
               />
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
                 <Button
-                  type="submit"
+                  onClick={submit}
                   loading={loading}
                   className="bg-secondary w-full"
                   style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}

@@ -3,6 +3,7 @@ import "@mantine/dates/styles.css";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Image from "next/image";
+import Cookie from "js-cookie";
 import { useState } from "react";
 import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
@@ -107,14 +108,13 @@ export default function Login() {
           message: "There was a problem contacting the server. Please try again later.",
         });
       } else {
-        console.log(response.headers);
         notifications.show({
           color: "green",
           title: "Success",
           icon: <IoMdCheckmarkCircleOutline />,
           message: "Logging you in",
         });
-
+        Cookie.set("token", signupResponse.access_token!);
         router.push("/");
       }
     } catch (error) {
@@ -176,7 +176,7 @@ export default function Login() {
                 required
                 clearable
                 valueFormat="DD MMMM YYYY"
-                placeholder="Date input"
+                placeholder="Date of birth"
                 style={{ caretColor: "transparent" }}
                 className="w-full cursor-pointer"
                 onKeyDown={(e) => e.preventDefault()}

@@ -6,23 +6,19 @@ export function middleware(req: NextRequest) {
   const logoutRoute = /^\/logout$/;
   const loginSingupRoutes = /^\/(login|signup)$/;
 
-  console.log(req.cookies.getAll());
-
-  if (protectedRoutes.test(req.nextUrl.pathname) && !req.cookies.has("access_token")) {
+  if (protectedRoutes.test(req.nextUrl.pathname) && !req.cookies.has("token")) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if (loginSingupRoutes.test(req.nextUrl.pathname) && req.cookies.has("access_token")) {
+  if (loginSingupRoutes.test(req.nextUrl.pathname) && req.cookies.has("token")) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  //   if (logoutRoute.test(req.nextUrl.pathname)) {
-  //     console.log("in here");
-
-  //     req.cookies.delete("access_token");
-  //     console.log();
-  //     return NextResponse.redirect(new URL("/login", req.url));
-  //   }
+  if (logoutRoute.test(req.nextUrl.pathname)) {
+    let response = NextResponse.next();
+    response.cookies.delete("token");
+    return response;
+  }
 
   return;
 }
