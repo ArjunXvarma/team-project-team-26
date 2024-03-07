@@ -1,30 +1,85 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
+import { AuthAPIResponse } from "@/types";
+import { useRouter } from "next/navigation";
+import { BiSolidError } from "react-icons/bi";
+import { notifications } from "@mantine/notifications";
+import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 
 export default function Login() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
   const form = useForm({
     initialValues: { email: "", password: "" },
-    validate: {
-      email: (value) =>
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)
-          ? null
-          : "Invalid email",
-      password: (value) => {
-        if (value.length < 3 || value.length > 20) {
-          return "Password length must be between 3-20 characters long.";
-        } else {
-          return null;
-        }
-      },
-    },
   });
 
-  const submit = form.onSubmit((values) => {
-    console.log(values);
-  });
+  const validateForm = () => {
+    let exitCode = 0;
+
+    // check email
+    const emailRegex: RegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(form.values.email)) {
+      form.setFieldError("email", "Enter a valid email address");
+      exitCode = 1;
+    }
+
+    return exitCode;
+  };
+
+  const submit = async () => {
+    setLoading(true);
+
+    if (validateForm() !== 0) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.values.email,
+          password: form.values.password,
+        }),
+      });
+
+      const loginResponse: AuthAPIResponse = await response.json();
+
+      // handle errors
+      if (response.status == 404) {
+        form.setFieldError("email", loginResponse.error);
+      } else if (response.status == 401) {
+        form.setFieldError("password", loginResponse.error);
+      } else {
+        notifications.show({
+          color: "green",
+          title: "Success",
+          icon: <IoMdCheckmarkCircleOutline />,
+          message: "Logging you in",
+        });
+
+        router.push("/");
+      }
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        color: "red",
+        title: "Server Error",
+        icon: <BiSolidError />,
+        message: "There was a problem contacting the server. Please try again later.",
+      });
+    }
+
+    setLoading(false);
+  };
 
   return (
     <main>
@@ -50,6 +105,7 @@ export default function Login() {
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
                 <Button
                   type="submit"
+                  loading={loading}
                   className="bg-secondary w-full"
                   style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
                 >

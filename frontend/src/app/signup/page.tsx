@@ -1,16 +1,23 @@
 "use client";
+import "@mantine/dates/styles.css";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Image from "next/image";
-import "@mantine/dates/styles.css";
+import { useState } from "react";
 import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
-import { notifications } from "@mantine/notifications";
-import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
+import { useRouter } from "next/navigation";
+import { AuthAPIResponse } from "@/types";
 import { BiSolidError } from "react-icons/bi";
+import { notifications } from "@mantine/notifications";
+import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 
 export default function Login() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
   const form = useForm({
     initialValues: { fname: "", lname: "", email: "", password: "", cpassword: "", dob: null },
   });
@@ -64,12 +71,18 @@ export default function Login() {
   }
 
   const submit = async () => {
+    setLoading(true);
+
     if (validateForm() !== 0) {
+      setLoading(false);
       return;
     }
+
     try {
       const response = await fetch(`${API_URL}/signup`, {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           first_name: form.values.fname,
           last_name: form.values.lname,
@@ -79,9 +92,31 @@ export default function Login() {
         }),
       });
 
-      const signupResponse = await response.json();
-      console.log(signupResponse);
-      console.log(response.status);
+      // email conflits
+      if (response.status == 409) {
+        form.setFieldError("email", "User with this email already exists");
+      }
+
+      const signupResponse: AuthAPIResponse = await response.json();
+
+      if (signupResponse.return_code == 0) {
+        notifications.show({
+          color: "red",
+          title: "Server Error",
+          icon: <BiSolidError />,
+          message: "There was a problem contacting the server. Please try again later.",
+        });
+      } else {
+        console.log(response.headers);
+        notifications.show({
+          color: "green",
+          title: "Success",
+          icon: <IoMdCheckmarkCircleOutline />,
+          message: "Logging you in",
+        });
+
+        router.push("/");
+      }
     } catch (error) {
       console.log(error);
       notifications.show({
@@ -91,13 +126,21 @@ export default function Login() {
         message: "There was a problem contacting the server. Please try again later.",
       });
     }
+
+    setLoading(false);
   };
 
   return (
     <main>
       <div className="flex md:flex-row flex:col w-full h-full">
         <div className="w-full h-screen md:flex items-center justify-center hidden">
-          <Image src="/runner.png" alt="Runner Image" width={600} height={400} />
+          <Image
+            height={400}
+            width={600}
+            priority={false}
+            src="/runner.png"
+            alt="Runner Image"
+          />
         </div>
         <div className="w-full h-screen flex items-center justify-center bg-primary">
           <div className="w-96 flex flex-col items-center gap-10">
@@ -158,6 +201,7 @@ export default function Login() {
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
                 <Button
                   onClick={submit}
+                  loading={loading}
                   className="w-full"
                   style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
                 >
