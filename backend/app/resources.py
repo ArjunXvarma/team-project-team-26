@@ -8,7 +8,9 @@ from flask_jwt_extended import (
     unset_jwt_cookies, jwt_required
 )
 import json
-import jwt
+import constants
+
+from apscheduler.schedulers.background import BackgroundScheduler
 
 from functools import wraps
 
@@ -242,7 +244,6 @@ class AuthenticationRoutes:
         unset_jwt_cookies(response)
         return response, 200
     
-
 class GPSRoutes:
     """
     Class for querying the journey data.
@@ -472,3 +473,219 @@ class GPSRoutes:
         db.session.commit()
 
         return jsonify({'status': 200, 'message': 'Journey updated successfully'}), 200
+class SubscriptionRoutes:
+    """
+    Class for handling subscription routes.
+
+    Attributes
+    ----------
+    None
+
+    Methods
+    -------
+    buy_subscription() -> json:
+        Allows a user to purchase a subscription.
+    remove_subscription() -> json:
+        Removes the active subscription of a user.
+    modify_subscription() -> json:
+        Modifies the active subscription of a user.
+    """
+
+    @app.route("/buy_subscription", methods=["POST"])
+    @jwt_required()
+    def buy_subscription() -> Tuple[Response, int]:
+        """
+        Allows a user to purchase a subscription.
+
+        Parameters
+        ----------
+        subscription_type : str
+            Type of subscription to purchase.
+        duration : str
+            Duration of the subscription ('Monthly' or 'Annually').
+        mode_of_payment : str
+            Mode of payment for the subscription.
+
+        Returns
+        -------
+        json
+            A JSON response indicating success or failure of the subscription purchase.
+        """
+        user_id = get_jwt_identity()
+        data = request.json
+        if not data:
+            return jsonify({"return_code": 0, "error": "No JSON Data found"}), 400
+
+        subscription_type = data.get("subscription_type")
+        duration = data.get("duration")
+        mode_of_payment = data.get("mode_of_payment")
+        
+        # Check if any required fields are missing
+        if not all([subscription_type, duration, mode_of_payment]):
+            return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
+
+        # Check if user already has an active subscription
+        user_subscription = models.Subscription.query.filter_by(user_id=user_id, is_active=True).first()
+        if user_subscription:
+            return jsonify({"return_code": 0, "error": "User already has an active subscription"}), 400
+
+        # Calculate start and end dates based on duration
+        start_date = datetime.now()
+        if duration.lower() == 'monthly':
+            end_date = start_date + timedelta(days=30)
+        elif duration.lower() == 'annually':
+            end_date = start_date + timedelta(days=365)
+        else:
+            return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
+        
+        if mode_of_payment not in constants.VALID_PAYMENT_METHODS:
+            return jsonify({"return_code": 0, "error": "Invalid mode of payment"}), 400
+
+        # Create new subscription with auto_renew set to True by default
+        new_subscription = models.Subscription(
+            user_id=user_id,
+            subscription_type=subscription_type,
+            duration=duration,
+            start_date=start_date,
+            end_date=end_date,
+            mode_of_payment=mode_of_payment,
+            is_active=True,
+            auto_renew=True 
+        )
+        db.session.add(new_subscription)
+        db.session.commit()
+
+        return jsonify({"return_code": 1, "message": "Subscription purchased successfully"}), 200
+    
+    @app.route("/cancel_subscription", methods=["DELETE"])
+    @jwt_required()
+    def cancel_subscription() -> Tuple[Response, int]:
+        """
+        Adjusts the active subscription of a user based on the current date.
+        If the current date is before the end date, auto renew is turned off.
+        If the current date is on or after the end date, the subscription is cancelled.
+
+        Returns
+        -------
+        json
+            A JSON response indicating the success or failure of the operation.
+        """
+        user_id = get_jwt_identity()
+
+        subscription = models.Subscription.query.filter_by(user_id=user_id, is_active=True).first()
+        if not subscription:
+            return jsonify({"return_code": 0, "error": "User does not have an active subscription"}), 400
+
+        current_date = datetime.utcnow()
+        if current_date < subscription.end_date:
+            # Only turn off auto-renew if the current date is before the end date
+            subscription.auto_renew = False
+            message = "Auto-renew disabled successfully."
+        else:
+            # Deactivate the subscription if the current date is on or after the end date
+            subscription.is_active = False
+            subscription.auto_renew = False
+            message = "Subscription cancelled and auto-renew disabled successfully."
+
+        db.session.commit()
+
+        return jsonify({"return_code": 1, "message": message}), 200
+    
+    @jwt_required()
+    @app.route("/modify_subscription", methods=["PUT"])
+    def modify_subscription() -> Tuple[Response, int]:
+        """
+        Modifies the active subscription of a user.
+
+        Parameters
+        ----------
+        subscription_type : str
+            Type of subscription to modify.
+        duration : str
+            Duration of the modified subscription ('Monthly' or 'Annually').
+        mode_of_payment : str
+            Mode of payment for the modified subscription.
+
+        Returns
+        -------
+        json
+            A JSON response indicating success or failure of the subscription modification.
+        """
+        user_id = get_jwt_identity()
+        data = request.json
+        if not data:
+            return jsonify({"return_code": 0, "error": "No JSON Data found"}), 400
+
+        subscription_type = data.get("subscription_type")
+        duration = data.get("duration")
+        mode_of_payment = data.get("mode_of_payment")
+
+        # Check if any required fields are missing
+        if not all([subscription_type, duration, mode_of_payment]):
+            return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
+
+        # Find the user and their active subscription
+        user = models.User.query.get(user_id)
+        if not user.subscription or not user.subscription.is_active:
+            return jsonify({"return_code": 0, "error": "User does not have an active subscription"}), 400
+
+        # Calculate start and end dates based on duration
+        start_date = datetime.now()
+        if duration.lower() == 'monthly':
+            end_date = start_date + timedelta(days=30)
+        elif duration.lower() == 'annually':
+            end_date = start_date + timedelta(days=365)
+        else:
+            return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
+
+        # Update subscription details
+        user.subscription.subscription_type = subscription_type
+        user.subscription.duration = duration
+        user.subscription.start_date = start_date
+        user.subscription.end_date = end_date
+        user.subscription.mode_of_payment = mode_of_payment
+        db.session.commit()
+
+        return jsonify({"return_code": 1, "message": "Subscription modified successfully"}), 200
+
+    def auto_renew_subscriptions():
+        """
+        Function to auto-renew subscriptions if today is the end date and auto renew is True.
+        """
+        current_date = datetime.utcnow()
+
+        # Find subscriptions ending today and with auto renew enabled
+        subscriptions_to_renew = models.Subscription.query.filter(models.Subscription.end_date == current_date, models.Subscription.auto_renew == True).all()
+
+        for subscription in subscriptions_to_renew:
+            # Update end date based on duration
+            if subscription.duration.lower() == 'monthly':
+                subscription.end_date += timedelta(days=30)
+            elif subscription.duration.lower() == 'annually':
+                subscription.end_date += timedelta(days=365)
+
+        # Commit changes to the database
+        db.session.commit()
+
+    def deactivate_expired_subscriptions():
+        """
+        Function to deactivate subscriptions if today is the end date and auto renew is False.
+        """
+        current_date = datetime.utcnow()
+
+        # Find subscriptions ending today and with auto renew disabled
+        subscriptions_to_deactivate = models.Subscription.query.filter(models.Subscription.end_date == current_date, models.Subscription.auto_renew == False).all()
+
+        for subscription in subscriptions_to_deactivate:
+            # Deactivate the subscription
+            subscription.is_active = False
+
+        # Commit changes to the database
+        db.session.commit()
+
+
+# Running the auto renew and deactivation functions every day using scheduler.
+scheduler = BackgroundScheduler()
+scheduler.add_job(SubscriptionRoutes.auto_renew_subscriptions, 'cron', hour=16, minute=0)
+scheduler.add_job(SubscriptionRoutes.deactivate_expired_subscriptions, 'cron', hour=16, minute=0)
+scheduler.start()
