@@ -1,26 +1,72 @@
+from enum import Enum
 """
 Constants File Description:
 
-This file contains lists of valid payment methods, membership types, and durations for the application. These constants are utilized throughout the application to ensure consistency and accuracy in handling payments and membership-related operations.
+This file contains enumerations of valid payment methods, membership types, and durations for the application. These enums are utilized throughout the application to ensure consistency and accuracy in handling payments and membership-related operations.
 
-1. VALID_PAYMENT_METHODS:
-    - This list includes various payment methods accepted by the application, such as PayPal, Google Pay, Apple Pay, AliPay, and Credit Card.
+PaymentMethod Enum:
+This enum includes various payment methods accepted by the application, such as PayPal, Google Pay, Apple Pay, AliPay, and Credit Card.
 
-2. VALID_MEMBERSHIP_TYPES:
-    - This list enumerates the valid membership tiers available in the application, including Basic, Bronze, and Silver. 
+MembershipType Enum:
+This enum enumerates the valid membership tiers available in the application, including Basic, Standard, and Premium.
 
-3. VALID_DURATIONS:
-    - This list specifies the valid durations for membership subscriptions, offering options such as Monthly and Annually.
+MembershipDuration Enum:
+This enum specifies the valid durations for membership subscriptions, offering options such as Monthly and Annually.
 
-By maintaining these constants in a centralized file, we can easily reference and update the available options for payment methods, membership types, and durations, ensuring coherence and reliability across the application.
+MembershipPrice Enum:
+This enum provides the prices for each membership type and duration combination, allowing easy access to pricing information for Basic, Standard, and Premium memberships, both on a monthly and annual basis.
+
+
+By maintaining these enums in a centralized file, we can easily reference and update the available options for payment methods, membership types, and durations, ensuring coherence and reliability across the application.
 """
 
-# A list of valid payment methods for the application
-VALID_PAYMENT_METHODS = ["PayPal", "Google Pay", "Apple Pay", "AliPay", "Credit Card"]
+class PaymentMethod(Enum):
+    PAYPAL = "PayPal"
+    GOOGLE_PAY = "Google Pay"
+    APPLE_PAY = "Apple Pay"
+    ALIPAY = "AliPay"
+    CREDIT_CARD = "Credit Card"
 
-# A list of valid membership types
-VALID_MEMBERSHIP_TYPES = ["Basic", "Bronze", "Silver"]
+class MembershipType(Enum):
+    BASIC = "Basic"
+    STANDARD = "Standard"
+    PREMIUM = "Premium"
+
+class MembershipDuration(Enum):
+    MONTHLY = "Monthly"
+    ANNUALLY = "Annually"
+
+# Prices for memberships
+class MembershipPrice(Enum):
+    BASIC_MONTHLY_PRICE = 8.00
+    BASIC_ANNUAL_PRICE = 80.00
+    STANDARD_MONTHLY_PRICE = 15.00
+    STANDARD_ANNUAL_PRICE = 120.00
+    PREMIUM_MONTHLY_PRICE = 22.00
+    PREMIUM_ANNUAL_PRICE = 180.00
+    
 
 
-# A list of valid durations
-VALID_MEMBERSHIP_DURATIONS = ["Monthly", "Annually"]
+# Validation functions for the ENUMs
+
+# Check if mode of payment is valid
+def is_valid_payment_method(mode_of_payment):
+        for paymentMode in PaymentMethod:
+            if paymentMode.value == mode_of_payment:
+                return True
+        return False
+    
+
+# Check if membership duration is valid
+def is_valid_duration(duration):
+    for durations in MembershipDuration:
+        if durations.value == duration:
+            return True
+    return False
+
+# Check if membership type is valid
+def is_valid_membership_type(membership_type):
+        for membershipType in MembershipType:
+            if membershipType.value == membership_type:
+                return True
+        return False

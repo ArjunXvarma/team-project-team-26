@@ -543,7 +543,7 @@ class MembershipRoutes:
             return jsonify({"return_code": 0, "error": "User already has an active membership"}), 400
 
         # Calculate start and end dates based on duration
-        if duration not in constants.VALID_MEMBERSHIP_DURATIONS:
+        if not constants.is_valid_duration(duration):
             return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
         start_date = datetime.now()
         if duration.lower() == 'monthly':
@@ -551,10 +551,10 @@ class MembershipRoutes:
         elif duration.lower() == 'annually':
             end_date = start_date + timedelta(days=365)
         
-        if membership_type not in constants.VALID_MEMBERSHIP_TYPES:
+        if not constants.is_valid_membership_type(membership_type):
             return jsonify({"return_code": 0, "error": "Invalid membership type"}), 400
         
-        if mode_of_payment not in constants.VALID_PAYMENT_METHODS:
+        if not constants.is_valid_payment_method(mode_of_payment):
             return jsonify({"return_code": 0, "error": "Invalid mode of payment"}), 400
         
         new_membership = models.Membership(
