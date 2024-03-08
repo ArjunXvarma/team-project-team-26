@@ -1,13 +1,12 @@
 from app import models, app, db
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token
 import pytest
+import constants
 
 # Initialize bcrypt
 bcrypt = Bcrypt(app)
-
-
 
 class TestSignup:
     """Class for testing user signup functionality."""
@@ -171,3 +170,319 @@ class TestGPSRoutes:
         }
         response = client.put("/update_journey/1", json=journey_update_data)
         assert response.status_code == 401
+
+
+class TestMembershipRoutes:
+    """Class for testing membership routes functionality.""" 
+    # Tests for buying the membership
+
+    def test_buy_membership_success(self, client, clean_db):
+        """Test buying a membership successfully."""
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to buy a membership
+        response = client.post("/buy_membership", json={
+            "membership_type": constants.MembershipType.BASIC.value,
+            "duration": constants.MembershipDuration.MONTHLY.value,
+            "mode_of_payment": constants.PaymentMethod.APPLE_PAY.value
+        }, headers={"Authorization": f"Bearer {token}"})
+        
+        assert response.status_code == 200
+        assert response.json['return_code'] == 1
+        assert response.json['message'] == "Membership purchased successfully"
+        
+        # Fetch the membership after purchasing it.
+        purchased_membership = models.Membership.query.filter_by(user_id=user.id).first()
+    
+        # Assert that the membership and auto-renewal are actually set to True
+        assert purchased_membership.is_active == True
+        assert purchased_membership.auto_renew == True
+
+    def test_buy_membership_missing_fields(self, client, clean_db):
+        """Test buying a membership with missing fields."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to buy a membership with missing fields
+        response = client.post("/buy_membership", json={
+            "membership_type": constants.MembershipType.BASIC.value,
+            # Missing 'duration' and 'mode_of_payment'
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+        assert response.json['return_code'] == 0
+        assert response.json['error'] == "Missing Required Fields"
+        
+        # Fetch the membership details.
+        membership_details = models.Membership.query.filter_by(user_id=user.id).first()
+    
+        # Assert that the membership is None and does not exist.
+        assert membership_details == None 
+
+    def test_buy_membership_invalid_duration(self, client, clean_db):
+        """Test buying a membership with an invalid duration."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to buy a membership with an invalid duration
+        response = client.post("/buy_membership", json={
+            "membership_type": constants.MembershipType.BASIC.value,
+            "duration": "InvalidDuration",
+            "mode_of_payment": constants.PaymentMethod.APPLE_PAY.value
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+        assert response.json['return_code'] == 0
+        assert response.json['error'] == "Invalid duration"
+        
+        # Fetch the membership details.
+        membership_details = models.Membership.query.filter_by(user_id=user.id).first()
+    
+        # Assert that the membership is None and does not exist.
+        assert membership_details == None 
+
+    def test_buy_membership_invalid_mode_of_payment(self, client, clean_db):
+        """Test buying a membership with an invalid mode of payment."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to buy a membership with an invalid mode of payment
+        response = client.post("/buy_membership", json={
+            "membership_type": constants.MembershipType.BASIC.value,
+            "duration": constants.MembershipDuration.MONTHLY.value,
+            "mode_of_payment": "InvalidModeOfTransaction"  # Invalid mode of payment
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+        assert response.json['return_code'] == 0
+        assert response.json['error'] == "Invalid mode of payment"
+        
+        # Fetch the membership details.
+        membership_details = models.Membership.query.filter_by(user_id=user.id).first()
+    
+        # Assert that the membership is None and does not exist.
+        assert membership_details == None 
+
+    def test_buy_membership_invalid_membership_type(self, client, clean_db):
+        """Test buying a membership with an invalid membership type."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to buy a membership with an invalid membership type
+        response = client.post("/buy_membership", json={
+            "membership_type": "InvalidType",
+            "duration": constants.MembershipDuration.MONTHLY.value,
+            "mode_of_payment": constants.PaymentMethod.APPLE_PAY.value
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+        assert response.json['return_code'] == 0
+        assert response.json['error'] == "Invalid membership type"
+        
+        # Fetch the membership details.
+        membership_details = models.Membership.query.filter_by(user_id=user.id).first()
+    
+        # Assert that the membership is None and does not exist.
+        assert membership_details == None 
+
+    # Tests for cancelling the membership
+    def test_cancel_membership_before_end_date(self, client, clean_db):
+        """Test canceling a membership before end date."""
+        # First, create a user and a membership
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Create a membership for the user
+        membership = models.Membership(
+            user_id=user.id,
+            membership_type=constants.MembershipType.PREMIUM.value,
+            duration=constants.MembershipDuration.MONTHLY.value,
+            start_date=datetime.utcnow() - timedelta(days=30),
+            end_date=datetime.utcnow() + timedelta(days=30),
+            mode_of_payment=constants.PaymentMethod.APPLE_PAY.value,
+            is_active=True,
+            auto_renew=True,
+        )
+        clean_db.session.add(membership)
+        clean_db.session.commit()
+        
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+        # Attempt to cancel the membership
+        response = client.delete("/cancel_membership", headers={"Authorization": f"Bearer {token}"})
+        
+        assert response.status_code == 200
+        assert response.json['return_code'] == 1
+        assert "Auto-renew disabled successfully." in response.json['message']
+        
+        
+            # Fetch the membership after cancellation
+        cancelled_membership = models.Membership.query.filter_by(user_id=user.id).first()
+    
+        # Assert that the auto-renewal is set to false
+        assert cancelled_membership.auto_renew == False
+        
+        # Assert that the membership is still activated.
+        assert cancelled_membership.is_active == True
+    
+    def test_cancel_membership_on_end_date(self, client, clean_db):
+        """Test canceling a membership on the end date."""
+        # First, create a user and a membership
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Create a membership for the user
+        membership = models.Membership(
+            user_id=user.id,
+            membership_type=constants.MembershipType.STANDARD.value,
+            duration=constants.MembershipDuration.MONTHLY.value,
+            start_date=datetime.utcnow() - timedelta(days=30),
+            end_date=datetime.utcnow(), # Current date
+            mode_of_payment=constants.PaymentMethod.APPLE_PAY.value,
+            is_active=True,
+            auto_renew=True,
+        )
+        clean_db.session.add(membership)
+        clean_db.session.commit()
+        
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+        # Attempt to cancel the membership
+        response = client.delete("/cancel_membership", headers={"Authorization": f"Bearer {token}"})
+        
+        assert response.status_code == 200
+        assert response.json['return_code'] == 1
+        assert "Membership cancelled and auto-renew disabled successfully." in response.json['message']
+
+        # Fetch the membership after cancellation
+        cancelled_membership = models.Membership.query.filter_by(user_id=user.id).first()
+    
+        # Assert that the membership and auto-renewal are actually set to false
+        assert cancelled_membership.is_active == False
+        assert cancelled_membership.auto_renew == False
+    
+    def test_cancel_membership_no_active_membership(self, client, clean_db):
+        """Test cancelling membership when no active membership exists."""
+        # First, create a user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to cancel the membership
+        response = client.delete("/cancel_membership", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 404
+        assert response.json['return_code'] == 0
+        assert "User does not have an active membership" in response.json['error']
+    
