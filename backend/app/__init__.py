@@ -15,8 +15,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 # Enabling CORS
-cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
+cors = CORS(app, supports_credentials=True)
 
 # Initializing the JWT Tokens for Authentication
 app.config["JWT_SECRET_KEY"] = "VERY-SECRET-JWT-KEY"
