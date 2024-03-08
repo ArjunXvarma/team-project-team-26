@@ -497,7 +497,7 @@ class MembershipRoutes:
         membership_type : str
             Type of membership to purchase (All types defined in constants.py).
         duration : str
-            Duration of the membership ('Monthly' or 'Annually').
+            Duration of the membership (All valid durations defined in constants.py)..
         mode_of_payment : str
             Mode of payment for the membership (All modes defined in constants.py).
 
@@ -543,13 +543,13 @@ class MembershipRoutes:
             return jsonify({"return_code": 0, "error": "User already has an active membership"}), 400
 
         # Calculate start and end dates based on duration
+        if duration not in constants.VALID_MEMBERSHIP_DURATIONS:
+            return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
         start_date = datetime.now()
         if duration.lower() == 'monthly':
             end_date = start_date + timedelta(days=30)
         elif duration.lower() == 'annually':
             end_date = start_date + timedelta(days=365)
-        else:
-            return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
         
         if membership_type not in constants.VALID_MEMBERSHIP_TYPES:
             return jsonify({"return_code": 0, "error": "Invalid membership type"}), 400
