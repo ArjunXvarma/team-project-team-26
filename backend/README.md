@@ -181,9 +181,9 @@ class MembershipPrice(Enum):
 
 - **Request Body:**
 
-  - ``membership_type``: Type of membership to purchase -> Defined in [constants.py](backend/constants.py).
-  - ``duration``: Duration of the membership -> Defined in [constants.py](backend/constants.py).
-  - ``mode_of_payment``: Mode of payment for the membership -> Defined in [constants.py](backend/constants.py).
+  - ``membership_type``: Type of membership to purchase -> Defined in [constants.py](constants.py).
+  - ``duration``: Duration of the membership -> Defined in [constants.py](constants.py).
+  - ``mode_of_payment``: Mode of payment for the membership -> Defined in [constants.py](constants.py).
 
 
 > [!NOTE]
