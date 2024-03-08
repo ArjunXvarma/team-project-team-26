@@ -9,11 +9,8 @@ from flask_jwt_extended import (
 )
 import json
 import constants
-
 from apscheduler.schedulers.background import BackgroundScheduler
-
 from functools import wraps
-
 bcrypt = Bcrypt(app)
 
 class AuthenticationRoutes:
@@ -473,9 +470,9 @@ class GPSRoutes:
         db.session.commit()
 
         return jsonify({'status': 200, 'message': 'Journey updated successfully'}), 200
-class SubscriptionRoutes:
+class MembershipRoutes:
     """
-    Class for handling subscription routes.
+    Class for handling membership routes.
 
     Attributes
     ----------
@@ -483,51 +480,67 @@ class SubscriptionRoutes:
 
     Methods
     -------
-    buy_subscription() -> json:
-        Allows a user to purchase a subscription.
-    remove_subscription() -> json:
-        Removes the active subscription of a user.
-    modify_subscription() -> json:
-        Modifies the active subscription of a user.
+    buy_membership() -> json:
+        Allows a user to purchase a membership.
+    cancel_membership() -> json:
+        Cancels the auto renewal of membership of a user.
     """
 
-    @app.route("/buy_subscription", methods=["POST"])
+    @app.route("/buy_membership", methods=["POST"])
     @jwt_required()
-    def buy_subscription() -> Tuple[Response, int]:
+    def buy_membership() -> Tuple[Response, int]:
         """
-        Allows a user to purchase a subscription.
+        Allows a user to purchase a membership.
 
         Parameters
         ----------
-        subscription_type : str
-            Type of subscription to purchase.
+        membership_type : str
+            Type of membership to purchase (All types defined in constants.py).
         duration : str
-            Duration of the subscription ('Monthly' or 'Annually').
+            Duration of the membership ('Monthly' or 'Annually').
         mode_of_payment : str
-            Mode of payment for the subscription.
+            Mode of payment for the membership (All modes defined in constants.py).
 
         Returns
         -------
         json
-            A JSON response indicating success or failure of the subscription purchase.
+            A JSON response indicating success or failure of the membership purchase.
+            If successful, returns:
+                - "return_code": 1
+                - "message": "Membership purchased successfully"
+            If unsuccessful, returns:
+                - "return_code": 0
+                - "error": Details about the error encountered during membership purchase.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Membership purchased successfully.
+        400 : Bad Request
+            - Missing required fields.
+            - Invalid duration.
+            - Invalid mode of payment.
+            - User already has an active membership.
+        401 : Unauthorized
+            Missing or invalid access token.
         """
-        user_id = get_jwt_identity()
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
         data = request.json
         if not data:
             return jsonify({"return_code": 0, "error": "No JSON Data found"}), 400
 
-        subscription_type = data.get("subscription_type")
+        membership_type = data.get("membership_type")
         duration = data.get("duration")
         mode_of_payment = data.get("mode_of_payment")
         
-        
-        if not all([subscription_type, duration, mode_of_payment]):
+        if not all([membership_type, duration, mode_of_payment]):
             return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
 
-        # Check if user already has an active subscription
-        user_subscription = models.Subscription.query.filter_by(user_id=user_id, is_active=True).first()
-        if user_subscription:
-            return jsonify({"return_code": 0, "error": "User already has an active subscription"}), 400
+        # Check if user already has an active membership
+        user_membership = models.Membership.query.filter_by(user_id=user.id, is_active=True).first()
+        if user_membership:
+            return jsonify({"return_code": 0, "error": "User already has an active membership"}), 400
 
         # Calculate start and end dates based on duration
         start_date = datetime.now()
@@ -538,12 +551,15 @@ class SubscriptionRoutes:
         else:
             return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
         
+        if membership_type not in constants.VALID_MEMBERSHIP_TYPES:
+            return jsonify({"return_code": 0, "error": "Invalid membership type"}), 400
+        
         if mode_of_payment not in constants.VALID_PAYMENT_METHODS:
             return jsonify({"return_code": 0, "error": "Invalid mode of payment"}), 400
-
-        new_subscription = models.Subscription(
-            user_id=user_id,
-            subscription_type=subscription_type,
+        
+        new_membership = models.Membership(
+            user_id=user.id,
+            membership_type=membership_type,
             duration=duration,
             start_date=start_date,
             end_date=end_date,
@@ -551,133 +567,90 @@ class SubscriptionRoutes:
             is_active=True,
             auto_renew=True 
         )
-        db.session.add(new_subscription)
+        db.session.add(new_membership)
         db.session.commit()
 
-        return jsonify({"return_code": 1, "message": "Subscription purchased successfully"}), 200
+        return jsonify({"return_code": 1, "message": "Membership purchased successfully"}), 200
     
-    @app.route("/cancel_subscription", methods=["DELETE"])
+    @app.route("/cancel_membership", methods=["DELETE"])
     @jwt_required()
-    def cancel_subscription() -> Tuple[Response, int]:
+    def cancel_membership() -> Tuple[Response, int]:
         """
-        Adjusts the active subscription of a user based on the current date.
+        Adjusts the active membership of a user based on the current date.
         If the current date is before the end date, auto renew is turned off.
-        If the current date is on or after the end date, the subscription is cancelled.
+        If the current date is on or after the end date, the membership is cancelled.
 
         Returns
         -------
         json
             A JSON response indicating the success or failure of the operation.
-        """
-        user_id = get_jwt_identity()
+            If successful, returns:
+                - "return_code": 1
+                - "message": Details about the operation performed.
+            If unsuccessful, returns:
+                - "return_code": 0
+                - "error": Details about the error encountered during the operation.
 
-        subscription = models.Subscription.query.filter_by(user_id=user_id, is_active=True).first()
-        if not subscription:
-            return jsonify({"return_code": 0, "error": "User does not have an active subscription"}), 400
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Operation performed successfully.
+        404 : Not Found
+            User does not have an active membership.
+        401 : Unauthorized
+            Missing or invalid access token.
+        """
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        membership = models.Membership.query.filter_by(user_id=user.id, is_active=True).first()
+        if not membership:
+            return jsonify({"return_code": 0, "error": "User does not have an active membership"}), 404
 
         current_date = datetime.utcnow()
-        if current_date < subscription.end_date:
-            # Only turn off auto-renew if the current date is before the end date
-            subscription.auto_renew = False
+        if current_date < membership.end_date:
+            membership.auto_renew = False
             message = "Auto-renew disabled successfully."
         else:
-            subscription.is_active = False
-            subscription.auto_renew = False
-            message = "Subscription cancelled and auto-renew disabled successfully."
+            membership.is_active = False
+            membership.auto_renew = False
+            message = "Membership cancelled and auto-renew disabled successfully."
 
         db.session.commit()
 
         return jsonify({"return_code": 1, "message": message}), 200
-    
-    @jwt_required()
-    @app.route("/modify_subscription", methods=["PUT"])
-    def modify_subscription() -> Tuple[Response, int]:
+
+    def auto_renew_memberships():
         """
-        Modifies the active subscription of a user.
-
-        Parameters
-        ----------
-        subscription_type : str
-            Type of subscription to modify.
-        duration : str
-            Duration of the modified subscription ('Monthly' or 'Annually').
-        mode_of_payment : str
-            Mode of payment for the modified subscription.
-
-        Returns
-        -------
-        json
-            A JSON response indicating success or failure of the subscription modification.
-        """
-        user_id = get_jwt_identity()
-        data = request.json
-        if not data:
-            return jsonify({"return_code": 0, "error": "No JSON Data found"}), 400
-
-        subscription_type = data.get("subscription_type")
-        duration = data.get("duration")
-        mode_of_payment = data.get("mode_of_payment")
-
-        # Check if any required fields are missing
-        if not all([subscription_type, duration, mode_of_payment]):
-            return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
-
-        # Find the user and their active subscription
-        user = models.User.query.get(user_id)
-        if not user.subscription or not user.subscription.is_active:
-            return jsonify({"return_code": 0, "error": "User does not have an active subscription"}), 400
-
-        start_date = datetime.now()
-        if duration.lower() == 'monthly':
-            end_date = start_date + timedelta(days=30)
-        elif duration.lower() == 'annually':
-            end_date = start_date + timedelta(days=365)
-        else:
-            return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
-
-        # Update subscription details
-        user.subscription.subscription_type = subscription_type
-        user.subscription.duration = duration
-        user.subscription.start_date = start_date
-        user.subscription.end_date = end_date
-        user.subscription.mode_of_payment = mode_of_payment
-        db.session.commit()
-
-        return jsonify({"return_code": 1, "message": "Subscription modified successfully"}), 200
-
-    def auto_renew_subscriptions():
-        """
-        Function to auto-renew subscriptions if today is the end date and auto renew is True.
+        Function to auto-renew memberships if today is the end date and auto renew is True.
         """
         current_date = datetime.utcnow()
 
-        # Find subscriptions ending today and with auto renew enabled
-        subscriptions_to_renew = models.Subscription.query.filter(models.Subscription.end_date == current_date, models.Subscription.auto_renew == True).all()
+        memberships_to_renew = models.Membership.query.filter(models.Membership.end_date == current_date, models.Membership.auto_renew == True).all()
 
-        for subscription in subscriptions_to_renew:
-            if subscription.duration.lower() == 'monthly':
-                subscription.end_date += timedelta(days=30)
-            elif subscription.duration.lower() == 'annually':
-                subscription.end_date += timedelta(days=365)
+        for membership in memberships_to_renew:
+            if membership.duration.lower() == 'monthly':
+                membership.end_date += timedelta(days=30)
+            elif membership.duration.lower() == 'annually':
+                membership.end_date += timedelta(days=365)
         db.session.commit()
 
-    def deactivate_expired_subscriptions():
+    def deactivate_expired_memberships():
         """
-        Function to deactivate subscriptions if today is the end date and auto renew is False.
+        Function to deactivate memberships if today is the end date and auto renew is False.
         """
         current_date = datetime.utcnow()
 
-        # Find subscriptions ending today and with auto renew disabled
-        subscriptions_to_deactivate = models.Subscription.query.filter(models.Subscription.end_date == current_date, models.Subscription.auto_renew == False).all()
+        memberships_to_deactivate = models.Membership.query.filter(models.Membership.end_date == current_date, models.Membership.auto_renew == False).all()
 
-        for subscription in subscriptions_to_deactivate:
-            subscription.is_active = False
+        for membership in memberships_to_deactivate:
+            membership.is_active = False
 
         db.session.commit()
 
 
 # Running the auto renew and deactivation functions every day using scheduler.
 scheduler = BackgroundScheduler()
-scheduler.add_job(SubscriptionRoutes.auto_renew_subscriptions, 'cron', hour=16, minute=0)
-scheduler.add_job(SubscriptionRoutes.deactivate_expired_subscriptions, 'cron', hour=16, minute=0)
+scheduler.add_job(MembershipRoutes.auto_renew_memberships, 'cron', hour=16, minute=0)
+scheduler.add_job(MembershipRoutes.deactivate_expired_memberships, 'cron', hour=16, minute=0)
 scheduler.start()
