@@ -9,7 +9,6 @@ user_roles = db.Table('user_roles',
 
 class User(db.Model):
     __tablename__ = 'user'
-
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(80), nullable=False)
     last_name = db.Column(db.String(80))
@@ -21,6 +20,23 @@ class User(db.Model):
     roles = db.relationship('Role', secondary=user_roles, 
                             backref=db.backref('users', lazy='dynamic'))
     journeys = db.relationship('Journey', backref='user', lazy=True)
+    membership = db.relationship('Membership', backref='user', uselist=False)
+
+
+class Membership(db.Model):
+    __tablename__ = 'membership'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    membership_type = db.Column(db.String(50), nullable=False)
+    duration = db.Column(db.String(20), nullable=False)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    mode_of_payment = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    auto_renew = db.Column(db.Boolean, default=False)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
 
 class Role(db.Model):
     __tablename__ = 'role'
