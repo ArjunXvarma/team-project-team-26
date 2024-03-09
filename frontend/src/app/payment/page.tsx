@@ -36,13 +36,13 @@ export default function Payment() {
             <div className="w-full h-full">
 
                 <header className="justify-around items-center pt-10 flex-grow">
-                    <h1 className="text-center text-4xl font-semibold pb-6 font-serif text-white "> Payment Details</h1>
+                    <p className="text-center text-4xl font-semibold pb-6 font-serif text-white "> Payment Details</p>
                 </header>
 
                 <div className=" flex justify-center mt-4">
                     <div className="w-fit flex bg-white  rounded-md p-4 ">
-                        <h1 className="text-lg">Selected Plan: &nbsp; </h1>
-                        <h1 className="font-semibold text-lg">{name} - {price}</h1>
+                        <p className="text-lg">Selected Plan: &nbsp; </p>
+                        <p className="font-semibold text-lg">{name} - {price}</p>
                     </div>  
                 </div>
 
@@ -67,7 +67,7 @@ export default function Payment() {
                         ( selectedPaymentMethod !== null ? 
                                 <div>
                                     <Link href={"/thankyou"}>
-                                        <Button color="#2EAE69">Continue</Button>
+                                        <Button className="bg-green-600 hover:bg-green-700" >Continue</Button>
                                     </Link>
                                 </div>
                             :

@@ -37,15 +37,15 @@ export default function Home(){
       
     
     return (
-        <main className="md:w-screen md:h-screen sm:w-full sm:h-full bg-primary"> 
-            <div className="w-full h-full  bg-primary">
+        <main className="w-full min-h-screen bg-primary flex justify-center items-center"> 
+            <div className="max-w-screen-lg w-full mb-20">
 
                 <header className="justify-around items-center pt-10 flex-grow">
-                    <h1 className="text-center text-4xl font-semibold pb-6 font-serif text-white "> Membership</h1>
-                    <h1 className="text-center text-lg text-white font-serif ">“Every journey begins with a single step”</h1>
+                    <p className="text-center text-4xl font-semibold pb-6 font-serif text-white "> Membership</p>
+                    <p className="text-center text-lg text-white font-serif ">“Every journey begins with a single step”</p>
                 </header>
 
-                <h1 className="text-2xl text-center text-white font-serif mt-12 mb-6">Choose your membership plan </h1>
+                <p className="text-2xl text-center text-white font-serif mt-12 mb-6">Choose your membership plan </p>
                 <div className='flex justify-center'>
                     <Select
                         placeholder="Pick type"
@@ -59,18 +59,18 @@ export default function Home(){
 
                 <div className="flex justify-center mt-10 gap-2 flex-wrap">
                 {selectedMembershipPlans.map(plan => (
-                <div key={plan.id} className={`flex flex-col items-center rounded-xl p-6 w-72 h-96 ${selectedPlan === plan.id ? 'bg-membership' : 'bg-white'}`}>
-                        <h2 className="text-2xl font-serif mt-2">{plan.name}</h2>
+                <div key={plan.id} className={`flex flex-col items-center rounded-xl p-6 w-72 h-96 ${selectedPlan === plan.id ? 'bg-lightGreen' : 'bg-white'}`}>
+                        <p className="text-2xl font-serif mt-2">{plan.name}</p>
                         <p className="text-xl font-bold mt-4 mb-4">{plan.price}</p>
                         <div className="flex flex-col text-center">
                             {plan.features.map((feature, index) => (
-                                <h1 key={index} className="mb-2">{feature}</h1>
+                                <p key={index} className="mb-2">{feature}</p>
                             ))}
                         </div>
                         {selectedPlan === plan.id ? (
-                            <Button onClick={() => handleSelectPlan(plan.id)} className="text-white px-4 py-2 rounded mt-4" variant="filled" color="gray" radius="sm">Cancel</Button>
+                            <Button onClick={() => handleSelectPlan(plan.id)} className="text-white px-4 py-2 rounded mt-4 bg-gray-500" variant="filled" color="gray" radius="sm">Cancel</Button>
                         ) : (
-                            <Button onClick={() => handleSelectPlan(plan.id)} className="text-white px-4 py-2 rounded mt-4" variant="filled" color="#2EAE69" radius="sm">Select</Button>
+                            <Button onClick={() => handleSelectPlan(plan.id)} className="text-white px-4 py-2 rounded mt-4 bg-green-700" variant="filled" color="#2EAE69" radius="sm">Select</Button>
                         )}
                     </div>
                 ))}
@@ -83,10 +83,10 @@ export default function Home(){
                                     selectedPlanName: selectedMembershipPlans.find(plan => plan.id === selectedPlan)?.name,
                                     selectedPlanPrice: selectedMembershipPlans.find(plan => plan.id === selectedPlan)?.price
                                 }}}>
-                                <Button className="text-white px-4 py-2 rounded" variant="filled" color="#2EAE69" radius="sm"> Continue &nbsp; <FaArrowRight/></Button>
+                                <Button className="text-white px-4 py-2 rounded bg-green-600" variant="filled" size="md"> Continue &nbsp; <FaArrowRight/></Button>
                             </Link>
                         </div>
-                    )};
+                    )}
                 </div>
             </div>
         </main>

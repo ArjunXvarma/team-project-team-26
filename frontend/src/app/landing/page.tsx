@@ -1,33 +1,33 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@mantine/core";
+import { Button, UnstyledButton } from "@mantine/core";
 export default function Landing(){
     return (
         <main> 
           <div className="w-full h-full">
             <header className=" flex items-center justify-between px-16 pt-10">
 
-                <h1 className="ml-4 text-2xl font-bold text-green-700">MyApp</h1>
+                <p className="ml-4 text-2xl font-bold text-green-700">MyApp</p>
                 <div className="flex items-center">
                     <Link href={"/login"} className="flex w-full justify-center">
-                        <button className="font-semibold text-lg">Login</button>
+                        <UnstyledButton className="font-semibold text-lg hover:text-green-700">Login</UnstyledButton>
                     </Link>
-                    <h1 className="text-lg">/</h1>
+                    <p className="text-lg">/</p>
                     <Link href={"/signup"} className="flex w-full justify-center">
-                        <button className="font-semibold text-lg ">SignUp</button>
+                        <UnstyledButton className="font-semibold  hover:text-green-700 text-lg ">SignUp</UnstyledButton>
                     </Link>
                 </div>
 
             </header>
             
-            <h1 className="text-center text-lg font-serif">“ Every journey begins with a single step ”</h1>
+            <p className="text-center text-lg font-serif">“ Every journey begins with a single step ”</p>
             <div className="flex items-start justify-between">
                 <div className="ml-24 py-40">
-                    <h1 className="text-4xl font-serif font-medium underline">Heading</h1>
+                    <p className="text-4xl font-serif font-medium underline">Heading</p>
                     <p className="text-xl font-serif ">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eu dui non diam eleifend egestas id a ligula.</p>
                     <Link href={"/membership"} className="flex w-full py-10">
-                    <Button variant="filled" color="rgba(0, 133, 57, 1)" size="md" radius="xl">Join Now</Button>
+                    <Button variant="filled" className="bg-green-700 hover:bg-green-800"  size="md" radius="xl">Join Now</Button>
                     </Link>
                 </div>
                 <div className="flex items-center justify-end">
