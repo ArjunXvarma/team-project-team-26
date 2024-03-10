@@ -1,34 +1,59 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams} from 'next/navigation';
 import { useForm } from "@mantine/form";
 import { TextInput, Button } from "@mantine/core";
 import Link from "next/link";
+import { FaGoogle } from "react-icons/fa6";
+import { FaRegCreditCard } from "react-icons/fa6";
+import { FaPaypal } from "react-icons/fa";
+import { FaApple } from "react-icons/fa6";
+import { FaAlipay } from "react-icons/fa6";
 import { number, expirationDate, cvv } from 'card-validator';
-import { error } from 'console';
-
+import { API_URL } from "@/constants";
 
 
 export default function Payment() {
-     
+
+    interface PaymentMethodData{
+       PaymentMethod: string[];
+    }
+
+    const [PaymentMethod, setPaymentMethod] = useState<PaymentMethodData | null>(null);
+
+    useEffect(() => {
+        fetch(`${API_URL}/api/enums`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json() as Promise<PaymentMethodData>;
+            })
+            .then(data => {
+                setPaymentMethod(data);
+            })
+            .catch(error => {
+                console.error('Error fetching membership data:', error);
+            });
+    }, []);
+
+    const paymentIcons = [
+        // Add more if needed
+        { value: 'Credit Card', icon: <FaRegCreditCard size={20} /> },
+        { value: 'Apple Pay', icon: <FaApple size={20} /> },
+        { value: 'Google Pay', icon:  <FaGoogle size={17}  />},
+        { value: 'PayPal', icon: <FaPaypal size={20} /> },
+        { value: 'AliPay', icon: <FaAlipay size={20} />}
+    ];
+    
     const searchParams = useSearchParams();
     const name = searchParams.get("selectedPlanName");
     const price = searchParams.get("selectedPlanPrice")
-
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<String | null>(null);
 
     const handlePaymentMethodChange = (method:String) => {
         setSelectedPaymentMethod(method);
     };
-
-    const paymentMethods = [
-        { label: 'Credit Card', value: 'creditCard' },
-        { label: 'Apple Pay', value: 'applePay' },
-        { label: 'Google Pay', value: 'googlePay' },
-        { label: 'PayPal', value: 'paypal' },
-        { label: 'Alipay', value: 'alipay' }
-    ];
-    
 
       
         return ( 
@@ -46,23 +71,18 @@ export default function Payment() {
                     </div>  
                 </div>
 
-                <div className='flex justify-center items-center text-white gap-10 m-10'>
-                    {paymentMethods.map(method => (
-                        <label key={method.value}>
-                            <input
-                                type="radio"
-                                name="paymentMethod"
-                                value={method.value}
-                                checked={selectedPaymentMethod === method.value}
-                                onChange={() => handlePaymentMethodChange(method.value)}
-                            />
-                            {method.label}
-                        </label>
+                <div className='flex justify-center items-center text-white gap-8 m-10'>
+                    {PaymentMethod && PaymentMethod.PaymentMethod.map(type => (
+                        <Button className={`hover:bg-green-600 ${selectedPaymentMethod === type ? 'bg-green-600' : ''}`} key={type} onClick={() => handlePaymentMethodChange(type)}>
+                            {paymentIcons.find(icon => icon.value === type)?.icon}
+                            &nbsp;
+                            {type}
+                        </Button>
                     ))}
                 </div>
 
                 <div className="flex justify-center items-center mt-6">
-                    {selectedPaymentMethod === 'creditCard' ? 
+                    {selectedPaymentMethod == "Credit Card" ? 
                     <CreditCardForm/> :
                         ( selectedPaymentMethod !== null ? 
                                 <div>
