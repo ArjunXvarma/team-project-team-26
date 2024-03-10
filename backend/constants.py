@@ -1,4 +1,6 @@
 from enum import Enum
+from app import app, db, models
+from flask import jsonify
 """
 Constants File Description:
 
@@ -37,14 +39,16 @@ class MembershipDuration(Enum):
     ANNUALLY = "Annually"
 
 # Prices for memberships
-class MembershipPrice(Enum):
+class MembershipPriceMonthly(Enum):
     BASIC_MONTHLY_PRICE = 8.00
-    BASIC_ANNUAL_PRICE = 80.00
     STANDARD_MONTHLY_PRICE = 15.00
-    STANDARD_ANNUAL_PRICE = 120.00
     PREMIUM_MONTHLY_PRICE = 22.00
+   
+class MembershipPriceAnnually(Enum):
+    BASIC_ANNUAL_PRICE = 80.00
+    STANDARD_ANNUAL_PRICE = 120.00
     PREMIUM_ANNUAL_PRICE = 180.00
-    
+ 
 
 
 # Validation functions for the ENUMs
@@ -70,3 +74,16 @@ def is_valid_membership_type(membership_type):
             if membershipType.value == membership_type:
                 return True
         return False
+
+
+@app.route('/api/enums')
+def get_enums():
+    enums = {
+        "PaymentMethod": [payment_method.value for payment_method in PaymentMethod],
+        "MembershipType": [membership_type.value for membership_type in MembershipType],
+        "MembershipDuration": [membership_duration.value for membership_duration in MembershipDuration],
+        "MembershipPriceMonthly": [membership_price_monthly.value for membership_price_monthly in MembershipPriceMonthly],
+        "MembershipPriceAnnually": [membership_price_annually.value for membership_price_annually in MembershipPriceAnnually],
+        "PaymentMethod" : [payment_mode.value for payment_mode in PaymentMethod]
+    }
+    return jsonify(enums)
