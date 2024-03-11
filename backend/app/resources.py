@@ -917,4 +917,3 @@ class FriendshipRoutes:
             friends_list.append({"email": friend_info.email, "name": friend_info.first_name + " " + friend_info.last_name})
 
         return jsonify({"friends": friends_list}), 200
-
