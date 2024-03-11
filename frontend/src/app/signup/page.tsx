@@ -1,49 +1,156 @@
 "use client";
+import "@mantine/dates/styles.css";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Image from "next/image";
-import "@mantine/dates/styles.css";
+import Cookie from "js-cookie";
+import { useState } from "react";
+import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
+import { useRouter } from "next/navigation";
+import { AuthAPIResponse } from "@/types";
+import { BiSolidError } from "react-icons/bi";
+import { notifications } from "@mantine/notifications";
+import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 
 export default function Login() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
   const form = useForm({
-    initialValues: { fname: "", lname: "", email: "", password: "", cpassword: "", dob: "" },
-    validate: {
-      fname: (value) => (value.length !== 0 ? null : "Enter first name"),
-      lname: (value) => (value.length !== 0 ? null : "Enter last name"),
-      email: (value) =>
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)
-          ? null
-          : "Invalid email",
-      password: (value) => {
-        if (value.length < 3) {
-          return "Password too short";
-        } else if (value.length > 20) {
-          return "Password too long";
-        } else {
-          null;
-        }
-      },
-    },
+    initialValues: { fname: "", lname: "", email: "", password: "", cpassword: "", dob: null },
   });
 
-  const submit = form.onSubmit((values) => {
-    console.log(form.errors);
-    console.log("submit");
-  });
+  const validateForm = () => {
+    let exitCode = 0;
+
+    // check first name
+    if (form.values.fname.length === 0) {
+      form.setFieldError("fname", "First name cannot be empty");
+      exitCode = 1;
+    }
+
+    // check last name
+    if (form.values.lname.length === 0) {
+      form.setFieldError("lname", "Last name cannot be empty");
+      exitCode = 1;
+    }
+
+    // check email
+    const emailRegex: RegExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(form.values.email)) {
+      form.setFieldError("email", "Enter a valid email address");
+      exitCode = 1;
+    }
+
+    // check dob
+    if (form.values.dob === null) {
+      form.setFieldError("dob", "Enter a valid date of birth");
+      exitCode = 1;
+    }
+
+    if (form.values.password.length < 5) {
+      form.setFieldError("password", "Too Short, Password must be atleast 5 characters long");
+      exitCode = 1;
+    }
+
+    if (form.values.password !== form.values.cpassword) {
+      form.setFieldError("cpassword", "Passwords do not match");
+      exitCode = 1;
+    }
+
+    return exitCode;
+  };
+
+  function formatDate(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  const submit = async () => {
+    setLoading(true);
+
+    if (validateForm() !== 0) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/signup`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          first_name: form.values.fname,
+          last_name: form.values.lname,
+          email: form.values.email,
+          date_of_birth: formatDate(form.values.dob!),
+          password: form.values.password,
+        }),
+      });
+
+      // email conflits
+      if (response.status == 409) {
+        form.setFieldError("email", "User with this email already exists");
+      }
+
+      const signupResponse: AuthAPIResponse = await response.json();
+
+      if (signupResponse.return_code == 0) {
+        notifications.show({
+          color: "red",
+          title: "Server Error",
+          icon: <BiSolidError />,
+          message: "There was a problem contacting the server. Please try again later.",
+        });
+      } else {
+        notifications.show({
+          color: "green",
+          title: "Success",
+          icon: <IoMdCheckmarkCircleOutline />,
+          message: "Logging you in",
+        });
+        Cookie.set("token", signupResponse.access_token!);
+        router.push("/");
+      }
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        color: "red",
+        title: "Server Error",
+        icon: <BiSolidError />,
+        message: "There was a problem contacting the server. Please try again later.",
+      });
+    }
+
+    setLoading(false);
+  };
 
   return (
     <main>
-      <div className="flex w-full h-full">
-        <div className="w-full h-screen flex items-center justify-center">
-          <Image src="/runner.png" alt="Runner Image" width={600} height={400} />
+      <div className="flex md:flex-row flex:col w-full h-full">
+        <div className="w-full h-screen md:flex items-center justify-center hidden">
+          <Image
+            height={400}
+            width={600}
+            priority={false}
+            src="/runner.png"
+            alt="Runner Image"
+          />
         </div>
         <div className="w-full h-screen flex items-center justify-center bg-primary">
           <div className="w-96 flex flex-col items-center gap-10">
             <h1 className="text-4xl font-black text-white">Sign Up</h1>
-            <form onClick={submit} className="w-full flex flex-col gap-3 items-center">
+            <form
+              className="w-full flex flex-col gap-3 items-center"
+              onSubmit={(e) => {
+                e.preventDefault();
+              }}
+            >
               <div className="w-full flex gap-3">
                 <TextInput
                   required
@@ -59,15 +166,17 @@ export default function Login() {
                 />
               </div>
               <TextInput
+                required
                 type="email"
                 className="w-full"
                 placeholder="Email"
                 {...form.getInputProps("email")}
               />
               <DateInput
+                required
                 clearable
                 valueFormat="DD MMMM YYYY"
-                placeholder="Date input"
+                placeholder="Date of birth"
                 style={{ caretColor: "transparent" }}
                 className="w-full cursor-pointer"
                 onKeyDown={(e) => e.preventDefault()}
@@ -76,16 +185,23 @@ export default function Login() {
                 minDate={dayjs(new Date(1920, 0, 1)).toDate()}
               />
               <PasswordInput
-                placeholder="Password"
+                required
                 className="w-full"
+                placeholder="Password"
                 {...form.getInputProps("password")}
               />
-              {form.values.password.length < 1 || form.errors.password ? null : (
-                <PasswordInput placeholder="Confirm Password" className="w-full" />
-              )}
+
+              <PasswordInput
+                required
+                placeholder="Confirm Password"
+                className="w-full"
+                {...form.getInputProps("cpassword")}
+              />
+
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
                 <Button
-                  type="submit"
+                  onClick={submit}
+                  loading={loading}
                   className="w-full"
                   style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
                 >

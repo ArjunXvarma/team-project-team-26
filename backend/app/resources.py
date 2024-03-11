@@ -8,10 +8,9 @@ from flask_jwt_extended import (
     unset_jwt_cookies, jwt_required
 )
 import json
-import jwt
-
+import constants
+from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
-
 bcrypt = Bcrypt(app)
 
 class AuthenticationRoutes:
@@ -242,7 +241,6 @@ class AuthenticationRoutes:
         unset_jwt_cookies(response)
         return response
     
-
 class GPSRoutes:
     """
     Class for querying the journey data.
@@ -472,3 +470,450 @@ class GPSRoutes:
         db.session.commit()
 
         return jsonify({'status': 200, 'message': 'Journey updated successfully'}), 200
+class MembershipRoutes:
+    """
+    Class for handling membership routes.
+
+    Attributes
+    ----------
+    None
+
+    Methods
+    -------
+    buy_membership() -> json:
+        Allows a user to purchase a membership.
+    cancel_membership() -> json:
+        Cancels the auto renewal of membership of a user.
+    """
+
+    @app.route("/buy_membership", methods=["POST"])
+    @jwt_required()
+    def buy_membership() -> Tuple[Response, int]:
+        """
+        Allows a user to purchase a membership.
+
+        Parameters
+        ----------
+        membership_type : str
+            Type of membership to purchase (All types defined in constants.py).
+        duration : str
+            Duration of the membership (All valid durations defined in constants.py)..
+        mode_of_payment : str
+            Mode of payment for the membership (All modes defined in constants.py).
+
+        Returns
+        -------
+        json
+            A JSON response indicating success or failure of the membership purchase.
+            If successful, returns:
+                - "return_code": 1
+                - "message": "Membership purchased successfully"
+            If unsuccessful, returns:
+                - "return_code": 0
+                - "error": Details about the error encountered during membership purchase.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Membership purchased successfully.
+        400 : Bad Request
+            - Missing required fields.
+            - Invalid duration.
+            - Invalid mode of payment.
+            - User already has an active membership.
+        401 : Unauthorized
+            Missing or invalid access token.
+        """
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+        data = request.json
+        if not data:
+            return jsonify({"return_code": 0, "error": "No JSON Data found"}), 400
+
+        membership_type = data.get("membership_type")
+        duration = data.get("duration")
+        mode_of_payment = data.get("mode_of_payment")
+        
+        if not all([membership_type, duration, mode_of_payment]):
+            return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
+
+        # Check if user already has an active membership
+        user_membership = models.Membership.query.filter_by(user_id=user.id, is_active=True).first()
+        if user_membership:
+            return jsonify({"return_code": 0, "error": "User already has an active membership"}), 400
+
+        # Calculate start and end dates based on duration
+        if not constants.is_valid_duration(duration):
+            return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
+        start_date = datetime.now()
+        if duration.lower() == 'monthly':
+            end_date = start_date + timedelta(days=30)
+        elif duration.lower() == 'annually':
+            end_date = start_date + timedelta(days=365)
+        
+        if not constants.is_valid_membership_type(membership_type):
+            return jsonify({"return_code": 0, "error": "Invalid membership type"}), 400
+        
+        if not constants.is_valid_payment_method(mode_of_payment):
+            return jsonify({"return_code": 0, "error": "Invalid mode of payment"}), 400
+        
+        new_membership = models.Membership(
+            user_id=user.id,
+            membership_type=membership_type,
+            duration=duration,
+            start_date=start_date,
+            end_date=end_date,
+            mode_of_payment=mode_of_payment,
+            is_active=True,
+            auto_renew=True 
+        )
+        db.session.add(new_membership)
+        db.session.commit()
+
+        return jsonify({"return_code": 1, "message": "Membership purchased successfully"}), 200
+    
+    @app.route("/cancel_membership", methods=["DELETE"])
+    @jwt_required()
+    def cancel_membership() -> Tuple[Response, int]:
+        """
+        Adjusts the active membership of a user based on the current date.
+        If the current date is before the end date, auto renew is turned off.
+        If the current date is on or after the end date, the membership is cancelled.
+
+        Returns
+        -------
+        json
+            A JSON response indicating the success or failure of the operation.
+            If successful, returns:
+                - "return_code": 1
+                - "message": Details about the operation performed.
+            If unsuccessful, returns:
+                - "return_code": 0
+                - "error": Details about the error encountered during the operation.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Operation performed successfully.
+        404 : Not Found
+            User does not have an active membership.
+        401 : Unauthorized
+            Missing or invalid access token.
+        """
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        membership = models.Membership.query.filter_by(user_id=user.id, is_active=True).first()
+        if not membership:
+            return jsonify({"return_code": 0, "error": "User does not have an active membership"}), 404
+
+        current_date = datetime.utcnow()
+        if current_date < membership.end_date:
+            membership.auto_renew = False
+            message = "Auto-renew disabled successfully."
+        else:
+            membership.is_active = False
+            membership.auto_renew = False
+            message = "Membership cancelled and auto-renew disabled successfully."
+
+        db.session.commit()
+
+        return jsonify({"return_code": 1, "message": message}), 200
+
+    def auto_renew_memberships():
+        """
+        Function to auto-renew memberships if today is the end date and auto renew is True.
+        """
+        current_date = datetime.utcnow()
+
+        memberships_to_renew = models.Membership.query.filter(models.Membership.end_date == current_date, models.Membership.auto_renew == True).all()
+
+        for membership in memberships_to_renew:
+            if membership.duration.lower() == 'monthly':
+                membership.end_date += timedelta(days=30)
+            elif membership.duration.lower() == 'annually':
+                membership.end_date += timedelta(days=365)
+        db.session.commit()
+
+    def deactivate_expired_memberships():
+        """
+        Function to deactivate memberships if today is the end date and auto renew is False.
+        """
+        current_date = datetime.utcnow()
+
+        memberships_to_deactivate = models.Membership.query.filter(models.Membership.end_date == current_date, models.Membership.auto_renew == False).all()
+
+        for membership in memberships_to_deactivate:
+            membership.is_active = False
+
+        db.session.commit()
+
+
+# Running the auto renew and deactivation functions every day using scheduler.
+scheduler = BackgroundScheduler()
+scheduler.add_job(MembershipRoutes.auto_renew_memberships, 'cron', hour=16, minute=0)
+scheduler.add_job(MembershipRoutes.deactivate_expired_memberships, 'cron', hour=16, minute=0)
+scheduler.start()
+
+class FriendshipRoutes:
+    """
+    Class for handling friendship-related routes.
+
+    Methods
+    -------
+    send_friend_request() -> Tuple[Response, int]:
+        Sends a friend request from the current user to another user.
+    accept_friend_request() -> Tuple[Response, int]:
+        Accepts a friend request.
+    reject_friend_request() -> Tuple[Response, int]:
+        Rejects a friend request.
+    list_friend_requests() -> Tuple[Response, int]:
+        Lists all pending friend requests for the current user.
+    list_friends() -> Tuple[Response, int]:
+        Lists all friends of the current user.
+    """
+
+    @app.route("/send_friend_request", methods=["POST"])
+    @jwt_required()
+    def send_friend_request() -> Tuple[Response, int]:
+        """
+        Sends a friend request from the current user to another user.
+
+        This method allows the current authenticated user to send a friend request to another user identified by their email.
+
+        Parameters
+        ----------
+        email : str
+            The email address of the user to whom the friend request is being sent.
+
+        Returns
+        -------
+        json
+            A JSON response indicating the success or failure of the friend request operation.
+            If successful, returns:
+                - "message": "Friend request sent successfully"
+            If unsuccessful, returns:
+                - "error": Description of the error (e.g., "Email is required", "Addressee not found")
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Friend request sent successfully.
+        400 : Bad Request
+            Missing email or attempting to send a request to oneself.
+        404 : Not Found
+            The specified user to send a request to does not exist.
+        409 : Conflict
+            A friend request already exists or the users are already friends.
+        """
+        current_user_email = get_jwt_identity()
+        data = request.json
+
+        addressee_email = data.get("email")
+
+        if not addressee_email:
+            return jsonify({"error": "Email is required"}), 400
+
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+        addressee = models.User.query.filter_by(email=addressee_email).first()
+
+        if not addressee:
+            return jsonify({"error": "Addressee not found"}), 404
+
+        # Prevent sending a request to oneself
+        if current_user.id == addressee.id:
+            return jsonify({"error": "Cannot send friend request to yourself"}), 400
+
+        # Check if the request already exists
+        existing_request = models.Friendship.query.filter(
+            ((models.Friendship.requester_id == current_user.id) & (models.Friendship.addressee_id == addressee.id)) |
+            ((models.Friendship.requester_id == addressee.id) & (models.Friendship.addressee_id == current_user.id))
+        ).first()
+
+        if existing_request:
+            return jsonify({"error": "Friend request already exists or already friends"}), 409
+
+        new_request = models.Friendship(requester_id=current_user.id, addressee_id=addressee.id)
+        db.session.add(new_request)
+        db.session.commit()
+
+        return jsonify({"message": "Friend request sent successfully"}), 200
+
+    @app.route("/accept_friend_request", methods=["POST"])
+    @jwt_required()
+    def accept_friend_request() -> Tuple[Response, int]:
+        """
+        Accepts a friend request.
+
+        Allows the current authenticated user to accept a friend request from another user.
+
+        Parameters
+        ----------
+        email : str
+            The email address of the user whose friend request is being accepted.
+
+        Returns
+        -------
+        json
+            A JSON response indicating the success or failure of the accept operation.
+            If successful, returns:
+                - "message": "Friend request accepted"
+            If unsuccessful, returns:
+                - "error": Description of the error (e.g., "Email is required", "Requester not found")
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Friend request accepted successfully.
+        400 : Bad Request
+            Missing email.
+        404 : Not Found
+            The friend request to be accepted was not found.
+        """
+        current_user_email = get_jwt_identity()
+        data = request.json
+
+        requester_email = data.get("email")
+
+        if not requester_email:
+            return jsonify({"error": "Email is required"}), 400
+
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+        requester = models.User.query.filter_by(email=requester_email).first()
+
+        if not requester:
+            return jsonify({"error": "Requester not found"}), 404
+
+        friend_request = models.Friendship.query.filter_by(requester_id=requester.id, addressee_id=current_user.id, status='pending').first()
+
+        if not friend_request:
+            return jsonify({"error": "Friend request not found"}), 404
+
+        friend_request.status = 'accepted'
+        db.session.commit()
+
+        return jsonify({"message": "Friend request accepted"}), 200
+    
+    @app.route("/reject_friend_request", methods=["POST"])
+    @jwt_required()
+    def reject_friend_request() -> Tuple[Response, int]:
+        """
+        Rejects a friend request.
+
+        Allows the current authenticated user to reject a friend request from another user.
+
+        Parameters
+        ----------
+        email : str
+            The email address of the user whose friend request is being rejected.
+
+        Returns
+        -------
+        json
+            A JSON response indicating the success or failure of the reject operation.
+            If successful, returns:
+                - "message": "Friend request rejected"
+            If unsuccessful, returns:
+                - "error": Description of the error (e.g., "Email is required", "Requester not found")
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Friend request rejected successfully.
+        400 : Bad Request
+            Missing email.
+        404 : Not Found
+            The friend request to be rejected was not found.
+        """
+        current_user_email = get_jwt_identity()
+        data = request.json
+
+        requester_email = data.get("email")
+
+        if not requester_email:
+            return jsonify({"error": "Email is required"}), 400
+
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+        requester = models.User.query.filter_by(email=requester_email).first()
+
+        if not requester:
+            return jsonify({"error": "Requester not found"}), 404
+
+        friend_request = models.Friendship.query.filter_by(
+            requester_id=requester.id, addressee_id=current_user.id, status='pending').first()
+
+        if not friend_request:
+            return jsonify({"error": "Friend request not found"}), 404
+
+        friend_request.status = 'rejected'
+        db.session.commit()
+
+        return jsonify({"message": "Friend request rejected"}), 200
+
+    @app.route("/list_friend_requests", methods=["GET"])
+    @jwt_required()
+    def list_friend_requests() -> Tuple[Response, int]:
+        """
+        Lists all pending friend requests for the current user.
+
+        This method retrieves all pending friend requests sent to the current authenticated user.
+
+        Returns
+        -------
+        json
+            A JSON response containing a list of pending friend requests.
+            Each entry in the list includes the email and name of the user who sent the request.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Successfully retrieved the list of pending friend requests.
+        """
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        pending_requests = models.Friendship.query.filter_by(
+            addressee_id=current_user.id, status='pending').all()
+        requests = []
+        for req in pending_requests:
+            user_info = models.User.query.get(req.requester_id)
+            requests.append({"email": user_info.email, "name": user_info.first_name + " " + user_info.last_name})
+
+        return jsonify({"pending_requests": requests}), 200
+
+    @app.route("/list_friends", methods=["GET"])
+    @jwt_required()
+    def list_friends() -> Tuple[Response, int]:
+        """
+        Lists all friends of the current user.
+
+        This method retrieves all friends of the current authenticated user.
+
+        Returns
+        -------
+        json
+            A JSON response containing a list of friends.
+            Each entry in the list includes the email and name of the friend.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Successfully retrieved the list of friends.
+        """
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        # Assuming friendships are symmetrical and both users can initiate a friendship
+        friends = models.Friendship.query.filter(
+            ((models.Friendship.requester_id == current_user.id) | 
+            (models.Friendship.addressee_id == current_user.id)) & 
+            (models.Friendship.status == 'accepted')
+        ).all()
+
+        friends_list = []
+        for friend in friends:
+            friend_id = friend.addressee_id if friend.requester_id == current_user.id else friend.requester_id
+            friend_info = models.User.query.get(friend_id)
+            friends_list.append({"email": friend_info.email, "name": friend_info.first_name + " " + friend_info.last_name})
+
+        return jsonify({"friends": friends_list}), 200

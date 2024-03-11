@@ -8,17 +8,16 @@ from flask_jwt_extended import (
     JWTManager,
 )
 
-# Initialising the flask app
+# Initializing the flask app
 app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 # Enabling CORS
-cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
+cors = CORS(app, supports_credentials=True)
 
-# Initialising the JWT Tokens for Authentication
+# Initializing the JWT Tokens for Authentication
 app.config["JWT_SECRET_KEY"] = "VERY-SECRET-JWT-KEY"
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 jwt = JWTManager(app)
