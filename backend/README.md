@@ -298,3 +298,198 @@ If the access token is missing or invalid:
     "message": "Missing or invalid access token."
 }, 401 Unauthorized
 ```
+## Endpoint (FRIENDSHIP APIs)
+
+#### POST ``/send_friend_request``
+- **General:**
+   - Allows a user to send a friend request to another user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+- **Request Body:**
+- ``email``: The email address of the user to whom the friend request is being sent.
+
+- **Sample Success Body:**
+```json
+{
+    "email": "bob@example.com"
+}
+```
+
+- **Returns:**
+- If the friend request is sent successfully:
+```json
+{
+    "message": "Friend request sent successfully"
+}, 200 OK
+```
+
+- If the friend request is sent successfully:
+```json
+{
+    "error": "User is already a friend"
+}, 400 BAD REQUEST
+```
+- If a friend request to the user is already pending:
+```json
+{
+    "error": "Friend request already pending"
+}, 400 BAD REQUEST
+```
+
+- If the specified user to send the request to does not exist:
+
+```json
+{
+    "error": "Addressee not found"
+}, 404 NOT FOUND
+```
+- If attempting to send a request to oneself:
+```json
+{
+    "error": "Cannot send friend request to yourself"
+}, 400 BAD REQUEST
+```
+
+- If the access token is missing or invalid:
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+
+
+#### POST ``/accept_friend_request``
+- **General:**
+   - Allows a user to accept a friend request from another user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+- **Request Body:**
+- ``email``: The email address of the user to whom the friend request is being sent.
+
+- **Returns:**
+- If the friend request is accepted successfully:
+```json
+{
+    "message": "Friend request accepted"
+}, 200 OK
+```
+- If the friend request to be accepted was not found:
+```json
+{
+    "error": "Friend request not found"
+}, 404 NOT FOUND
+```
+- If the access token is missing or invalid:
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+#### POST ``/reject_friend_request``
+
+- **General:**
+   - Allows a user to reject a friend request from another user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+- **Request Body:**
+- ``email``: The email address of the user to whom the friend request is being sent.
+
+- **Returns:**
+- If the friend request is rejected successfully:
+```json
+{
+    "message": "Friend request rejected"
+}, 200 OK
+```
+- If the friend request to be rejected was not found:
+```json
+{
+    "error": "Friend request not found"
+}, 404 NOT FOUND
+```
+
+- If the access token is missing or invalid:
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+
+#### POST ``/list_friend_requests``
+
+- **General:**
+   - Lists all pending friend requests for the current user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+
+- **Returns:**
+- A JSON response containing a list of pending friend requests, each entry including the email and name of the user who sent the request.
+```json
+{
+    "pending_requests": [
+        {
+            "email": "sender@example.com",
+            "name": "Sender Name"
+        },
+        {
+            "email": "another_sender@example.com",
+            "name": "Another Sender Name"
+        }
+    ]
+}
+```
+
+- If the access token is missing or invalid:
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+
+
+#### POST ``/list_friends``
+
+- **General:**
+   - Lists all friends of the current user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+
+- **Returns:**
+- A JSON response containing a list of friends, each entry including the email and name of the friend.
+
+```json
+{
+    "friends": [
+        {
+            "email": "friend1@example.com",
+            "name": "Friend One"
+        },
+        {
+            "email": "friend2@example.com",
+            "name": "Friend Two"
+        }
+    ]
+}
+```
+- If the access token is missing or invalid:
+
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
