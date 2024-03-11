@@ -22,7 +22,6 @@ class User(db.Model):
     journeys = db.relationship('Journey', backref='user', lazy=True)
     membership = db.relationship('Membership', backref='user', uselist=False)
 
-
 class Membership(db.Model):
     __tablename__ = 'membership'
 
@@ -36,7 +35,6 @@ class Membership(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     auto_renew = db.Column(db.Boolean, default=False)
     date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
 
 class Role(db.Model):
     __tablename__ = 'role'
@@ -59,3 +57,12 @@ class Admin(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     isAdmin = db.Column(db.Boolean, nullable=False, default=False)
+
+class Friendship(db.Model):
+    __tablename__ = 'friendship'
+    requester_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    addressee_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    status = db.Column(db.String(20), nullable=False, default='pending')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    requester = db.relationship('User', foreign_keys=[requester_id], backref=db.backref('sent_requests', lazy='dynamic'))
+    addressee = db.relationship('User', foreign_keys=[addressee_id], backref=db.backref('received_requests', lazy='dynamic'))
