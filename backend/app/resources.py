@@ -286,7 +286,7 @@ class GPSRoutes:
         updates the data of a particular journey.
     """
 
-    @app.route("/get_journies_of_user", methods=["GET"])
+    @app.route("/get_journeys_of_user", methods=["GET"])
     @jwt_required()
     def getJourneys() -> Tuple[dict, int]:
         """
