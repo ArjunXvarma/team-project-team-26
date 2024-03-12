@@ -288,7 +288,7 @@ class GPSRoutes:
 
     @app.route("/get_journies_of_user", methods=["GET"])
     @jwt_required()
-    def getJournies() -> Tuple[dict, int]:
+    def getJourneys() -> Tuple[dict, int]:
         """
         Returns all the journies of a user.
 
@@ -530,7 +530,7 @@ class GPSRoutes:
                 return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
             # After validation, serialize points to JSON string for storage
             journey.points = json.dumps(points)
-            
+
         try:
             if 'startTime' in data:
                 data['startTime'] = datetime.strptime(data['startTime'], '%H:%M:%S').time()
