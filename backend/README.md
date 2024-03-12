@@ -497,7 +497,7 @@ If the access token is missing or invalid:
 ## Endpoint (GPS APIs)
 ### GPS APIs
 
-#### GET `/get_journies_of_user`
+#### GET `/get_journeys_of_user`
 - **General:**
   - Retrieves all journeys associated with the authenticated user.
 - **Authentication:**
