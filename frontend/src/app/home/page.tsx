@@ -6,7 +6,7 @@ import { FaRegHeart } from "react-icons/fa";
 import { CiUser} from "react-icons/ci";
 import { AiOutlineFire } from "react-icons/ai";
 import { SlDrop } from "react-icons/sl";
-import { useState } from 'react';
+import { useState} from 'react';
 import Cookies from "js-cookie";
 
   
@@ -22,9 +22,11 @@ export default function Home(){
         { day: 'Sat', distance: 30 },
         { day: 'Sun', distance: 28 },
       ]);
-      const maxDistance = Math.max(...data.map(item => item.distance));
-      const [username, setUsername] = useState(Cookies.get("username"));
-     
+
+    // const maxDistance = Math.max(...data.map(item => item.distance));
+    console.log(Cookies.get('token'));
+    const [username, setUsername] = useState(Cookies.get("username"));
+
     return (
         <main> 
             <div className="w-full h-full">
