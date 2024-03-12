@@ -559,6 +559,8 @@ class MembershipRoutes:
         Allows a user to purchase a membership.
     cancel_membership() -> json:
         Cancels the auto renewal of membership of a user.
+    has_active_membership() -> bool:
+        Returns if an user have an active membership or not.
     """
 
     @app.route("/buy_membership", methods=["POST"])
@@ -695,6 +697,40 @@ class MembershipRoutes:
 
         return jsonify({"return_code": 1, "message": message}), 200
 
+    @app.route("/has_active_membership", methods=["GET"])
+    @jwt_required()
+    def has_active_membership() -> Tuple[Response, int]:
+        """
+        Checks if the user has an active membership.
+
+        Returns
+        -------
+        json
+            A JSON response indicating whether the user has an active membership.
+            If user has an active membership, returns:
+                - "has_active_membership": true
+            If user does not have an active membership, returns:
+                - "has_active_membership": false
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Membership status checked successfully.
+        401 : Unauthorized
+            Missing or invalid access token.
+        """
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        # Check if user has an active membership
+        user_has_active_membership = models.Membership.query.filter_by(user_id=user.id, is_active=True).first()
+
+        if user_has_active_membership:
+            return jsonify({"has_active_membership": True}), 200
+        else:
+            return jsonify({"has_active_membership": False}), 200
+        
+    
     def auto_renew_memberships():
         """
         Function to auto-renew memberships if today is the end date and auto renew is True.
