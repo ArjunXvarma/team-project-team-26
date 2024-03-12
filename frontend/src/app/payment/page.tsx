@@ -147,7 +147,7 @@ export default function Payment() {
                     <CreditCardForm/> :
                         ( selectedPaymentMethod !== null ? 
                                 <div>
-                                    <Button onClick={submit} className="bg-green-600 hover:bg-green-700" >Continue</Button>
+                                    <Button loading={loading} loaderProps={{ type: 'dots' }} onClick={submit} className="bg-green-600 hover:bg-green-700" >Continue</Button>
                                 </div>
                             :
                             null
