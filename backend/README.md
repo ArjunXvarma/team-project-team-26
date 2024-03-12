@@ -495,6 +495,8 @@ If the access token is missing or invalid:
 ```
 
 ## Endpoint (GPS APIs)
+### GPS APIs
+
 #### GET `/get_journies_of_user`
 - **General:**
   - Retrieves all journeys associated with the authenticated user.
@@ -601,3 +603,38 @@ If the access token is missing or invalid:
         "error": "Error message detailing what went wrong"
     }
     ```
+
+### Example Request Body for `POST /create_journey`
+
+```json
+{
+  "name": "Evening Walk",
+  "type": "Walking",
+  "totalDistance": 3.5,
+  "elevation": {
+    "avg": 120.0,
+    "min": 100.0,
+    "max": 150.0
+  },
+  "points": [
+    {
+      "lat": 38.897957,
+      "lon": -77.036560,
+      "ele": 100.0
+    },
+    {
+      "lat": 38.898956,
+      "lon": -77.037560,
+      "ele": 110.0
+    },
+    {
+      "lat": 38.899955,
+      "lon": -77.038560,
+      "ele": 120.0
+    }
+  ],
+  "startTime": "18:00:00",
+  "endTime": "19:30:00",
+  "dateCreated": "2024-03-15"
+}
+```
