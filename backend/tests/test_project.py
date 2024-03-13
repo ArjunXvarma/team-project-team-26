@@ -139,7 +139,42 @@ class TestGPSRoutes:
         response = client.get("/get_journies_of_user")
         assert response.status_code == 401  # Expecting Unauthorized access
 
-    
+
+    def test_get_journies_with_jwt_success(self, client, clean_db):
+        """Test successfully getting user journeys."""
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        journey_data = {
+            "id": 1,
+            "userId": 1,
+            "gpxData": "{ \"coordinates\": [[1, 70], [20, 80], [3, 20]] }",
+            "startTime": "21:00:00",
+            "endTime": "23:00:00",
+            "dateCreated": "15-09-2025"
+        }
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+
+        response = client.get("/get_journies_of_user", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+
+
     def test_create_journey_without_jwt(self, client):
         """Test creating a journey without a JWT."""
         journey_data = {
@@ -153,13 +188,101 @@ class TestGPSRoutes:
         response = client.post("/create_journey", json=journey_data)
         assert response.status_code == 401
 
-    
+    def test_create_journey_with_jwt(self, client, clean_db):
+        """Test creating a journey with JWT."""
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Make a request with JWT
+        journey_data = {
+            "id": 1,
+            "userId": 1,
+            "gpxData": "{ \"coordinates\": [[1, 70], [20, 80], [3, 20]] }",
+            "startTime": "21:00:00",
+            "endTime": "23:00:00",
+            "dateCreated": "15-09-2025"
+        }
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 201
+
+    def test_create_journey_invalid_data(self, client, clean_db):
+        """Test creating a journey with JWT and invalid data."""
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Make a request with JWT, invalid endTime and date data
+        journey_data = {
+            "id": 1,
+            "userId": 1,
+            "gpxData": "{ \"coordinates\": [[1, 70], [20, 80], [3, 20]] }",
+            "startTime": "21:00:00",
+            "endTime": "2300",
+            "dateCreated": "15-09-20025"
+        }
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+
+
     def test_delete_journey_without_jwt(self, client):
         """Test deleting a journey without a JWT."""
         response = client.delete("/delete_journey/1")
         assert response.status_code == 401
 
-    
+    def test_delete_journey_with_jwt(self, client, clean_db):
+        """Test deleting a journey with a JWT."""
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        response = client.delete("/delete_journey/1", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
     def test_update_journey_without_jwt(self, client):
         """Test updating a journey without a JWT."""
         journey_update_data = {
@@ -171,9 +294,37 @@ class TestGPSRoutes:
         response = client.put("/update_journey/1", json=journey_update_data)
         assert response.status_code == 401
 
+    def test_update_journey_with_jwt(self, client, clean_db):
+        """Test updating a journey with a JWT."""
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        journey_update_data = {
+            "gpxData": "{ \"coordinates\": [[10, 7], [2, 8], [30, 2]] }",
+            "startTime": "10:00:00",
+            "endTime": "11:00:00",
+            "dateCreated": "2023-02-01"
+        }
+        response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
 
 class TestMembershipRoutes:
-    """Class for testing membership routes functionality.""" 
+    """Class for testing membership routes functionality."""
     # Tests for buying the membership
 
     def test_buy_membership_success(self, client, clean_db):
@@ -202,14 +353,14 @@ class TestMembershipRoutes:
             "duration": constants.MembershipDuration.MONTHLY.value,
             "mode_of_payment": constants.PaymentMethod.APPLE_PAY.value
         }, headers={"Authorization": f"Bearer {token}"})
-        
+
         assert response.status_code == 200
         assert response.json['return_code'] == 1
         assert response.json['message'] == "Membership purchased successfully"
-        
+
         # Fetch the membership after purchasing it.
         purchased_membership = models.Membership.query.filter_by(user_id=user.id).first()
-    
+
         # Assert that the membership and auto-renewal are actually set to True
         assert purchased_membership.is_active == True
         assert purchased_membership.auto_renew == True
@@ -243,12 +394,12 @@ class TestMembershipRoutes:
         assert response.status_code == 400
         assert response.json['return_code'] == 0
         assert response.json['error'] == "Missing Required Fields"
-        
+
         # Fetch the membership details.
         membership_details = models.Membership.query.filter_by(user_id=user.id).first()
-    
+
         # Assert that the membership is None and does not exist.
-        assert membership_details == None 
+        assert membership_details == None
 
     def test_buy_membership_invalid_duration(self, client, clean_db):
         """Test buying a membership with an invalid duration."""
@@ -280,12 +431,12 @@ class TestMembershipRoutes:
         assert response.status_code == 400
         assert response.json['return_code'] == 0
         assert response.json['error'] == "Invalid duration"
-        
+
         # Fetch the membership details.
         membership_details = models.Membership.query.filter_by(user_id=user.id).first()
-    
+
         # Assert that the membership is None and does not exist.
-        assert membership_details == None 
+        assert membership_details == None
 
     def test_buy_membership_invalid_mode_of_payment(self, client, clean_db):
         """Test buying a membership with an invalid mode of payment."""
@@ -317,12 +468,12 @@ class TestMembershipRoutes:
         assert response.status_code == 400
         assert response.json['return_code'] == 0
         assert response.json['error'] == "Invalid mode of payment"
-        
+
         # Fetch the membership details.
         membership_details = models.Membership.query.filter_by(user_id=user.id).first()
-    
+
         # Assert that the membership is None and does not exist.
-        assert membership_details == None 
+        assert membership_details == None
 
     def test_buy_membership_invalid_membership_type(self, client, clean_db):
         """Test buying a membership with an invalid membership type."""
@@ -354,12 +505,12 @@ class TestMembershipRoutes:
         assert response.status_code == 400
         assert response.json['return_code'] == 0
         assert response.json['error'] == "Invalid membership type"
-        
+
         # Fetch the membership details.
         membership_details = models.Membership.query.filter_by(user_id=user.id).first()
-    
+
         # Assert that the membership is None and does not exist.
-        assert membership_details == None 
+        assert membership_details == None
 
     # Tests for cancelling the membership
     def test_cancel_membership_before_end_date(self, client, clean_db):
@@ -388,7 +539,7 @@ class TestMembershipRoutes:
         )
         clean_db.session.add(membership)
         clean_db.session.commit()
-        
+
         # Login as the user
         login_response = client.post("/login", json={
             "email": "john.doe@example.com",
@@ -397,21 +548,21 @@ class TestMembershipRoutes:
         token = login_response.json['session_token']
         # Attempt to cancel the membership
         response = client.delete("/cancel_membership", headers={"Authorization": f"Bearer {token}"})
-        
+
         assert response.status_code == 200
         assert response.json['return_code'] == 1
         assert "Auto-renew disabled successfully." in response.json['message']
-        
-        
+
+
             # Fetch the membership after cancellation
         cancelled_membership = models.Membership.query.filter_by(user_id=user.id).first()
-    
+
         # Assert that the auto-renewal is set to false
         assert cancelled_membership.auto_renew == False
-        
+
         # Assert that the membership is still activated.
         assert cancelled_membership.is_active == True
-    
+
     def test_cancel_membership_on_end_date(self, client, clean_db):
         """Test canceling a membership on the end date."""
         # First, create a user and a membership
@@ -438,7 +589,7 @@ class TestMembershipRoutes:
         )
         clean_db.session.add(membership)
         clean_db.session.commit()
-        
+
         # Login as the user
         login_response = client.post("/login", json={
             "email": "john.doe@example.com",
@@ -447,18 +598,18 @@ class TestMembershipRoutes:
         token = login_response.json['session_token']
         # Attempt to cancel the membership
         response = client.delete("/cancel_membership", headers={"Authorization": f"Bearer {token}"})
-        
+
         assert response.status_code == 200
         assert response.json['return_code'] == 1
         assert "Membership cancelled and auto-renew disabled successfully." in response.json['message']
 
         # Fetch the membership after cancellation
         cancelled_membership = models.Membership.query.filter_by(user_id=user.id).first()
-    
+
         # Assert that the membership and auto-renewal are actually set to false
         assert cancelled_membership.is_active == False
         assert cancelled_membership.auto_renew == False
-    
+
     def test_cancel_membership_no_active_membership(self, client, clean_db):
         """Test cancelling membership when no active membership exists."""
         # First, create a user
@@ -487,7 +638,7 @@ class TestMembershipRoutes:
         assert "User does not have an active membership" in response.json['error']
 
 class TestFriendshipRoutes:
-    """Class for testing friendship routes functionality.""" 
+    """Class for testing friendship routes functionality."""
 
     def test_send_friend_request_success(self, client, clean_db):
         """Test sending a friend request successfully."""
@@ -621,7 +772,7 @@ class TestFriendshipRoutes:
         updated_friend_request = models.Friendship.query.filter_by(requester_id=user1.id, addressee_id=user2.id).first()
         assert updated_friend_request.status == "accepted"
     # Test rejecting friend request
-        
+
     def test_reject_friend_request_success(self, client, clean_db):
         """Test rejecting a friend request successfully."""
         # Setup: Create two users
@@ -663,7 +814,7 @@ class TestFriendshipRoutes:
 
         # Check if the friend request is updated in the database
         updated_friend_request = models.Friendship.query.filter_by(requester_id=user1.id, addressee_id=user2.id).first()
-        assert updated_friend_request.status == "rejected"   
+        assert updated_friend_request.status == "rejected"
 
     def test_list_pending_friend_requests(self, client, clean_db):
         """Test listing all pending friend requests for the current user."""
