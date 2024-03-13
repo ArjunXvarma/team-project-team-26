@@ -261,9 +261,34 @@ class GPSRoutes:
         updates the data of a particular journey.
     """
 
-    @app.route("/get_journies_of_user", methods=["GET"])
+    def validate_points(points):
+        """
+        Validates that each item in the points list contains exactly 'lat', 'lon', and 'ele' keys.
+
+        Parameters:
+        - points (list): The list of point dictionaries to validate.
+
+        Returns:
+        - (bool, str): Tuple containing a boolean indicating if the validation passed,
+                    and a string with an error message if it failed.
+        """
+        required_keys = {'lat', 'lon', 'ele'}
+        for point in points:
+            point_keys = set(point.keys())
+            if point_keys != required_keys:
+                missing_keys = required_keys - point_keys
+                extra_keys = point_keys - required_keys
+                error_message = []
+                if missing_keys:
+                    error_message.append(f"Missing keys: {', '.join(missing_keys)}")
+                if extra_keys:
+                    error_message.append(f"Extra keys: {', '.join(extra_keys)}")
+                return False, '; '.join(error_message)
+        return True, ""
+
+    @app.route("/get_journeys_of_user", methods=["GET"])
     @jwt_required()
-    def getJournies() -> Tuple[dict, int]:
+    def getJourneys() -> Tuple[dict, int]:
         """
         Returns all the journies of a user.
 
@@ -297,22 +322,29 @@ class GPSRoutes:
         journeys = models.Journey.query.filter_by(userId=user.id).all()
         journey_data = []
         for journey in journeys:
+            points = json.loads(journey.points) if journey.points else []
+
             journey_data.append({
                 'id': journey.id,
-                'gpxData': json.loads(journey.gpxData) if journey.gpxData else None,
+                'name': journey.name,
+                'type': journey.type,
+                'totalDistance': journey.totalDistance,
+                'elevation': {
+                    'avg': journey.avgEle,
+                    'min': journey.minEle,
+                    'max': journey.maxEle,
+                },
+                'points': points, 
                 'startTime': journey.startTime.strftime('%H:%M:%S') if journey.startTime else None,
                 'endTime': journey.endTime.strftime('%H:%M:%S') if journey.endTime else None,
                 'dateCreated': journey.dateCreated.strftime('%d-%m-%Y') if journey.dateCreated else None,
             })
 
         if journey_data:
-            return jsonify({'status': 200, 'data': {
-                'userId': user.id,
-                'journies': journey_data
-            }}), 200
+            return jsonify({'status': 200, 'data': journey_data}), 200
         else:
             return jsonify({'status': 404, 'message': 'No journeys found for given userId'}), 404
-        
+    
     @app.route("/create_journey", methods=["POST"])
     @jwt_required()
     def createJourney() -> Tuple[dict, int]:
@@ -349,22 +381,47 @@ class GPSRoutes:
 
         data = request.get_json()
 
+        # Validate points before processing further
+        points = data.get('points')
+        if points is None:
+            return jsonify({'status': 400, 'message': 'Missing field: points'}), 400
+
+        valid, error_message = validate_points(points)
+        if not valid:
+            return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
+
         try:
-            if 'startTime' in data:
-                data['startTime'] = datetime.strptime(data['startTime'], '%H:%M:%S').time()
-            if 'endTime' in data:
-                data['endTime'] = datetime.strptime(data['endTime'], '%H:%M:%S').time()
-            if 'dateCreated' in data:
-                data['dateCreated'] = datetime.strptime(data['dateCreated'], '%d-%m-%Y').date()
+            name = data['name']
+            journey_type = data['type']  
+            totalDistance = data['totalDistance']
+            elevation = data['elevation']  
+            avgEle = elevation['avg']
+            minEle = elevation['min']
+            maxEle = elevation['max']
+            points = json.dumps(data['points'])  
+
+        except KeyError as e:
+            return jsonify({'status': 400, 'message': f'Missing field: {str(e)}'}), 400
+
+        try:
+            startTime = datetime.strptime(data['startTime'], '%H:%M:%S').time()
+            endTime = datetime.strptime(data['endTime'], '%H:%M:%S').time()
+            dateCreated = datetime.strptime(data['dateCreated'], '%Y-%m-%d').date()
         except ValueError as e:
             return jsonify({'status': 400, 'message': 'Invalid date/time format'}), 400
 
         journey = models.Journey(
-            userId=user.id,  
-            gpxData=data.get('gpxData'),  
-            startTime=data.get('startTime'),  
-            endTime=data.get('endTime'),  
-            dateCreated=data.get('dateCreated')  
+            userId=user.id,
+            name=name,
+            type=journey_type,
+            totalDistance=totalDistance,
+            avgEle=avgEle,
+            minEle=minEle,
+            maxEle=maxEle,
+            points=points,
+            startTime=startTime,
+            endTime=endTime,
+            dateCreated=dateCreated
         )
 
         db.session.add(journey)
@@ -446,6 +503,32 @@ class GPSRoutes:
 
         data = request.get_json()
 
+        # Update the journey object with new data if available
+        if 'name' in data:
+            journey.name = data['name']
+        if 'type' in data:
+            journey.type = data['type']
+        if 'totalDistance' in data:
+            journey.totalDistance = data['totalDistance']
+        
+        if 'elevation' in data:
+            elevation = data['elevation']
+            if 'avg' in elevation:
+                journey.avgEle = elevation['avg']
+            if 'min' in elevation:
+                journey.minEle = elevation['min']
+            if 'max' in elevation:
+                journey.maxEle = elevation['max']
+
+        # Validate points directly from the request JSON
+        if 'points' in data:
+            points = data['points']
+            valid, error_message = validate_points(points)
+            if not valid:
+                return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
+        
+            journey.points = json.dumps(points)
+
         try:
             if 'startTime' in data:
                 data['startTime'] = datetime.strptime(data['startTime'], '%H:%M:%S').time()
@@ -453,23 +536,13 @@ class GPSRoutes:
                 data['endTime'] = datetime.strptime(data['endTime'], '%H:%M:%S').time()
             if 'dateCreated' in data:
                 data['dateCreated'] = datetime.strptime(data['dateCreated'], '%d-%m-%Y').date()
-
         except ValueError as e:
             return jsonify({'status': 400, 'message': 'Invalid date/time format'}), 400
-
-        # Update the journey object with new data if available
-        if 'gpxData' in data:
-            journey.gpxData = data['gpxData']
-        if 'startTime' in data:
-            journey.startTime = data['startTime']
-        if 'endTime' in data:
-            journey.endTime = data['endTime']
-        if 'dateCreated' in data:
-            journey.dateCreated = data['dateCreated']
 
         db.session.commit()
 
         return jsonify({'status': 200, 'message': 'Journey updated successfully'}), 200
+    
 class MembershipRoutes:
     """
     Class for handling membership routes.
@@ -484,6 +557,8 @@ class MembershipRoutes:
         Allows a user to purchase a membership.
     cancel_membership() -> json:
         Cancels the auto renewal of membership of a user.
+    has_active_membership() -> bool:
+        Returns if an user have an active membership or not.
     """
 
     @app.route("/buy_membership", methods=["POST"])
@@ -620,6 +695,40 @@ class MembershipRoutes:
 
         return jsonify({"return_code": 1, "message": message}), 200
 
+    @app.route("/has_active_membership", methods=["GET"])
+    @jwt_required()
+    def has_active_membership() -> Tuple[Response, int]:
+        """
+        Checks if the user has an active membership.
+
+        Returns
+        -------
+        json
+            A JSON response indicating whether the user has an active membership.
+            If user has an active membership, returns:
+                - "has_active_membership": true
+            If user does not have an active membership, returns:
+                - "has_active_membership": false
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Membership status checked successfully.
+        401 : Unauthorized
+            Missing or invalid access token.
+        """
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        # Check if user has an active membership
+        user_has_active_membership = models.Membership.query.filter_by(user_id=user.id, is_active=True).first()
+
+        if user_has_active_membership:
+            return jsonify({"has_active_membership": True}), 200
+        else:
+            return jsonify({"has_active_membership": False}), 200
+        
+    
     def auto_renew_memberships():
         """
         Function to auto-renew memberships if today is the end date and auto renew is True.
