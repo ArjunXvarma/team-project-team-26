@@ -334,7 +334,7 @@ class GPSRoutes:
                     'min': journey.minEle,
                     'max': journey.maxEle,
                 },
-                'points': points,  # Now correctly deserialized
+                'points': points, 
                 'startTime': journey.startTime.strftime('%H:%M:%S') if journey.startTime else None,
                 'endTime': journey.endTime.strftime('%H:%M:%S') if journey.endTime else None,
                 'dateCreated': journey.dateCreated.strftime('%d-%m-%Y') if journey.dateCreated else None,
@@ -391,7 +391,6 @@ class GPSRoutes:
             return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
 
         try:
-            # Extracting data from the request
             name = data['name']
             journey_type = data['type']  
             totalDistance = data['totalDistance']
@@ -523,12 +522,11 @@ class GPSRoutes:
 
         # Validate points directly from the request JSON
         if 'points' in data:
-            # Deserialize the incoming 'points' JSON string to a Python list for validation
-            points = data['points']  # Assuming points are provided correctly as a list of dicts
+            points = data['points']
             valid, error_message = validate_points(points)
             if not valid:
                 return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
-            # After validation, serialize points to JSON string for storage
+        
             journey.points = json.dumps(points)
 
         try:
