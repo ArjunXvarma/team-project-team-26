@@ -13,31 +13,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
 bcrypt = Bcrypt(app)
 
-def validate_points(points):
-    """
-    Validates that each item in the points list contains exactly 'lat', 'lon', and 'ele' keys.
-
-    Parameters:
-    - points (list): The list of point dictionaries to validate.
-
-    Returns:
-    - (bool, str): Tuple containing a boolean indicating if the validation passed,
-                   and a string with an error message if it failed.
-    """
-    required_keys = {'lat', 'lon', 'ele'}
-    for point in points:
-        point_keys = set(point.keys())
-        if point_keys != required_keys:
-            missing_keys = required_keys - point_keys
-            extra_keys = point_keys - required_keys
-            error_message = []
-            if missing_keys:
-                error_message.append(f"Missing keys: {', '.join(missing_keys)}")
-            if extra_keys:
-                error_message.append(f"Extra keys: {', '.join(extra_keys)}")
-            return False, '; '.join(error_message)
-    return True, ""
-
 class AuthenticationRoutes:
     """
     Class for handling authentication routes.
@@ -285,6 +260,31 @@ class GPSRoutes:
     updateJourney(journeyId) -> json:
         updates the data of a particular journey.
     """
+
+    def validate_points(points):
+        """
+        Validates that each item in the points list contains exactly 'lat', 'lon', and 'ele' keys.
+
+        Parameters:
+        - points (list): The list of point dictionaries to validate.
+
+        Returns:
+        - (bool, str): Tuple containing a boolean indicating if the validation passed,
+                    and a string with an error message if it failed.
+        """
+        required_keys = {'lat', 'lon', 'ele'}
+        for point in points:
+            point_keys = set(point.keys())
+            if point_keys != required_keys:
+                missing_keys = required_keys - point_keys
+                extra_keys = point_keys - required_keys
+                error_message = []
+                if missing_keys:
+                    error_message.append(f"Missing keys: {', '.join(missing_keys)}")
+                if extra_keys:
+                    error_message.append(f"Extra keys: {', '.join(extra_keys)}")
+                return False, '; '.join(error_message)
+        return True, ""
 
     @app.route("/get_journeys_of_user", methods=["GET"])
     @jwt_required()
