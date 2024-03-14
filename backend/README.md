@@ -298,3 +298,343 @@ If the access token is missing or invalid:
     "message": "Missing or invalid access token."
 }, 401 Unauthorized
 ```
+## Endpoint (FRIENDSHIP APIs)
+
+#### POST ``/send_friend_request``
+- **General:**
+   - Allows a user to send a friend request to another user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+- **Request Body:**
+- ``email``: The email address of the user to whom the friend request is being sent.
+
+- **Sample Success Body:**
+```json
+{
+    "email": "bob@example.com"
+}
+```
+
+- **Returns:**
+- If the friend request is sent successfully:
+```json
+{
+    "message": "Friend request sent successfully"
+}, 200 OK
+```
+
+- If the friend request is sent successfully:
+```json
+{
+    "error": "User is already a friend"
+}, 400 BAD REQUEST
+```
+- If a friend request to the user is already pending:
+```json
+{
+    "error": "Friend request already pending"
+}, 400 BAD REQUEST
+```
+
+- If the specified user to send the request to does not exist:
+
+```json
+{
+    "error": "Addressee not found"
+}, 404 NOT FOUND
+```
+- If attempting to send a request to oneself:
+```json
+{
+    "error": "Cannot send friend request to yourself"
+}, 400 BAD REQUEST
+```
+
+- If the access token is missing or invalid:
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+
+
+#### POST ``/accept_friend_request``
+- **General:**
+   - Allows a user to accept a friend request from another user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+- **Request Body:**
+- ``email``: The email address of the user to whom the friend request is being sent.
+
+- **Returns:**
+- If the friend request is accepted successfully:
+```json
+{
+    "message": "Friend request accepted"
+}, 200 OK
+```
+- If the friend request to be accepted was not found:
+```json
+{
+    "error": "Friend request not found"
+}, 404 NOT FOUND
+```
+- If the access token is missing or invalid:
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+#### POST ``/reject_friend_request``
+
+- **General:**
+   - Allows a user to reject a friend request from another user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+- **Request Body:**
+- ``email``: The email address of the user to whom the friend request is being sent.
+
+- **Returns:**
+- If the friend request is rejected successfully:
+```json
+{
+    "message": "Friend request rejected"
+}, 200 OK
+```
+- If the friend request to be rejected was not found:
+```json
+{
+    "error": "Friend request not found"
+}, 404 NOT FOUND
+```
+
+- If the access token is missing or invalid:
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+
+#### POST ``/list_friend_requests``
+
+- **General:**
+   - Lists all pending friend requests for the current user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+
+- **Returns:**
+- A JSON response containing a list of pending friend requests, each entry including the email and name of the user who sent the request.
+```json
+{
+    "pending_requests": [
+        {
+            "email": "sender@example.com",
+            "name": "Sender Name"
+        },
+        {
+            "email": "another_sender@example.com",
+            "name": "Another Sender Name"
+        }
+    ]
+}
+```
+
+- If the access token is missing or invalid:
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+
+
+#### POST ``/list_friends``
+
+- **General:**
+   - Lists all friends of the current user.
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route.
+
+
+- **Returns:**
+- A JSON response containing a list of friends, each entry including the email and name of the friend.
+
+```json
+{
+    "friends": [
+        {
+            "email": "friend1@example.com",
+            "name": "Friend One"
+        },
+        {
+            "email": "friend2@example.com",
+            "name": "Friend Two"
+        }
+    ]
+}
+```
+- If the access token is missing or invalid:
+
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+
+## Endpoint (GPS APIs)
+### GPS APIs
+
+#### GET `/get_journeys_of_user`
+- **General:**
+  - Retrieves all journeys associated with the authenticated user.
+- **Authentication:**
+  - Requires a valid JWT token.
+- **Returns:**
+  - If journeys exist for the user:
+    ```json
+    {
+        "status": 200,
+        "data": [
+            {
+                "id": 1,
+                "name": "Morning Run",
+                "type": "Running",
+                "totalDistance": 5.0,
+                "elevation": {
+                    "avg": 120,
+                    "min": 100,
+                    "max": 140
+                },
+                "points": [
+                    {"lat": 38.5, "lon": -120.2, "ele": 100},
+                    {"lat": 38.6, "lon": -120.3, "ele": 110}
+                ],
+                "startTime": "07:30:00",
+                "endTime": "08:15:00",
+                "dateCreated": "2024-03-12"
+            }
+        ]
+    }
+    ```
+  - If no journeys are found for the user:
+    ```json
+    {
+        "status": 404,
+        "message": "No journeys found for given userId"
+    }
+    ```
+
+#### POST `/create_journey`
+- **General:**
+  - Creates a new journey for the authenticated user.
+- **Authentication:**
+  - Requires a valid JWT token.
+- **Request Body:**
+  - The JSON object should contain `name`, `type`, `totalDistance`, `elevation` (with `avg`, `min`, `max`), `points` (with `lat`, `lon`, `ele` for each point), `startTime`, `endTime`, and `dateCreated`.
+- **Returns:**
+  - If the journey is created successfully:
+    ```json
+    {
+        "status": 201,
+        "message": "Journey created successfully"
+    }
+    ```
+  - If there's an error (e.g., missing required fields, invalid date/time format):
+    ```json
+    {
+        "status": 400,
+        "error": "Error message detailing what went wrong"
+    }
+    ```
+
+#### DELETE `/delete_journey/<int:journeyId>`
+- **General:**
+  - Deletes a specific journey associated with the authenticated user.
+- **Authentication:**
+  - Requires a valid JWT token.
+- **Returns:**
+  - If the journey is deleted successfully:
+    ```json
+    {
+        "status": 200,
+        "message": "Journey deleted successfully"
+    }
+    ```
+  - If the specified journey does not exist:
+    ```json
+    {
+        "status": 404,
+        "message": "Journey not found"
+    }
+    ```
+
+#### PUT `/update_journey/<int:journeyId>`
+- **General:**
+  - Updates a specific journey associated with the authenticated user.
+- **Authentication:**
+  - Requires a valid JWT token.
+- **Request Body:**
+  - The JSON object should contain any of the fields that need updating, similar to those specified for the creation endpoint.
+- **Returns:**
+  - If the journey is updated successfully:
+    ```json
+    {
+        "status": 200,
+        "message": "Journey updated successfully"
+    }
+    ```
+  - If there's an error (e.g., journey not found, invalid date/time format):
+    ```json
+    {
+        "status": 400,
+        "error": "Error message detailing what went wrong"
+    }
+    ```
+
+### Example Request Body for `POST /create_journey`
+
+```json
+{
+  "name": "Evening Walk",
+  "type": "Walking",
+  "totalDistance": 3.5,
+  "elevation": {
+    "avg": 120.0,
+    "min": 100.0,
+    "max": 150.0
+  },
+  "points": [
+    {
+      "lat": 38.897957,
+      "lon": -77.036560,
+      "ele": 100.0
+    },
+    {
+      "lat": 38.898956,
+      "lon": -77.037560,
+      "ele": 110.0
+    },
+    {
+      "lat": 38.899955,
+      "lon": -77.038560,
+      "ele": 120.0
+    }
+  ],
+  "startTime": "18:00:00",
+  "endTime": "19:30:00",
+  "dateCreated": "2024-03-15"
+}
+```

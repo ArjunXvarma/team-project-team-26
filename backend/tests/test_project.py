@@ -136,8 +136,8 @@ class TestGPSRoutes:
 
     def test_get_journies_without_jwt(self, client):
         """Test getting user journies without a JWT."""
-        response = client.get("/get_journies_of_user")
-        assert response.status_code == 401  # Expecting Unauthorized access
+        response = client.get("/get_journeys_of_user")
+        assert response.status_code == 401
 
     
     def test_create_journey_without_jwt(self, client):
@@ -485,4 +485,264 @@ class TestMembershipRoutes:
         assert response.status_code == 404
         assert response.json['return_code'] == 0
         assert "User does not have an active membership" in response.json['error']
-    
+
+class TestFriendshipRoutes:
+    """Class for testing friendship routes functionality.""" 
+
+    def test_send_friend_request_success(self, client, clean_db):
+        """Test sending a friend request successfully."""
+        # Create two users
+        user1 = models.User(
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        user2 = models.User(
+            first_name="Bob",
+            last_name="Johnson",
+            email="bob@example.com",
+            date_of_birth=datetime(1991, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add_all([user1, user2])
+        clean_db.session.commit()
+
+        # Login as user1
+        login_response = client.post("/login", json={
+            "email": "alice@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to send a friend request from user1 to user2
+        response = client.post("/send_friend_request", json={"email": "bob@example.com"}, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert response.json['message'] == "Friend request sent successfully"
+
+        # Check if the friend request is created in the database
+        friend_request = models.Friendship.query.filter_by(requester_id=user1.id, addressee_id=user2.id).first()
+        assert friend_request is not None
+        assert friend_request.status == "pending"
+
+    def test_send_friend_request_to_nonexistent_user(self, client, clean_db):
+        """Test sending a friend request to a non-existent user."""
+        # Create a user
+        user = models.User(
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as user
+        login_response = client.post("/login", json={
+            "email": "alice@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to send a friend request to a non-existent user
+        response = client.post("/send_friend_request", json={"email": "nonexistent@example.com"}, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 404
+        assert response.json['error'] == "Addressee not found"
+
+    def test_send_friend_request_to_self(self, client, clean_db):
+        """Test sending a friend request to oneself."""
+        # Create a user
+        user = models.User(
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as user
+        login_response = client.post("/login", json={
+            "email": "alice@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to send a friend request to oneself
+        response = client.post("/send_friend_request", json={"email": "alice@example.com"}, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 400
+        assert response.json['error'] == "Cannot send friend request to yourself"
+
+    def test_accept_friend_request_success(self, client, clean_db):
+        """Test accepting a friend request successfully."""
+        # Create two users
+        user1 = models.User(
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        user2 = models.User(
+            first_name="Bob",
+            last_name="Johnson",
+            email="bob@example.com",
+            date_of_birth=datetime(1991, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add_all([user1, user2])
+        clean_db.session.commit()
+
+        # Create a friend request from user1 to user2
+        friendship_request = models.Friendship(requester_id=user1.id, addressee_id=user2.id)
+        clean_db.session.add(friendship_request)
+        clean_db.session.commit()
+
+        # Login as user2
+        login_response = client.post("/login", json={
+            "email": "bob@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to accept the friend request
+        response = client.post("/accept_friend_request", json={"email": "alice@example.com"}, headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert response.json['message'] == "Friend request accepted"
+
+        # Check if the friend request is updated in the database
+        updated_friend_request = models.Friendship.query.filter_by(requester_id=user1.id, addressee_id=user2.id).first()
+        assert updated_friend_request.status == "accepted"
+    # Test rejecting friend request
+        
+    def test_reject_friend_request_success(self, client, clean_db):
+        """Test rejecting a friend request successfully."""
+        # Setup: Create two users
+        user1 = models.User(
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        user2 = models.User(
+            first_name="Bob",
+            last_name="Johnson",
+            email="bob@example.com",
+            date_of_birth=datetime(1991, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add_all([user1, user2])
+        clean_db.session.commit()
+
+        # Create a friend request from user1 to user2
+        friendship_request = models.Friendship(requester_id=user1.id, addressee_id=user2.id)
+        clean_db.session.add(friendship_request)
+        clean_db.session.commit()
+
+        # Login as user2
+        login_response = client.post("/login", json={
+            "email": "bob@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to reject the friend request
+        response = client.post("/reject_friend_request", json={"email": "alice@example.com"}, headers={"Authorization": f"Bearer {token}"})
+
+        # Assertion: Request rejected
+        assert response.status_code == 200
+        assert response.json['message'] == "Friend request rejected"
+
+        # Check if the friend request is updated in the database
+        updated_friend_request = models.Friendship.query.filter_by(requester_id=user1.id, addressee_id=user2.id).first()
+        assert updated_friend_request.status == "rejected"   
+
+    def test_list_pending_friend_requests(self, client, clean_db):
+        """Test listing all pending friend requests for the current user."""
+        # Setup: Create two users
+        user1 = models.User(
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        user2 = models.User(
+            first_name="Bob",
+            last_name="Johnson",
+            email="bob@example.com",
+            date_of_birth=datetime(1991, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add_all([user1, user2])
+        clean_db.session.commit()
+
+        # Create a pending friend request from user1 to user2
+        friendship_request = models.Friendship(requester_id=user1.id, addressee_id=user2.id, status="pending")
+        clean_db.session.add(friendship_request)
+        clean_db.session.commit()
+
+        # Login as user2
+        login_response = client.post("/login", json={
+            "email": "bob@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to list pending friend requests
+        response = client.get("/list_friend_requests", headers={"Authorization": f"Bearer {token}"})
+
+        # Assertion: Pending friend request listed successfully
+        assert response.status_code == 200
+        assert len(response.json['pending_requests']) == 1
+        assert response.json['pending_requests'][0]['email'] == "alice@example.com"
+        assert response.json['pending_requests'][0]['name'] == "Alice Smith"
+
+    def test_list_friends(self, client, clean_db):
+        """Test listing all friends of the current user."""
+        # Setup: Create two users
+        user1 = models.User(
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        user2 = models.User(
+            first_name="Bob",
+            last_name="Johnson",
+            email="bob@example.com",
+            date_of_birth=datetime(1991, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add_all([user1, user2])
+        clean_db.session.commit()
+
+        # Create a friendship between user1 and user2
+        friendship = models.Friendship(requester_id=user1.id, addressee_id=user2.id, status="accepted")
+        clean_db.session.add(friendship)
+        clean_db.session.commit()
+
+        # Login as user1
+        login_response = client.post("/login", json={
+            "email": "alice@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Attempt to list friends
+        response = client.get("/list_friends", headers={"Authorization": f"Bearer {token}"})
+
+        # Assertion: Friends listed successfully
+        assert response.status_code == 200
+        assert len(response.json['friends']) == 1
+        assert response.json['friends'][0]['email'] == "bob@example.com"
+        assert response.json['friends'][0]['name'] == "Bob Johnson"
