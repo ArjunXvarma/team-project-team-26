@@ -7,91 +7,109 @@ import { API_URL } from "@/constants";
 import { FaCheck } from "react-icons/fa6";
 import { RxCross2 } from "react-icons/rx";
 import { FaRegUser } from "react-icons/fa";
-import { Accordion, UnstyledButton } from '@mantine/core';
+import { Accordion } from '@mantine/core';
 import { notifications } from "@mantine/notifications";
 import { IoIosSearch } from "react-icons/io";
 import { HiArrowLongRight } from "react-icons/hi2";
-import { AuthAPIResponse } from "@/types";
+import { useDisclosure } from '@mantine/hooks';
+import { Modal } from '@mantine/core';
 import { BiSolidError } from "react-icons/bi";
 import { useState, useEffect } from 'react';
 import { Input, CloseButton } from '@mantine/core';
+import { Autocomplete, ComboboxItem, OptionsFilter } from '@mantine/core';
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+
+
 
 export default function Friends() {
 
     const [value, setValue] = useState("");
-    const [friendRequests, setFriendRequests] = useState<string[]>([]);
-    const [friendList, setFriendList] = useState<string[]>([]);
+    const [friendRequests, setFriendRequests] = useState<{name:String, email:String}[]>([]);
+    const [friendList, setFriendList] = useState<{name:String, email:String}[]>([]);
+    const [opened, { open, close }] = useDisclosure(false);
+    const [email, setEmail] = useState('');
+    const [options, setOptions] = useState<{name:String}[]>([]);
+
+    interface Friend {
+        name: string;
+        email: string;
+      }
+      
 
 
     useEffect(() => {
-        const friendReqList = async () => {
-            try {
-            const token = Cookies.get("token"); 
-            const response = await fetch(`${API_URL}/list_friend_requests`, {
-                method: "GET",
-                credentials: "include",
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-        
-                const listResponse: AuthAPIResponse = await response.json();
-                // handle errors
-                if (response.status == 401) {
-                    console.log(listResponse.error);
-                
-                } else{
-                    const requestInfo = listResponse.pending_requests;
-                    if(requestInfo)
-                    {
-                            setFriendRequests(prevFriendRequests => (
-                            requestInfo.map(request => ({
-                                name: request.name,
-                                email: request.email
-                            })).concat(prevFriendRequests)
-                        ));
-                    }
-                } 
-
-            } catch (error) {
-            console.log(error);
-            }
-
+        const fetchData = async () => {
+            await friendReqList();
+            await friendsList();
         };
-        const friendsList = async () => {
-            try {
-            const token = Cookies.get("token"); 
-            console.log(token);
-            const response = await fetch(`${API_URL}/list_friends`, {
-                method: "GET",
-                credentials: "include",
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-        
-                const friendListResponse: AuthAPIResponse = await response.json();
-                // handle errors
-                if (response.status == 200) {
-                    const friendInfo = friendListResponse.friends;
-                    if(friendInfo)
-                   { 
-                        setFriendList(prevFriendRequests => (
-                            friendInfo.map(friend => ({
-                                name: friend.name,
-                                email: friend.email
-                            })).concat(prevFriendRequests)
-                        ));
-                    }
-                } 
 
-            } catch (error) {
-            console.log(error);
-            }
-
-        };
-        friendReqList(); 
-        friendsList();
-
+        fetchData();
     }, []); 
 
+
+    const friendReqList = async () => {
+        try {
+        const token = Cookies.get("token"); 
+        const response = await fetch(`${API_URL}/list_friend_requests`, {
+            method: "GET",
+            credentials: "include",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+    
+            const listResponse = await response.json();
+      
+            if (response.status == 401) {
+                console.log(listResponse.error);
+            
+            } else{
+                const requestInfo = listResponse.pending_requests;
+                if(requestInfo)
+                {
+                        setFriendRequests( 
+                        requestInfo.map((request:Friend)=> ({
+                            name: request.name,
+                            email: request.email
+                        }))
+                    );
+                }
+            } 
+
+        } catch (error) {
+        console.log(error);
+        }
+
+    };
+
+    const friendsList = async () => {
+        try {
+        const token = Cookies.get("token"); 
+        console.log(token);
+        const response = await fetch(`${API_URL}/list_friends`, {
+            method: "GET",
+            credentials: "include",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+    
+            const friendListResponse= await response.json();
+            console.log(friendListResponse);
+            if (response.status == 200) {
+                const friendInfo = friendListResponse.friends;
+                if(friendInfo)
+               { 
+                    setFriendList( 
+                        friendInfo.map((friend: Friend) => ({
+                            name: friend.name,
+                            email: friend.email
+                        }))
+                    );
+                }
+            } 
+
+        } catch (error) {
+        console.log(error);
+        }
+
+    };
 
     const accept = async (email:string) => {
         try {
@@ -106,7 +124,7 @@ export default function Friends() {
                 email: email
             }),
         });
-            const acceptResponse: AuthAPIResponse = await response.json();
+            const acceptResponse= await response.json();
 
             if (response.status == 200) {
                 console.log(acceptResponse.error);
@@ -145,7 +163,7 @@ export default function Friends() {
                 email: email
             }),
         });
-            const acceptResponse: AuthAPIResponse = await response.json();
+            const acceptResponse = await response.json();
 
             if (response.status == 200) {
                 console.log(acceptResponse.error);
@@ -169,6 +187,59 @@ export default function Friends() {
         console.log(error);
         }
     };
+
+    const addFriend = async (email:string) => {
+        try {
+        const token = Cookies.get("token"); 
+        const response = await fetch(`${API_URL}/send_friend_request`, {
+            method: "POST",
+            credentials: "include",
+            headers: {  "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({
+                email: email
+            }),
+        });
+            const addResponse= await response.json();
+
+            if (response.status == 200) {
+                console.log(addResponse.error);
+                notifications.show({
+                    color: "green",
+                    title: "Success",
+                    icon: <IoMdCheckmarkCircleOutline />,
+                    message: "Friend Request Sucessfully Sent",
+                    });
+            } else {
+                console.log(addResponse.error);
+                notifications.show({
+                    color: "red",
+                    title: "Error",
+                    icon: <BiSolidError />,
+                    message: addResponse.error,
+                });
+            }   
+
+        } catch (error) {
+        console.log(error);
+        }
+    };
+
+
+
+    const fetchOptions = async (inputValue: String) => {
+        const len = inputValue.length;
+        const op = [];
+        for (const i in friendList) {
+            const name = friendList[i].name;
+            if (name.substring(0, len).toLowerCase().trim() == inputValue) {
+                op.push({name: name});
+            }
+        }
+        setOptions(op);
+    };
+
+
     return ( 
 
         <main> 
@@ -186,23 +257,30 @@ export default function Friends() {
                 </header>
 
                 <div className="flex flex-col mx-28 pt-10 ">
-                    <div className="">
-                        <Input
-                            placeholder="Friend name" 
+                    <div>
+                         <Autocomplete
+                            label="Friend name"
+                            placeholder="Search for a friend"
                             leftSection={<IoIosSearch size={26}/>} 
+                            data={options.map(option => ({ label: option.name, value: option.name.toString() }))}
                             value={value}
-                            onChange={(event) => setValue(event.currentTarget.value)}
+                            onChange={(newValue) => {
+                                setValue(newValue);
+                                fetchOptions(newValue);
+                            }}
+                            clearable
+                            onClear={() => setValue('')}
+                            rightSection={
+                                <CloseButton
+                                    onClick={() => setValue('')}
+                                />
+                            }
+                            // onSelect not working
                             rightSectionPointerEvents="all"
                             size="lg"
-                            rightSection={
-                            <CloseButton
-                                aria-label="Clear input"
-                                onClick={() => setValue('')}
-                                style={{ display: value ? undefined : 'none' }}
                             />
-                            }
-                        />
                     </div>
+                    
                     { friendRequests.length != 0  && 
                         <div className="mt-10">
                             <Accordion>
@@ -216,8 +294,8 @@ export default function Friends() {
                                                     <FaRegUser color={"white"} size={24}/>
                                                 </div>  
                                                 <p className="text-2xl">{request.name}</p>
-                                                <Button onClick={()=>accept(request.email)} variant="transparent"> <FaCheck color={"green"} size={26}/></Button>
-                                                <CloseButton onClick={()=>reject(request.email)} variant="transparent" icon={< RxCross2 color={"red"} size={28}/>}/>
+                                                <Button onClick={()=>accept(request.email.toString())} variant="transparent"> <FaCheck color={"green"} size={26}/></Button>
+                                                <CloseButton onClick={()=>reject(request.email.toString())} variant="transparent" icon={< RxCross2 color={"red"} size={28}/>}/>
                                             
                                             </div>
                                         ))}
@@ -229,23 +307,34 @@ export default function Friends() {
                     }
                     
                     <div className="flex flex-col mt-10 h-max">
-                        <p className="text-2xl font-domine ">Friends</p>
+                        <div className="flex justify-between">
+                            <p className="text-2xl font-domine ">Friends</p>
+                            <div>
+                                <Modal opened={opened} onClose={close} withCloseButton={false} centered>
+                                    <p className="text-lg mb-4">Enter friends email address:</p>
+                                    <Input size="md" placeholder="Email" value={email} onChange={(event) => setEmail(event.target.value)}></Input>
+                                    <div className="flex justify-center mt-4">
+                                        <Button className="bg-primary" onClick={()=>{addFriend(email);  setEmail('');}}>Send Request</Button>  
+                                    </div>
+                                </Modal>
+
+                                <Button className="bg-primary rounded-full" onClick={open}>Add Friend</Button>
+                            </div>
+                        </div>
                         <div className="flex flex-col gap-5 mt-4">
-                            { friendList && friendList.map((friend, index) => (
+
+                            {friendList && friendList.map((friend, index) => (
                                 <div key={index} className="flex justify-between items-center gap-3 bg-tertiary p-4 rounded-md">
                                     <div className="bg-primary rounded-full p-2">
                                         <FaRegUser color={"white"} size={24}/>
                                     </div>  
-
                                     <p className="text-2xl">{friend.name}</p>
                                     <div className="flex-grow">  </div>
                                     <Link href={{ pathname: '/friendInfo', query: { 
-                                        friendName: friend.name
+                                        friendName: friend.name.toString()
                                     }}}>
                                         <HiArrowLongRight size={48} color="gray"/>
                                     </Link>
-                                  
-                                    {/* <CloseButton variant="transparent" icon={< RxCross2 color={"red"} size={28}/>}/> */}
                                 </div>
                             ))}
                         </div>
