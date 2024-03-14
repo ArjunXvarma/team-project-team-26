@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const protectedRoutes = /^\/$/;
+  const protectedRoutes = /^\/$|^\/journeys$/;
   const logoutRoute = /^\/logout$/;
   const loginSingupRoutes = /^\/(login|signup)$/;
 
