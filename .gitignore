@@ -42,7 +42,7 @@ backend/app/views.py
 backend/app.db
 
 # Virtual Environment
-/virtual_env
+**/virtual_env
 /.venv
 
 /backend/app/__pycache__
