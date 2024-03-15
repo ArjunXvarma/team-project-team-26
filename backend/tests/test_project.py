@@ -6,6 +6,8 @@ import pytest
 import constants
 from app.resources import GPSRoutes
 
+from app.resources import validate_points
+
 # Initialize bcrypt
 bcrypt = Bcrypt(app)
 
@@ -513,6 +515,38 @@ class TestGPSRoutes:
         response = client.put("/update_journey/1", json=journey_update_data)
         assert response.status_code == 401
 
+    def test_validate_points(self):
+        points_valid = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25, 'ele': 10}
+        ]
+        assert validate_points(points_valid)[0] == True
+
+        points_missing_key = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25}
+        ]
+        assert validate_points(points_missing_key)[0] == False
+
+        points_extra_key = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25, 'ele': 10, 'temp': 50} 
+        ]
+        assert validate_points(points_extra_key)[0] == False
+
+        points_missing_and_extra_keys = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'temp': 50} 
+        ]
+        assert validate_points(points_missing_and_extra_keys)[0] == False
+
+        points_empty = []
+        assert validate_points(points_empty)[0] == False
+
+        points_different_order = [
+            {'ele': 5, 'lon': 20, 'lat': 10}
+        ]
+        assert validate_points(points_different_order)[0] == True
 
     def test_update_journey_with_jwt(self, client, clean_db):
         """Test updating a journey with a JWT."""
