@@ -1,12 +1,13 @@
 "use client";
 import "@mantine/dates/styles.css";
+import dayjs from "dayjs";
 import Cookie from "js-cookie";
 import router from "next/router";
 import GPXparser from "gpxparser";
 import { API_URL } from "@/constants";
 import { GrAdd } from "react-icons/gr";
 import { BiSolidError } from "react-icons/bi";
-import { Button, Modal } from "@mantine/core";
+import { Button, Loader, Modal, Select, TextInput } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { ChangeEvent, useState } from "react";
 import { GiPathDistance } from "react-icons/gi";
@@ -14,27 +15,37 @@ import { AiOutlineCompass } from "react-icons/ai";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import { useForm } from "@mantine/form";
 
 export default function Journeys() {
+  const validTypes = ["Run", "Walk", "Cycle"];
   const [loading, setLoading] = useState(false);
+  const [gpxLoading, setGPXLoading] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
-  const [fileUploadError, setFileUploadError] = useState("");
+  const [fileUploadStatus, setFileUploadStatus] = useState<{
+    type: "success" | "error";
+    msg: String;
+  } | null>();
 
-  const [gpxData, setGpxData] = useState<{
-    startTime: String | null;
-    endTime: String | null;
-    date: Date | null;
-    coordinates: number[][] | null;
-  }>({
-    date: null,
-    endTime: null,
-    startTime: null,
-    coordinates: null,
+  const form = useForm({
+    initialValues: {
+      name: "",
+      type: "",
+      points: [],
+      endTime: "",
+      startTime: "",
+      eventDate: null,
+      totalDistance: -1,
+      elevation: { min: -1, max: -1, avg: -1 },
+    },
   });
 
   const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
+    setGPXLoading(true);
+    setFileUploadStatus(null);
     if (e.target.files === null || e.target.files.length === 0) {
-      setFileUploadError("Please upload a valid .gpx File");
+      setGPXLoading(false);
+      setFileUploadStatus({ type: "error", msg: "Please upload a valid GPX file" });
       return;
     }
 
@@ -54,46 +65,108 @@ export default function Journeys() {
         }
         const gpx = new GPXparser();
         gpx.parse(rawData as string);
-        console.log(gpx);
-
-        const coordinates = gpx.tracks[0].points.map((val) => [val.lat, val.lon, val.ele]);
-        setGpxData((val) => ({ ...val, coordinates: coordinates }));
+        const track = gpx.tracks[0];
+        form.setFieldValue("elevation", {
+          min: track.elevation.min,
+          max: track.elevation.max,
+          avg: track.elevation.avg,
+        });
+        form.setFieldValue("totalDistance", track.distance.total);
+        form.setFieldValue(
+          "points",
+          track.points.map((val) => ({ lat: val.lat, lon: val.lon, ele: val.ele } as never))
+        );
       };
       reader.readAsText(file);
     }
+    setFileUploadStatus({ type: "success", msg: "File Uploaded" });
+    setGPXLoading(false);
+  };
+
+  // Check if start and end times are valid
+  const isValidTime = (hour: number, minute: number) => {
+    return (
+      !isNaN(hour) && !isNaN(minute) && hour >= 0 && hour < 24 && minute >= 0 && minute < 60
+    );
+  };
+
+  const validateForm = () => {
+    let exitCode = 0;
+
+    // validate name
+    if (form.values.name === "") {
+      form.setFieldError("name", "Enter a valid name for the journey");
+      exitCode = 1;
+    }
+
+    // validate type
+    if (!validTypes.includes(form.values.type)) {
+      form.setFieldError("type", "Select a valid type for the journey");
+      exitCode = 1;
+    }
+
+    // check time input
+    // Parse start and end times
+    const [startHour, startMinute] = form.values.startTime.split(":").map(Number);
+    const [endHour, endMinute] = form.values.endTime.split(":").map(Number);
+
+    const validStartTime = isValidTime(startHour, startMinute);
+    const validEndTime = isValidTime(endHour, endMinute);
+
+    if (!validStartTime) {
+      form.setFieldError("startTime", "Enter a valid start time");
+      exitCode = 1;
+    }
+
+    if (!validEndTime) {
+      form.setFieldError("endTime", "Enter a valid end time");
+      exitCode = 1;
+    }
+
+    if (validStartTime && validEndTime) {
+      const startDate = new Date();
+      startDate.setHours(startHour, startMinute);
+
+      const endDate = new Date();
+      endDate.setHours(endHour, endMinute);
+
+      // Check if start time is before end time
+      if (startDate >= endDate) {
+        form.setFieldError("endTime", "End time must be after the start time");
+        exitCode = 1;
+      }
+    }
+
+    // validate date
+    if (form.values.eventDate === null) {
+      form.setFieldError("eventDate", "Enter a valid date");
+      exitCode = 1;
+    }
+
+    if (form.values.points.length === 0) {
+      setFileUploadStatus({ type: "error", msg: "Please upload a valid GPX file" });
+      exitCode = 1;
+    }
+
+    return exitCode;
   };
 
   const submit = async () => {
     setLoading(true);
 
-    if (
-      gpxData.date == null ||
-      gpxData.endTime == null ||
-      gpxData.startTime == null ||
-      gpxData.coordinates == null
-    ) {
-      notifications.show({
-        color: "red",
-        title: "Server Error",
-        icon: <BiSolidError />,
-        message: "Please enter valid data before submitting the form.",
-      });
+    if (validateForm() !== 0) {
       setLoading(false);
       return;
     }
 
+    // Get authorization token
     const token = Cookie.get("token");
     try {
       const response = await fetch(`${API_URL}/create_journey`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          endTime: gpxData.endTime,
-          dateCreated: "15-09-2024",
-          startTime: gpxData.startTime,
-          gpxData: JSON.stringify({ coordinates: gpxData.coordinates }),
-        }),
+        body: JSON.stringify({ ...form.values, dateCreated: form.values.eventDate }),
       });
 
       const data = await response.json();
@@ -122,39 +195,57 @@ export default function Journeys() {
       </div>
       <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md border-slate-100 bg-slate-50 text-slate-400">
         <GiPathDistance size={64} />
-        <h2>You haven't taken a journey yet</h2>
+        <h2 className="text-xs md:text-lg">You haven't taken a journey yet</h2>
       </div>
       <Modal opened={opened} onClose={close} title="Upload Journey" size="lg">
-        <h1 className="my-3 font-bold text-red-600">{fileUploadError}</h1>
-        <div className="flex justify-between gap-5">
-          <TimeInput
-            withSeconds
-            className="w-full"
-            label="Start Time"
-            placeholder="Start Time"
-            onChange={(e) => setGpxData((val) => ({ ...val, startTime: e.target.value }))}
-          />
-          <TimeInput
-            withSeconds
-            label="End Time"
-            className="w-full"
-            placeholder="End Time"
-            onChange={(e) => setGpxData((val) => ({ ...val, endTime: e.target.value }))}
-          />
-        </div>
-        <DateInput
-          className="my-5"
-          label="Journey Date"
-          onChange={(e) => setGpxData((val) => ({ ...val, date: e }))}
-        />
-        <label htmlFor="fileInput">
-          Upload GPX (.gpx) File
-          <div className="bg-green-600 text-white font-medium flex gap-2 w-fit items-center p-2 rounded mt-3">
-            <AiOutlineCompass size={24} />
-            <p className="">Upload File</p>
-            <input hidden type="file" id="fileInput" onChange={handleFile} accept=".gpx" />
+        <div className="flex flex-col gap-3">
+          <TextInput label="Name" {...form.getInputProps("name")} />
+          <Select label="Type" data={validTypes} {...form.getInputProps("type")} />
+          <div className="flex justify-between gap-5">
+            <TimeInput
+              label="Start Time"
+              className="w-full"
+              {...form.getInputProps("startTime")}
+            />
+            <TimeInput
+              label="End Time"
+              className="w-full"
+              {...form.getInputProps("endTime")}
+            />
           </div>
-        </label>
+          <DateInput
+            required
+            clearable
+            label="Event Date"
+            valueFormat="DD MMMM YYYY"
+            className="w-full cursor-pointer"
+            {...form.getInputProps("eventDate")}
+            maxDate={dayjs(new Date()).toDate()}
+            style={{ caretColor: "transparent" }}
+            onKeyDown={(e) => e.preventDefault()}
+            minDate={dayjs(new Date(1920, 0, 1)).toDate()}
+          />
+          <label htmlFor="fileInput" className="mt-5">
+            Upload GPX (.gpx) File
+            {fileUploadStatus ? (
+              <p
+                className={`text-xs class text-${
+                  fileUploadStatus.type == "error" ? "[#FA5252]" : "primary"
+                }`}
+              >
+                {fileUploadStatus.msg}
+              </p>
+            ) : null}
+            <div className="mt-5 flex items-center gap-3">
+              {gpxLoading && <Loader size="sm" color="green" />}
+              <div className="bg-green-600 text-white font-medium flex gap-2 w-fit items-center p-2 rounded">
+                <AiOutlineCompass size={24} />
+                <p className="">Upload File</p>
+                <input hidden type="file" id="fileInput" onChange={handleFile} accept=".gpx" />
+              </div>
+            </div>
+          </label>
+        </div>
         <Button
           onClick={submit}
           loading={loading}
