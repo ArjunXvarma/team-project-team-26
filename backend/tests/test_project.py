@@ -5,7 +5,7 @@ from flask_jwt_extended import create_access_token
 import pytest
 import constants
 
-from app.resources import validate_points
+from app.resources import GPSRoutes
 
 # Initialize bcrypt
 bcrypt = Bcrypt(app)
@@ -179,7 +179,7 @@ class TestGPSRoutes:
             {'lat': 10, 'lon': 20, 'ele': 5},
             {'lat': 15, 'lon': 25, 'ele': 10}
         ]
-        assert validate_points(points_valid)[0] == True
+        assert GPSRoutes.validate_points(points_valid)[0] == True
 
     def validate_points2(self):
         """Test points with missing keys"""
@@ -187,7 +187,7 @@ class TestGPSRoutes:
             {'lat': 10, 'lon': 20, 'ele': 5},
             {'lat': 15, 'lon': 25}
         ]
-        assert validate_points(points_missing_key)[0] == False
+        assert GPSRoutes.validate_points(points_missing_key)[0] == False
 
     def validate_points3(self):
         """Test points with extra keys"""
@@ -195,7 +195,7 @@ class TestGPSRoutes:
             {'lat': 10, 'lon': 20, 'ele': 5},
             {'lat': 15, 'lon': 25, 'ele': 10, 'temp': 50} 
         ]
-        assert validate_points(points_extra_key)[0] == False
+        assert GPSRoutes.validate_points(points_extra_key)[0] == False
 
     def validate_points4(self):
         """Test points with extra and missing keys"""
@@ -203,19 +203,19 @@ class TestGPSRoutes:
             {'lat': 10, 'lon': 20, 'ele': 5},
             {'lat': 15, 'temp': 50} 
         ]
-        assert validate_points(points_missing_and_extra_keys)[0] == False
+        assert GPSRoutes.validate_points(points_missing_and_extra_keys)[0] == False
 
     def validate_points5(self):
         """Test empty points"""
         points_empty = []
-        assert validate_points(points_empty)[0] == False
+        assert GPSRoutes.validate_points(points_empty)[0] == False
 
     def validate_points6(self):
         """Test different ordered points"""
         points_different_order = [
             {'ele': 5, 'lon': 20, 'lat': 10}
         ]
-        assert validate_points(points_different_order)[0] == True
+        assert GPSRoutes.validate_points(points_different_order)[0] == True
 
 class TestMembershipRoutes:
     """Class for testing membership routes functionality.""" 
