@@ -4,6 +4,7 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token
 import pytest
 import constants
+from app.resources import GPSRoutes
 
 # Initialize bcrypt
 bcrypt = Bcrypt(app)
@@ -134,6 +135,51 @@ class TestLogin:
 class TestGPSRoutes:
     """Class for testing GPS routes functionality."""
 
+    def test_validate_points1(self):
+        """Test valid points"""
+        points_valid = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25, 'ele': 10}
+        ]
+        assert GPSRoutes.validate_points(points_valid)[0] == True
+
+    def validate_points2(self):
+        """Test points with missing keys"""
+        points_missing_key = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25}
+        ]
+        assert GPSRoutes.validate_points(points_missing_key)[0] == False
+
+    def validate_points3(self):
+        """Test points with extra keys"""
+        points_extra_key = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25, 'ele': 10, 'temp': 50}
+        ]
+        assert GPSRoutes.validate_points(points_extra_key)[0] == False
+
+    def validate_points4(self):
+        """Test points with extra and missing keys"""
+        points_missing_and_extra_keys = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'temp': 50}
+        ]
+        assert GPSRoutes.validate_points(points_missing_and_extra_keys)[0] == False
+
+    def validate_points5(self):
+        """Test empty points"""
+        points_empty = []
+        assert GPSRoutes.validate_points(points_empty)[0] == False
+
+    def validate_points6(self):
+        """Test different ordered points"""
+        points_different_order = [
+            {'ele': 5, 'lon': 20, 'lat': 10}
+        ]
+        assert GPSRoutes.validate_points(points_different_order)[0] == True
+
+
     def test_get_journies_without_jwt(self, client):
         """Test getting user journies without a JWT."""
         response = client.get("/get_journeys_of_user")
@@ -142,6 +188,7 @@ class TestGPSRoutes:
 
     def test_get_journies_with_jwt_success(self, client, clean_db):
         """Test successfully getting user journeys."""
+
         # Creation of an user
         user = models.User(
             first_name="John",
@@ -158,25 +205,67 @@ class TestGPSRoutes:
             "email": "john.doe@example.com",
             "password": "password"
         })
+        # Get token
         token = login_response.json['session_token']
 
+        # Create a Journey to test with
         journey_data = {
-            "id": 1,
-            "userId": 1,
-            "gpxData": "{ \"coordinates\": [[1, 70], [20, 80], [3, 20]] }",
-            "startTime": "21:00:00",
-            "endTime": "23:00:00",
-            "dateCreated": "15-09-2025"
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
         }
         r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
 
-        response = client.get("/get_journies_of_user", headers={"Authorization": f"Bearer {token}"})
+        # Test if journey is returned successfuly
+        response = client.get("/get_journeys_of_user", headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
 
 
 
+    def test_get_journies_with_no_journeys(self, client, clean_db):
+        """ Test Error handling when getting a journey from an empty list"""
+
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Test getting a journey when none exist
+        response = client.get("/get_journeys_of_user", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 404
+
+
     def test_create_journey_without_jwt(self, client):
         """Test creating a journey without a JWT."""
+
+        # journey to be added
         journey_data = {
             "id": 1,
             "userId": 1,
@@ -185,11 +274,15 @@ class TestGPSRoutes:
             "endTime": "23:00:00",
             "dateCreated": "15-09-2025"
         }
+
+        # if there is a missing token, dont make journey
         response = client.post("/create_journey", json=journey_data)
         assert response.status_code == 401
 
+
     def test_create_journey_with_jwt(self, client, clean_db):
         """Test creating a journey with JWT."""
+
         # Creation of an user
         user = models.User(
             first_name="John",
@@ -206,23 +299,37 @@ class TestGPSRoutes:
             "email": "john.doe@example.com",
             "password": "password"
         })
+
+        # Get token
         token = login_response.json['session_token']
 
-        # Make a request with JWT
+        # Journey to be added
         journey_data = {
-            "id": 1,
-            "userId": 1,
-            "gpxData": "{ \"coordinates\": [[1, 70], [20, 80], [3, 20]] }",
-            "startTime": "21:00:00",
-            "endTime": "23:00:00",
-            "dateCreated": "15-09-2025"
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
         }
-        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
 
+        # Test if journey is created successfully
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 201
 
-    def test_create_journey_invalid_data(self, client, clean_db):
+
+    def test_create_journey_invalid_points_array(self, client, clean_db):
         """Test creating a journey with JWT and invalid data."""
+
         # Creation of an user
         user = models.User(
             first_name="John",
@@ -239,29 +346,91 @@ class TestGPSRoutes:
             "email": "john.doe@example.com",
             "password": "password"
         })
+
+        # Get token
         token = login_response.json['session_token']
 
-        # Make a request with JWT, invalid endTime and date data
+        # Make a request with JWT, invalid Points array format
         journey_data = {
-            "id": 1,
-            "userId": 1,
-            "gpxData": "{ \"coordinates\": [[1, 70], [20, 80], [3, 20]] }",
-            "startTime": "21:00:00",
-            "endTime": "2300",
-            "dateCreated": "15-09-20025"
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "ele": 10000000},
+                {"lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
         }
-        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
 
+        # Test the output of creating a journey with invalid points data
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 400
+
+
+    def test_create_journey_invalid_date_time(self, client, clean_db):
+        """Test creating a journey with JWT and invalid data."""
+
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Make a request with JWT, invalid Time and date data
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "30:00",
+            "endTime": "080400",
+            "dateCreated": "2024-0"
+        }
+
+        # Test output when creating a journey with invalid date and time formats
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 400
 
 
     def test_delete_journey_without_jwt(self, client):
         """Test deleting a journey without a JWT."""
+
         response = client.delete("/delete_journey/1")
         assert response.status_code == 401
 
+
     def test_delete_journey_with_jwt(self, client, clean_db):
         """Test deleting a journey with a JWT."""
+
         # Creation of an user
         user = models.User(
             first_name="John",
@@ -278,24 +447,40 @@ class TestGPSRoutes:
             "email": "john.doe@example.com",
             "password": "password"
         })
+
+        # Get token
         token = login_response.json['session_token']
 
+        # Add a journey before deleting one
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+
+        # Test if journey is sucessfully deleted
         response = client.delete("/delete_journey/1", headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
 
-    def test_update_journey_without_jwt(self, client):
-        """Test updating a journey without a JWT."""
-        journey_update_data = {
-            "gpxData": "{ \"coordinates\": [[10, 7], [2, 8], [30, 2]] }",
-            "startTime": "10:00:00",
-            "endTime": "11:00:00",
-            "dateCreated": "2023-02-01"
-        }
-        response = client.put("/update_journey/1", json=journey_update_data)
-        assert response.status_code == 401
 
-    def test_update_journey_with_jwt(self, client, clean_db):
-        """Test updating a journey with a JWT."""
+    def test_delete_journey_non_existing_journey(self, client, clean_db):
+        """Test deleting a journey that doesn't exist."""
+
+        # Creation of an user
         user = models.User(
             first_name="John",
             last_name="Doe",
@@ -311,16 +496,192 @@ class TestGPSRoutes:
             "email": "john.doe@example.com",
             "password": "password"
         })
+
+        # Get token
         token = login_response.json['session_token']
 
+        # Test if the program handles deleting a non existing journey successfully
+        response = client.delete("/delete_journey/1", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 404
+
+
+    def test_update_journey_without_jwt(self, client):
+        """Test updating a journey without a JWT."""
+
+        # fields to be updated
         journey_update_data = {
-            "gpxData": "{ \"coordinates\": [[10, 7], [2, 8], [30, 2]] }",
             "startTime": "10:00:00",
             "endTime": "11:00:00",
             "dateCreated": "2023-02-01"
         }
+
+        # Test if attempting to update a journey without a token is handled correctly
+        response = client.put("/update_journey/1", json=journey_update_data)
+        assert response.status_code == 401
+
+
+    def test_update_journey_with_jwt(self, client, clean_db):
+        """Test updating a journey with a JWT."""
+
+        # Create User
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Create a journey to update
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+
+        # Fields to be updated
+        journey_update_data = {
+            "type": "Walking",
+            "totalDistance": 2.0,
+            "elevation": {
+                "avg": 110,
+                "min": 101,
+                "max": 145
+            },
+            "points": [
+                {"lat": 21.5, "lon": -110.2, "ele": 210},
+                {"lat": 48.6, "lon": -123.3, "ele": 120}
+            ]
+        }
+
+        # Test if journey is updated successfully
         response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
+
+
+    def test_update_journey_non_existing_journey(self, client, clean_db):
+        """Test updating a journey that doesn't exist."""
+
+        # Create User
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Field to be updated, no journey exists
+        journey_update_data = {
+            "type": "Walking",
+            "totalDistance": 2.0,
+            "elevation": {
+                "avg": 110,
+                "min": 101,
+                "max": 145
+            },
+            "points": [
+                {"lat": 21.5, "lon": -110.2, "ele": 210},
+                {"lat": 48.6, "lon": -123.3, "ele": 120}
+            ]
+        }
+
+        # Test if updating a non existing journey is handled correctly
+        response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 404
+
+
+
+    def test_update_journey_invalid_date_time(self, client, clean_db):
+        """Test updating a journey using invalid date and time formatted data."""
+
+        # Create User
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Create a journey to update
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+
+        # Fields to be updated, invalid date and time data
+        journey_update_data = {
+            "type": "Walking",
+            "startTime": "07:3",
+            "endTime": "08:1:00",
+            "dateCreated": "20240312"
+        }
+
+        # Test if updating a journey with invalid data is handled correctly
+        response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 400
+
 
 
 class TestMembershipRoutes:
