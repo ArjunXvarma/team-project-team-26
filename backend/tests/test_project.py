@@ -6,8 +6,6 @@ import pytest
 import constants
 from app.resources import GPSRoutes
 
-from app.resources import GPSRoutes
-
 # Initialize bcrypt
 bcrypt = Bcrypt(app)
 
