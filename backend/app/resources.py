@@ -13,34 +13,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
 bcrypt = Bcrypt(app)
 
-def validate_points(points):
-    """
-    Validates that each item in the points list contains exactly 'lat', 'lon', and 'ele' keys.
-
-    Parameters:
-    - points (list): The list of point dictionaries to validate.
-
-    Returns:
-    - (bool, str): Tuple containing a boolean indicating if the validation passed,
-                and a string with an error message if it failed.
-    """
-    if points != []:
-        required_keys = {'lat', 'lon', 'ele'}
-        for point in points:
-            point_keys = set(point.keys())
-            if point_keys != required_keys:
-                missing_keys = required_keys - point_keys
-                extra_keys = point_keys - required_keys
-                error_message = []
-                if missing_keys:
-                    error_message.append(f"Missing keys: {', '.join(missing_keys)}")
-                if extra_keys:
-                    error_message.append(f"Extra keys: {', '.join(extra_keys)}")
-                return False, '; '.join(error_message)
-        return True, ""
-    
-    return False, "No points provided"
-
 class AuthenticationRoutes:
     """
     Class for handling authentication routes.
@@ -279,8 +251,8 @@ class GPSRoutes:
 
     Methods
     -------
-    getJournies(userId) -> json:
-        returns the journies of a user.
+    getJourneys(userId) -> json:
+        returns the journeys of a user.
     createJourny() -> json:
         creates a journey for a user.
     deleteJourney(journeyId) -> json:
@@ -289,26 +261,53 @@ class GPSRoutes:
         updates the data of a particular journey.
     """
 
+    def validate_points(points):
+        """
+        Validates that each item in the points list contains exactly 'lat', 'lon', and 'ele' keys.
+
+        Parameters:
+        - points (list): The list of point dictionaries to validate.
+
+        Returns:
+        - (bool, str): Tuple containing a boolean indicating if the validation passed,
+                    and a string with an error message if it failed.
+        """
+        if points != []:
+            required_keys = {'lat', 'lon', 'ele'}
+            for point in points:
+                point_keys = set(point.keys())
+                if point_keys != required_keys:
+                    missing_keys = required_keys - point_keys
+                    extra_keys = point_keys - required_keys
+                    error_message = []
+                    if missing_keys:
+                        error_message.append(f"Missing keys: {', '.join(missing_keys)}")
+                    if extra_keys:
+                        error_message.append(f"Extra keys: {', '.join(extra_keys)}")
+                    return False, '; '.join(error_message)
+            return True, ""
+        return False, "No data provided"
+
     @app.route("/get_journeys_of_user", methods=["GET"])
     @jwt_required()
     def getJourneys() -> Tuple[dict, int]:
         """
-        Returns all the journies of a user.
+        Returns all the journeys of a user.
 
         Parameters
         ----------
         userId : int
-            The user for which you want to query the journies.
+            The user for which you want to query the journeys.
 
         Returns
         -------
         Json
             A JSON object that contains the userId and an array of all 
-            the journies that belong to the user.
+            the journeys that belong to the user.
 
         Notes
         -----
-        If there are no journies that belong to the user a 404 error will be sent as there was no
+        If there are no journeys that belong to the user a 404 error will be sent as there was no
         journey data found. If the journey data exists, it is returned with a response of 200.
 
         Exceptions
@@ -389,7 +388,7 @@ class GPSRoutes:
         if points is None:
             return jsonify({'status': 400, 'message': 'Missing field: points'}), 400
 
-        valid, error_message = validate_points(points)
+        valid, error_message = GPSRoutes.validate_points(points)
         if not valid:
             return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
 
@@ -462,9 +461,9 @@ class GPSRoutes:
         if not user:
             return jsonify({'status': 404, 'message': 'User not found'}), 404
         
-        journies = models.Journey.query.filter_by(userId=user.id).all()
+        journeys = models.Journey.query.filter_by(userId=user.id).all()
 
-        for journey in journies:
+        for journey in journeys:
             if journeyId == journey.id:
                 db.session.delete(journey)
                 db.session.commit()
@@ -526,7 +525,7 @@ class GPSRoutes:
         # Validate points directly from the request JSON
         if 'points' in data:
             points = data['points']
-            valid, error_message = validate_points(points)
+            valid, error_message = GPSRoutes.validate_points(points)
             if not valid:
                 return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
         
