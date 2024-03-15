@@ -1031,3 +1031,59 @@ class FriendshipRoutes:
             friends_list.append({"email": friend_info.email, "name": friend_info.first_name + " " + friend_info.last_name})
 
         return jsonify({"friends": friends_list}), 200
+    
+class AdminRoutes:
+    def create_admin_role():
+        admin_role = models.Role.query.filter_by(name='admin').first()
+        if not admin_role:
+            admin_role = models.Role(name='admin')
+            db.session.add(admin_role)
+            db.session.commit()
+        return admin_role
+
+    @app.route('/admin/create_admin_user', methods=['POST'])
+    def careateAdminUser():
+        data = request.json
+        if not data:
+            return jsonify({"status": 0, "error": "No JSON Data found"}), 400
+        
+        # Extract user data
+        first_name = data.get("first_name")
+        last_name = data.get("last_name")
+        email = data.get("email")
+        password = data.get("password")
+        date_of_birth_str = data.get("date_of_birth")
+        
+        # Validation
+        if not all([password, email, first_name, date_of_birth_str]):
+            return jsonify({"status": 400, "error": "Missing Required Fields"}), 400
+        
+        if models.User.query.filter_by(email=email).first():
+            return jsonify({"status": 409, "error": "User Already Exists"}), 409
+        
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        date_of_birth = datetime.strptime(date_of_birth_str, "%Y-%m-%d")
+        
+        user = models.User(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            date_of_birth=date_of_birth,
+            hashed_password=hashed_password
+        )
+        
+        admin_role = AdminRoutes.create_admin_role()
+        user.roles.append(admin_role)
+        db.session.add(user)
+        db.session.commit()
+        
+        return jsonify({"status": 200, "message": "Admin user created successfully"}), 201
+    
+    @app.route('admin/check_if_admin/<int:userId>', methods=['GET'])
+    def is_user_admin(userId):
+        user = models.User.query.get(userId)
+        if not user:
+            return jsonify({"status": 404, "message": "User not found"}), 404
+        
+        is_admin = any(role.name == 'admin' for role in user.roles)
+        return jsonify({"status": 200, "is_admin": is_admin}), 200
