@@ -7,11 +7,12 @@ import { CiUser} from "react-icons/ci";
 import { AiOutlineFire } from "react-icons/ai";
 import { SlDrop } from "react-icons/sl";
 import { useState } from 'react';
-
+import Cookies from "js-cookie";
 
   
 export default function Home(){
 
+  
     const [data, setData] = useState([
         { day: 'Mon', distance: 10 },
         { day: 'Tue', distance: 15 },
@@ -22,7 +23,7 @@ export default function Home(){
         { day: 'Sun', distance: 28 },
       ]);
       const maxDistance = Math.max(...data.map(item => item.distance));
-
+      const [username, setUsername] = useState(Cookies.get("username"));
      
     return (
         <main> 
@@ -30,13 +31,14 @@ export default function Home(){
                 <header className="flex w-full h-20 justify-around items-center pt-6">
                     <p className="text-center text-lg font-serif flex-grow">“Every journey begins with a single step”</p>
 
-                    <Link href={"/landing"} className="rounded-xl mr-10">
-                        <Button  className="rounded-full" variant="filled" color="rgba(0, 133, 57, 1)" radius="xl"><CiUser size={30}/></Button>
+                    <Link href={"/landing"} className="flex items-center rounded-xl mr-10">
+                        <p className='font-domine font-bold mr-2'>Home</p>
+                        <Button  className="rounded-full bg-green-700" variant="filled" color="rgba(0, 133, 57, 1)" radius="xl" >  <CiUser size={30}/></Button>
                     </Link>
                 </header>
                 
                 <div className="px-20 mb-20">
-                    <p className="font-serif text-2xl mt-10 ">Hi, name</p>
+                    <p className="font-serif text-2xl mt-10 ">Hi {username},</p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 mt-10">
                         <div className="w-auto border-2 border-primary bg-tertiary h-80 rounded-lg justify-start p-2 px-4">
