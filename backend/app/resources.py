@@ -251,9 +251,9 @@ class GPSRoutes:
 
     Methods
     -------
-    getJournies(userId) -> json:
-        returns the journies of a user.
-    createJourny() -> json:
+    getJourneys(userId) -> json:
+        returns the journeys of a user.
+    createJourney() -> json:
         creates a journey for a user.
     deleteJourney(journeyId) -> json:
         deletes a particular journey.
@@ -290,22 +290,22 @@ class GPSRoutes:
     @jwt_required()
     def getJourneys() -> Tuple[dict, int]:
         """
-        Returns all the journies of a user.
+        Returns all the journeys of a user.
 
         Parameters
         ----------
         userId : int
-            The user for which you want to query the journies.
+            The user for which you want to query the journeys.
 
         Returns
         -------
         Json
             A JSON object that contains the userId and an array of all 
-            the journies that belong to the user.
+            the journeys that belong to the user.
 
         Notes
         -----
-        If there are no journies that belong to the user a 404 error will be sent as there was no
+        If there are no journeys that belong to the user a 404 error will be sent as there was no
         journey data found. If the journey data exists, it is returned with a response of 200.
 
         Exceptions
@@ -386,7 +386,7 @@ class GPSRoutes:
         if points is None:
             return jsonify({'status': 400, 'message': 'Missing field: points'}), 400
 
-        valid, error_message = validate_points(points)
+        valid, error_message = GPSRoutes.validate_points(points)
         if not valid:
             return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
 
@@ -459,9 +459,9 @@ class GPSRoutes:
         if not user:
             return jsonify({'status': 404, 'message': 'User not found'}), 404
         
-        journies = models.Journey.query.filter_by(userId=user.id).all()
+        journeys = models.Journey.query.filter_by(userId=user.id).all()
 
-        for journey in journies:
+        for journey in journeys:
             if journeyId == journey.id:
                 db.session.delete(journey)
                 db.session.commit()
@@ -523,7 +523,7 @@ class GPSRoutes:
         # Validate points directly from the request JSON
         if 'points' in data:
             points = data['points']
-            valid, error_message = validate_points(points)
+            valid, error_message = GPSRoutes.validate_points(points)
             if not valid:
                 return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
         
