@@ -253,7 +253,7 @@ class GPSRoutes:
     -------
     getJourneys(userId) -> json:
         returns the journeys of a user.
-    createJourny() -> json:
+    createJourney() -> json:
         creates a journey for a user.
     deleteJourney(journeyId) -> json:
         deletes a particular journey.
