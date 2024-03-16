@@ -11,7 +11,6 @@ import { FaApple } from "react-icons/fa6";
 import { FaAlipay } from "react-icons/fa6";
 import { number, expirationDate, cvv } from 'card-validator';
 import { API_URL } from "@/constants";
-import { AuthAPIResponse } from "@/types";
 import { BiSolidError } from "react-icons/bi";
 import Cookie from "js-cookie";
 import { notifications } from "@mantine/notifications";
@@ -68,7 +67,9 @@ export default function Payment() {
     const submit = async () => {
         setLoading(true);
         try {
-          const token = Cookie.get("token"); 
+          const token = Cookie.get('token'); 
+          console.log(token);
+          
           const response = await fetch(`${API_URL}/buy_membership`, {
             method: "POST",
             credentials: "include",
@@ -81,7 +82,7 @@ export default function Payment() {
             }),
           });
     
-            const purchaseResponse: AuthAPIResponse = await response.json();
+            const purchaseResponse= await response.json();
             // handle errors
             if (response.status == 400) {
                 console.log(purchaseResponse.error);

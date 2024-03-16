@@ -4,7 +4,6 @@ import Link from "next/link";
 import React, { useEffect, useState } from 'react';
 import { Button, UnstyledButton } from "@mantine/core";
 import Cookies from "js-cookie";
-import { AuthAPIResponse } from "@/types";
 import { API_URL } from "@/constants";
 
 export default function Landing(){
@@ -15,8 +14,8 @@ export default function Landing(){
 
     useEffect(() => {
         const token = Cookies.get('token');
+        // setting isLoggedIn to true if token exists
         setIsLoggedIn(!!token); 
-      
         async function fetchMembershipStatus() {
         try {
             const response = await fetch(`${API_URL}/has_active_membership`, {
@@ -27,11 +26,12 @@ export default function Landing(){
                 },
             });
 
-            const membershipResponse: AuthAPIResponse =  await response.json();
+            const membershipResponse = await response.json();
             
             if (response.status == 200) {
                 sethasActiveMembership(membershipResponse.has_active_membership);
             } else if (response.status == 401) {
+                sethasActiveMembership(membershipResponse.has_active_membership);
                 console.log(membershipResponse.error);
             }
         } catch (error) {
