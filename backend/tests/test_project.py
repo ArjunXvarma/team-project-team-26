@@ -136,9 +136,9 @@ class TestLogin:
 class TestGPSRoutes:
     """Class for testing GPS routes functionality."""
 
-    def test_get_journies_without_jwt(self, client):
-        """Test getting user journies without a JWT."""
-        response = client.get("/get_journies_of_user")
+    def test_get_journeys_without_jwt(self, client):
+        """Test getting user journeys without a JWT."""
+        response = client.get("/get_journeys_of_user")
         assert response.status_code == 401  # Expecting Unauthorized access
 
     
