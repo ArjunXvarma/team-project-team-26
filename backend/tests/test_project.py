@@ -5,6 +5,8 @@ from flask_jwt_extended import create_access_token
 import pytest
 import constants
 
+from app.resources import GPSRoutes
+
 # Initialize bcrypt
 bcrypt = Bcrypt(app)
 
@@ -134,9 +136,9 @@ class TestLogin:
 class TestGPSRoutes:
     """Class for testing GPS routes functionality."""
 
-    def test_get_journies_without_jwt(self, client):
-        """Test getting user journies without a JWT."""
-        response = client.get("/get_journies_of_user")
+    def test_get_journeys_without_jwt(self, client):
+        """Test getting user journeys without a JWT."""
+        response = client.get("/get_journeys_of_user")
         assert response.status_code == 401  # Expecting Unauthorized access
 
     
@@ -171,6 +173,43 @@ class TestGPSRoutes:
         response = client.put("/update_journey/1", json=journey_update_data)
         assert response.status_code == 401
 
+    def test_validate_points(self):
+        points_valid = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25, 'ele': 10}
+        ]
+        assert GPSRoutes.validate_points(points_valid)[0] == True
+
+    def validate_points_missing_keys(self):
+        points_missing_key = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25}
+        ]
+        assert GPSRoutes.validate_points(points_missing_key)[0] == False
+
+    def validate_points_extra_keys(self):
+        points_extra_key = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'lon': 25, 'ele': 10, 'temp': 50} 
+        ]
+        assert GPSRoutes.validate_points(points_extra_key)[0] == False
+
+    def validate_points_missing_and_extra_keys(self):
+        points_missing_and_extra_keys = [
+            {'lat': 10, 'lon': 20, 'ele': 5},
+            {'lat': 15, 'temp': 50} 
+        ]
+        assert GPSRoutes.validate_points(points_missing_and_extra_keys)[0] == False
+
+    def validate_points_empty(self):
+        points_empty = []
+        assert GPSRoutes.validate_points(points_empty)[0] == False
+
+    def validate_points_different_order(self):
+        points_different_order = [
+            {'ele': 5, 'lon': 20, 'lat': 10}
+        ]
+        assert GPSRoutes.validate_points(points_different_order)[0] == True
 
 class TestMembershipRoutes:
     """Class for testing membership routes functionality.""" 
