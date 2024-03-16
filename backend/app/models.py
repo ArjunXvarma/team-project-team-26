@@ -34,7 +34,7 @@ class Membership(db.Model):
     mode_of_payment = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     auto_renew = db.Column(db.Boolean, default=False)
-    date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.now(), nullable=False)
 
 class Role(db.Model):
     __tablename__ = 'role'

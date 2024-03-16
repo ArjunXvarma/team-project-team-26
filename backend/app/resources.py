@@ -7,6 +7,8 @@ import json
 import constants
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
+from constants import PaymentMethod, MembershipType, MembershipDuration, MembershipPriceMonthly, MembershipPriceAnnually
+
 bcrypt = Bcrypt(app)
 
 #Enabling CORS for all the routes
@@ -1045,13 +1047,52 @@ class FriendshipRoutes:
         return jsonify({"friends": friends_list}), 200
     
 class AdminRoutes:
-    def create_admin_role():
+    """
+    Class for handling all the admin related routes.
+
+    Methods
+    -------
+    createAdminRole() -> (Role | Any):
+        Assigns an admin role to an ordinary user.
+    careateAdminUser() -> Tuple[Response, int]:
+        Allows the creation of an admin user.
+    isUserAdmin() -> Tuple[Response, int]:
+        Checks if a user has admin privileges.
+    getAllUsers() -> Tuple[Response, int]:
+        Returns all the users that are on the app.
+    deleteUser(userId) -> Tuple[Response, int]:
+        Deletes a user with the given user ID.
+    displayRevenues() -> Tuple[Response, int]:
+        Returns all the weekly revenues.
+    """
+    
+    def createAdminRole():
         admin_role = models.Role.query.filter_by(name='admin').first()
         if not admin_role:
             admin_role = models.Role(name='admin')
             db.session.add(admin_role)
             db.session.commit()
         return admin_role
+    
+    def getMembershipPrice(membershipType, duration):
+        membershipType = membershipType.upper()
+
+        prices = {
+            'BASIC': {
+                'Monthly': MembershipPriceMonthly.BASIC_MONTHLY_PRICE.value,
+                'Annually': MembershipPriceAnnually.BASIC_ANNUAL_PRICE.value,
+            },
+            'STANDARD': {
+                'Monthly': MembershipPriceMonthly.STANDARD_MONTHLY_PRICE.value,
+                'Annually': MembershipPriceAnnually.STANDARD_ANNUAL_PRICE.value,
+            },
+            'PREMIUM': {
+                'Monthly': MembershipPriceMonthly.PREMIUM_MONTHLY_PRICE.value,
+                'Annually': MembershipPriceAnnually.PREMIUM_ANNUAL_PRICE.value,
+            },
+        }
+
+        return prices.get(membershipType, {}).get(duration, 0)
 
     @app.route('/admin/create_admin_user', methods=['POST'])
     def careateAdminUser():
@@ -1059,14 +1100,12 @@ class AdminRoutes:
         if not data:
             return jsonify({"status": 0, "error": "No JSON Data found"}), 400
         
-        # Extract user data
         first_name = data.get("first_name")
         last_name = data.get("last_name")
         email = data.get("email")
         password = data.get("password")
         date_of_birth_str = data.get("date_of_birth")
         
-        # Validation
         if not all([password, email, first_name, date_of_birth_str]):
             return jsonify({"status": 400, "error": "Missing Required Fields"}), 400
         
@@ -1084,18 +1123,123 @@ class AdminRoutes:
             hashed_password=hashed_password
         )
         
-        admin_role = AdminRoutes.create_admin_role()
+        admin_role = AdminRoutes.createAdminRole()
         user.roles.append(admin_role)
         db.session.add(user)
         db.session.commit()
         
         return jsonify({"status": 200, "message": "Admin user created successfully"}), 201
     
-    @app.route('admin/check_if_admin/<int:userId>', methods=['GET'])
-    def is_user_admin(userId):
-        user = models.User.query.get(userId)
+    @app.route('/admin/check_if_admin', methods=['GET'])
+    @jwt_required()
+    def isUserAdmin():
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
         if not user:
-            return jsonify({"status": 404, "message": "User not found"}), 404
-        
-        is_admin = any(role.name == 'admin' for role in user.roles)
-        return jsonify({"status": 200, "is_admin": is_admin}), 200
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+        isAdmin = any(role.name == 'admin' for role in user.roles)
+        return jsonify({"status": 200, "isAdmin": isAdmin}), 200
+    
+    @app.route('/admin/get_all_users', methods=['GET'])
+    @jwt_required()
+    def getAllUsers():
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not current_user:
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+
+        if not any(role.name == 'admin' for role in current_user.roles):
+            return jsonify({'status': 401, 'message': 'Error: Unauthorized access'}), 401
+
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+
+        offset = (page - 1) * per_page
+
+        non_admin_users_query = models.User.query.filter(~models.User.roles.any(models.Role.name == 'admin'))
+        non_admin_users = non_admin_users_query.offset(offset).limit(per_page).all()
+
+        users_data = []
+        for user in non_admin_users:
+            membership_type = 'No membership'
+            if user.membership:
+                membership_type = user.membership.membership_type
+                
+            user_info = {
+                "name": f"{user.first_name} {user.last_name}",
+                "email": user.email,
+                "dob": user.date_of_birth.strftime('%d-%m-%Y'),
+                "account_created": user.account_created.strftime('%d-%m-%Y'),
+                "membership_type": membership_type
+            }
+            users_data.append(user_info)
+
+        total = non_admin_users_query.count()
+
+        return jsonify({
+            "status": 200,
+            "users": users_data,
+            "total": total,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": (total + per_page - 1) // per_page  
+        }), 200
+    
+    @app.route('/admin/delete_user/<int:userId>', methods=['DELETE'])
+    @jwt_required()
+    def deleteUser(userId):
+        """
+        Deletes a user with the given userId.
+        """
+
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not current_user:
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+
+        if not any(role.name == 'admin' for role in current_user.roles):
+            return jsonify({'status': 401, 'message': 'Error: Unauthorized access'}), 401
+
+        user_to_delete = models.User.query.get(userId)
+        if not user_to_delete:
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+
+        db.session.delete(user_to_delete)
+        db.session.commit()
+        return jsonify({'status': 200, 'message': 'User successfully deleted'}), 200
+    
+    @app.route('/admin/get_revenues', methods=['GET'])
+    @jwt_required()
+    def displayRevenues():
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not current_user:
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+
+        if not any(role.name == 'admin' for role in current_user.roles):
+            return jsonify({'status': 401, 'message': 'Unauthorized access'}), 401
+
+        memberships = models.Membership.query.all()
+        weekly_revenues = {}
+
+        for membership in memberships:
+            week = membership.date_created.strftime('%Y-%W')
+            price = AdminRoutes.getMembershipPrice(membership.membership_type, membership.duration)
+
+            if week not in weekly_revenues:
+                weekly_revenues[week] = {'total_revenue': 0, 'total_sold': 0, 'by_type': {}}
+
+            weekly_revenues[week]['total_revenue'] += price
+            weekly_revenues[week]['total_sold'] += 1
+
+            if membership.membership_type not in weekly_revenues[week]['by_type']:
+                weekly_revenues[week]['by_type'][membership.membership_type] = {'total_revenue': 0, 'total_sold': 0}
+
+            weekly_revenues[week]['by_type'][membership.membership_type]['total_revenue'] += price
+            weekly_revenues[week]['by_type'][membership.membership_type]['total_sold'] += 1
+
+        result = [dict(week=week, **data) for week, data in weekly_revenues.items()]
+        return jsonify(result), 200
