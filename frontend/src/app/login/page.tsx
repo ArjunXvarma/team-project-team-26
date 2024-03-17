@@ -72,6 +72,7 @@ export default function Login() {
           message: "Logging you in",
         });
         Cookie.set("token", loginResponse.session_token!);
+        Cookie.set("username", loginResponse.name!);
         router.push("/");
       }
     } catch (error) {

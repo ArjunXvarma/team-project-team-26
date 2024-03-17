@@ -53,7 +53,8 @@ export default function Home(){
         }
       };
       
-    
+     
+
     return (
         <main className="w-full min-h-screen bg-primary flex justify-center items-center"> 
             <div className="max-w-screen-lg w-full mb-20">
@@ -76,9 +77,9 @@ export default function Home(){
                 </div>  
 
 
-                <div className="flex justify-center mt-10 gap-2 flex-wrap">
+                <div className="flex justify-center items-center mt-10 gap-2 flex-wrap">
                 {selectedPlanType && selectedMembershipPlans?.map((plan, index) => (
-                <div key={index} className={`flex flex-col items-center rounded-xl p-6 w-72 h-96  ${selectedPlan === index ? 'bg-lightGreen' : 'bg-white'}`}>
+                <div key={index} className={`flex flex-col items-center rounded-xl p-6 w-72 h-80  ${selectedPlan === index ? 'bg-lightGreen w-80 h-96' : 'bg-white'}`}>
                         <p className="text-2xl font-serif mt-2 ">{membershipData?.MembershipType[index]}</p>
                         <div className='divide-y divide-gray-500 flex flex-col justify-between '>
                             <div className="flex font-serif mb-3 justify-center">
@@ -87,11 +88,6 @@ export default function Home(){
                                 <p className="text-xl mt-7">/{selectedPlanType}</p>
                             </div>
                             
-                            {/* <div className="flex flex-col text-center mt-4">
-                                {plan.features.map((feature, index) => (
-                                    <p key={index} className="mb-2">{feature}</p>
-                                ))}
-                            </div> */}
                             <div className="text-white py-4 flex items-center justify-center">
                                 {selectedPlan === index ? (
                                     <Button onClick={() => handleSelectPlan(index)} className=" bg-gray-500" variant="filled" color="gray" radius="sm">Cancel</Button>
@@ -109,7 +105,8 @@ export default function Home(){
                         <div className="flex justify-center mt-10">
                             <Link href={{ pathname: '/payment', query: { 
                                     selectedPlanName: membershipData?.MembershipType[selectedPlan],
-                                    selectedPlanPrice: "£"+selectedMembershipPlans?.[selectedPlan]+"/"+selectedPlanType
+                                    selectedPlanPrice: "£"+selectedMembershipPlans?.[selectedPlan]+"/",
+                                    selectedPlanDuration: selectedPlanType+""
                                 }}}>
                                 <Button className="text-white px-4 py-2 rounded bg-green-600" variant="filled" size="md"> Continue &nbsp; <FaArrowRight/></Button>
                             </Link>
