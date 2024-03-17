@@ -55,10 +55,10 @@ class MembershipPriceAnnually(Enum):
 
 # Check if mode of payment is valid
 def is_valid_payment_method(mode_of_payment):
-        for paymentMode in PaymentMethod:
-            if paymentMode.value == mode_of_payment:
-                return True
-        return False
+    for paymentMode in PaymentMethod:
+        if paymentMode.value == mode_of_payment:
+            return True
+    return False
     
 
 # Check if membership duration is valid

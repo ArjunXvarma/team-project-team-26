@@ -14,6 +14,7 @@ class User(db.Model):
     last_name = db.Column(db.String(80))
     email = db.Column(db.String(80), nullable=False, unique=True)
     date_of_birth = db.Column(db.DateTime, nullable=False)
+    account_created = db.Column(db.DateTime, default=datetime.now(), nullable=False)
 
     hashed_password = db.Column(db.String(300), nullable=False)
     # Establish relationship with roles
@@ -34,7 +35,7 @@ class Membership(db.Model):
     mode_of_payment = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     auto_renew = db.Column(db.Boolean, default=False)
-    date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.now(), nullable=False)
 
 class Role(db.Model):
     __tablename__ = 'role'
@@ -47,16 +48,7 @@ class Journey(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     userId = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    name = db.Column(db.String, nullable=False)
-    type = db.Column(db.String, nullable=False)
-    totalDistance = db.Column(db.Float, nullable=False)
-    
-    avgEle = db.Column(db.Float, nullable=False)
-    minEle = db.Column(db.Float, nullable=False)
-    maxEle = db.Column(db.Float, nullable=False)
-    
-    points = db.Column(db.String, nullable=False)  
-    
+    gpxData = db.Column(db.String, nullable=False)
     startTime = db.Column(db.Time, nullable=False)
     endTime = db.Column(db.Time, nullable=False)
     dateCreated = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)

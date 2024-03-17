@@ -11,9 +11,17 @@ import { FaApple } from "react-icons/fa6";
 import { FaAlipay } from "react-icons/fa6";
 import { number, expirationDate, cvv } from 'card-validator';
 import { API_URL } from "@/constants";
-
+import { AuthAPIResponse } from "@/types";
+import { BiSolidError } from "react-icons/bi";
+import Cookie from "js-cookie";
+import { notifications } from "@mantine/notifications";
+import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import { useRouter } from "next/navigation";
 
 export default function Payment() {
+
+    const router = useRouter();
+    const [loading, setLoading] = useState(false);
 
     interface PaymentMethodData{
        PaymentMethod: string[];
@@ -49,13 +57,65 @@ export default function Payment() {
     const searchParams = useSearchParams();
     const name = searchParams.get("selectedPlanName");
     const price = searchParams.get("selectedPlanPrice")
+    const duration = searchParams.get("selectedPlanDuration")
+
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<String | null>(null);
 
     const handlePaymentMethodChange = (method:String) => {
         setSelectedPaymentMethod(method);
     };
 
-      
+    const submit = async () => {
+        setLoading(true);
+        try {
+          const token = Cookie.get("token"); 
+          const response = await fetch(`${API_URL}/buy_membership`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({
+                membership_type: name,
+                duration: duration,
+                mode_of_payment: selectedPaymentMethod,
+            }),
+          });
+    
+            const purchaseResponse: AuthAPIResponse = await response.json();
+            // handle errors
+            if (response.status == 400) {
+                console.log(purchaseResponse.error);
+                notifications.show({
+                    color: "red",
+                    title: "Error",
+                    icon: <BiSolidError />,
+                    message: purchaseResponse.error,
+                });
+            } else if (response.status == 401) {
+                console.log(purchaseResponse.error);
+            } else {
+                notifications.show({
+                color: "green",
+                title: "Success",
+                icon: <IoMdCheckmarkCircleOutline />,
+                message: "Purchased Membership",
+                });
+                router.push("/thankyou");
+            }
+
+        } catch (error) {
+        console.log(error);
+        notifications.show({
+            color: "red",
+            title: "Server Error",
+            icon: <BiSolidError />,
+            message: "There was a problem contacting the server. Please try again later.",
+        });
+        }
+        
+        setLoading(false);
+    };
+
         return ( 
         <main className="w-screen h-screen bg-primary">
             <div className="w-full h-full">
@@ -68,6 +128,7 @@ export default function Payment() {
                     <div className="w-fit flex bg-white  rounded-md p-4 ">
                         <p className="text-lg">Selected Plan: &nbsp; </p>
                         <p className="font-semibold text-lg">{name} - {price}</p>
+                        <p className="font-semibold text-lg">{duration}</p>
                     </div>  
                 </div>
 
@@ -86,9 +147,7 @@ export default function Payment() {
                     <CreditCardForm/> :
                         ( selectedPaymentMethod !== null ? 
                                 <div>
-                                    <Link href={"/thankyou"}>
-                                        <Button className="bg-green-600 hover:bg-green-700" >Continue</Button>
-                                    </Link>
+                                    <Button onClick={submit} className="bg-green-600 hover:bg-green-700" >Continue</Button>
                                 </div>
                             :
                             null
