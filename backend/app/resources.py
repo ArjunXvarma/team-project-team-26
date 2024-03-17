@@ -1,16 +1,16 @@
-from app import app, db, models
+from app import (app, db, models, create_access_token,
+    get_jwt, get_jwt_identity, unset_jwt_cookies, jwt_required
+    )
 from flask import Flask, request, jsonify, Response
 from flask_bcrypt import Bcrypt
 from typing import Tuple
 from datetime import datetime, timedelta, timezone
-from flask_jwt_extended import (
-    create_access_token, get_jwt, get_jwt_identity,
-    unset_jwt_cookies, jwt_required
-)
 import json
 import constants
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
+from constants import PaymentMethod, MembershipType, MembershipDuration, MembershipPriceMonthly, MembershipPriceAnnually
+
 bcrypt = Bcrypt(app)
 
 class AuthenticationRoutes:
@@ -63,7 +63,6 @@ class AuthenticationRoutes:
             If unsuccessful, returns:
                 - "return_code": 0
                 - "error": Details about the error encountered during registration.
-
         HTTP Status Codes
         -----------------
         200 : OK
@@ -165,10 +164,8 @@ class AuthenticationRoutes:
         user = models.User.query.filter_by(email=email).first()
         if user is None:
             return jsonify({"return_code":0, "error": "User Not found with the given Email"}), 404
-
         if not bcrypt.check_password_hash(user.hashed_password, password):
             return jsonify({"return_code":1, "error": "Incorrect password, please try again"}), 401
-
         access_token = create_access_token(identity=email)
         full_user_name = (user.first_name+" "+user.last_name)
         return jsonify({
@@ -240,8 +237,6 @@ class AuthenticationRoutes:
         response = jsonify({"msg": "logout successful"})
         unset_jwt_cookies(response)
         return response
-
-
 class GPSRoutes:
     """
     Class for querying the journey data.
@@ -252,6 +247,8 @@ class GPSRoutes:
 
     Methods
     -------
+    validate_points(points) -> json:
+        Returns if the points are valid or not.
     getJourneys(userId) -> json:
         returns the journeys of a user.
     createJourney() -> json:
@@ -347,7 +344,6 @@ class GPSRoutes:
             return jsonify({'status': 200, 'data': journey_data}), 200
         else:
             return jsonify({'status': 404, 'message': 'No journeys found for given userId'}), 404
-
     @app.route("/create_journey", methods=["POST"])
     @jwt_required()
     def createJourney() -> Tuple[dict, int]:
@@ -376,7 +372,6 @@ class GPSRoutes:
             format.
 
         """
-
         current_user_email = get_jwt_identity()
         user = models.User.query.filter_by(email=current_user_email).first()
         if not user:
@@ -431,7 +426,6 @@ class GPSRoutes:
         db.session.commit()
 
         return jsonify({'status': 201, 'message': 'Journey created successfully'}), 201
-
     @app.route("/delete_journey/<int:journeyId>", methods=["DELETE"])
     @jwt_required()
     def deleteJourney(journeyId) -> Tuple[dict, int]:
@@ -461,7 +455,6 @@ class GPSRoutes:
         user = models.User.query.filter_by(email=current_user_email).first()
         if not user:
             return jsonify({'status': 404, 'message': 'User not found'}), 404
-
         journeys = models.Journey.query.filter_by(userId=user.id).all()
 
         for journey in journeys:
@@ -469,9 +462,7 @@ class GPSRoutes:
                 db.session.delete(journey)
                 db.session.commit()
                 return {'status': 200, 'message': 'Journey deleted successfully'}, 200
-
         return {'status': 404, 'message': 'Journey not found'}, 404
-
 
     @app.route("/update_journey/<int:journeyId>", methods=["PUT"])
     @jwt_required()
@@ -500,7 +491,6 @@ class GPSRoutes:
         """
 
         journey = models.Journey.query.get(journeyId)
-
         if not journey:
             return jsonify({'status': 404, 'message': 'Journey not found'}), 404
 
@@ -513,7 +503,6 @@ class GPSRoutes:
             journey.type = data['type']
         if 'totalDistance' in data:
             journey.totalDistance = data['totalDistance']
-
         if 'elevation' in data:
             elevation = data['elevation']
             if 'avg' in elevation:
@@ -529,7 +518,6 @@ class GPSRoutes:
             valid, error_message = GPSRoutes.validate_points(points)
             if not valid:
                 return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
-
             journey.points = json.dumps(points)
 
         try:
@@ -545,7 +533,6 @@ class GPSRoutes:
         db.session.commit()
 
         return jsonify({'status': 200, 'message': 'Journey updated successfully'}), 200
-
 class MembershipRoutes:
     """
     Class for handling membership routes.
@@ -611,7 +598,6 @@ class MembershipRoutes:
         membership_type = data.get("membership_type")
         duration = data.get("duration")
         mode_of_payment = data.get("mode_of_payment")
-
         if not all([membership_type, duration, mode_of_payment]):
             return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
 
@@ -628,13 +614,10 @@ class MembershipRoutes:
             end_date = start_date + timedelta(days=30)
         elif duration.lower() == 'annually':
             end_date = start_date + timedelta(days=365)
-
         if not constants.is_valid_membership_type(membership_type):
             return jsonify({"return_code": 0, "error": "Invalid membership type"}), 400
-
         if not constants.is_valid_payment_method(mode_of_payment):
             return jsonify({"return_code": 0, "error": "Invalid mode of payment"}), 400
-
         new_membership = models.Membership(
             user_id=user.id,
             membership_type=membership_type,
@@ -649,7 +632,6 @@ class MembershipRoutes:
         db.session.commit()
 
         return jsonify({"return_code": 1, "message": "Membership purchased successfully"}), 200
-
     @app.route("/cancel_membership", methods=["DELETE"])
     @jwt_required()
     def cancel_membership() -> Tuple[Response, int]:
@@ -730,7 +712,6 @@ class MembershipRoutes:
             return jsonify({"has_active_membership": True}), 200
         else:
             return jsonify({"has_active_membership": False}), 200
-
 
     def auto_renew_memberships():
         """
@@ -905,7 +886,6 @@ class FriendshipRoutes:
         db.session.commit()
 
         return jsonify({"message": "Friend request accepted"}), 200
-
     @app.route("/reject_friend_request", methods=["POST"])
     @jwt_required()
     def reject_friend_request() -> Tuple[Response, int]:
