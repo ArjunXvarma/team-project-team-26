@@ -4,6 +4,12 @@ from sklearn.ensemble import RandomForestRegressor
 from pandas.tseries.offsets import MonthBegin, Week
 
 def generateFutureRevenueData(requestData, frequency='monthly'):
+    if len(requestData) == 0: 
+        return []
+    
+    if frequency not in ['monthly', 'weekly']:
+        return []
+    
     data = []
     for revData in requestData:
         data.append({
