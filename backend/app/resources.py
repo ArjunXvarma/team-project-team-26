@@ -1187,26 +1187,38 @@ class AdminRoutes:
         if not any(role.name == 'admin' for role in current_user.roles):
             return jsonify({'status': 401, 'message': 'Unauthorized access'}), 401
 
-        memberships = models.Membership.query.all()
-        weekly_revenues = {}
+        period = request.args.get('period', default='week', type=str)
+        limit = request.args.get('limit', default=10, type=int)
 
-        for membership in memberships:
-            week = membership.date_created.strftime('%Y-%W')
+        if period not in ['week', 'month']:
+            return jsonify({'status': 400, 'message': 'Invalid period parameter. Use "week" or "month".'}), 400
+
+        revenues = {}
+        for membership in models.Membership.query.all():
+            # Adjust the format based on the period
+            if period == 'week':
+                period_key = membership.date_created.strftime('%Y-%W')
+            elif period == 'month':
+                period_key = membership.date_created.strftime('%Y-%m')
+            
             price = AdminRoutes.getMembershipPrice(membership.membership_type, membership.duration)
 
-            if week not in weekly_revenues:
-                weekly_revenues[week] = {'total_revenue': 0, 'total_sold': 0, 'by_type': {}}
+            if period_key not in revenues:
+                revenues[period_key] = {'total_revenue': 0, 'total_sold': 0, 'by_type': {}}
 
-            weekly_revenues[week]['total_revenue'] += price
-            weekly_revenues[week]['total_sold'] += 1
+            revenues[period_key]['total_revenue'] += price
+            revenues[period_key]['total_sold'] += 1
 
-            if membership.membership_type not in weekly_revenues[week]['by_type']:
-                weekly_revenues[week]['by_type'][membership.membership_type] = {'total_revenue': 0, 'total_sold': 0}
+            if membership.membership_type not in revenues[period_key]['by_type']:
+                revenues[period_key]['by_type'][membership.membership_type] = {'total_revenue': 0, 'total_sold': 0}
 
-            weekly_revenues[week]['by_type'][membership.membership_type]['total_revenue'] += price
-            weekly_revenues[week]['by_type'][membership.membership_type]['total_sold'] += 1
+            revenues[period_key]['by_type'][membership.membership_type]['total_revenue'] += price
+            revenues[period_key]['by_type'][membership.membership_type]['total_sold'] += 1
 
-        result = [dict(week=week, **data) for week, data in weekly_revenues.items()]
+        # Sorting and limiting the revenues based on most recent periods
+        sorted_revenues = sorted(revenues.items(), key=lambda x: x[0], reverse=True)[:limit]
+        result = [dict(period=period, **data) for period, data in sorted_revenues]
+        
         return jsonify(result), 200
     
     @app.route('/admin/get_future_revenue', methods=['GET'])
