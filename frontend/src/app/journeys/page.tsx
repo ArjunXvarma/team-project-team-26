@@ -1,27 +1,28 @@
 "use client";
 import "@mantine/dates/styles.css";
 import dayjs from "dayjs";
+import Link from "next/link";
 import Cookie from "js-cookie";
-import router from "next/router";
 import GPXparser from "gpxparser";
 import { API_URL } from "@/constants";
 import { GrAdd } from "react-icons/gr";
-import { BiSolidError } from "react-icons/bi";
-import { Button, Loader, Modal, Select, TextInput } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
-import { ChangeEvent, useState } from "react";
 import { GiPathDistance } from "react-icons/gi";
 import { AiOutlineCompass } from "react-icons/ai";
 import { DateInput, TimeInput } from "@mantine/dates";
-import { notifications } from "@mantine/notifications";
-import { IoMdCheckmarkCircleOutline } from "react-icons/io";
-import { useForm } from "@mantine/form";
+import { ChangeEvent, useEffect, useState } from "react";
+import { Button, Loader, Modal, Select, TextInput } from "@mantine/core";
+import { CreateJourneyAPIResponse, GetJourneyAPIResponse, Journey } from "@/types";
+import { formatDate, isValidTime, showErrorMessage, showSuccessMessage } from "@/utils";
 
 export default function Journeys() {
   const validTypes = ["Run", "Walk", "Cycle"];
-  const [loading, setLoading] = useState(false);
   const [gpxLoading, setGPXLoading] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
+  const [journeys, setJourneys] = useState<Journey[]>([]);
+  const [getJourneyLoading, setGetJourneyLoading] = useState(true);
+  const [createJourneyLoading, setCreateJourneyLoading] = useState(false);
   const [fileUploadStatus, setFileUploadStatus] = useState<{
     type: "success" | "error";
     msg: String;
@@ -53,14 +54,9 @@ export default function Journeys() {
     if (file) {
       const reader = new FileReader();
       reader.onload = function (event: ProgressEvent<FileReader>) {
-        const rawData = event.target!.result;
+        const rawData = (event.target as FileReader).result;
         if (!rawData) {
-          notifications.show({
-            color: "red",
-            title: "Server Error",
-            icon: <BiSolidError />,
-            message: "Unable to parse the GPX file.",
-          });
+          showErrorMessage("Error", "Unable to parse the GPX file.");
           return;
         }
         const gpx = new GPXparser();
@@ -81,13 +77,6 @@ export default function Journeys() {
     }
     setFileUploadStatus({ type: "success", msg: "File Uploaded" });
     setGPXLoading(false);
-  };
-
-  // Check if start and end times are valid
-  const isValidTime = (hour: number, minute: number) => {
-    return (
-      !isNaN(hour) && !isNaN(minute) && hour >= 0 && hour < 24 && minute >= 0 && minute < 60
-    );
   };
 
   const validateForm = () => {
@@ -151,11 +140,11 @@ export default function Journeys() {
     return exitCode;
   };
 
-  const submit = async () => {
-    setLoading(true);
+  const createJourney = async () => {
+    setCreateJourneyLoading(true);
 
     if (validateForm() !== 0) {
-      setLoading(false);
+      setCreateJourneyLoading(false);
       return;
     }
 
@@ -166,23 +155,64 @@ export default function Journeys() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ ...form.values, dateCreated: form.values.eventDate }),
+        body: JSON.stringify({
+          ...form.values,
+          dateCreated: formatDate(form.values.eventDate!),
+        }),
       });
 
-      const data = await response.json();
-      console.log(data);
+      const data: CreateJourneyAPIResponse = await response.json();
+
+      if (response.status === 400) {
+        showErrorMessage("Error", data.message);
+      } else {
+        showSuccessMessage("Success", data.message);
+        getJourneys();
+        close();
+      }
     } catch (error) {
       console.log(error);
-      notifications.show({
-        color: "red",
-        title: "Server Error",
-        icon: <BiSolidError />,
-        message: "There was a problem contacting the server. Please try again later.",
-      });
+      showErrorMessage(
+        "Server Error",
+        "There was a problem contacting the server. Please try again later."
+      );
     }
 
-    setLoading(false);
+    setCreateJourneyLoading(false);
   };
+
+  const getJourneys = async () => {
+    setGetJourneyLoading(true);
+
+    const token = Cookie.get("token");
+    try {
+      const response = await fetch(`${API_URL}/get_journeys_of_user`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+
+      const journeyData: GetJourneyAPIResponse = await response.json();
+      console.log(journeyData);
+      if (response.status === 404) {
+        showErrorMessage("Error", journeyData.message!);
+      } else {
+        setJourneys(journeyData.data!);
+        [];
+      }
+    } catch (error) {
+      console.log(error);
+      showErrorMessage(
+        "Server Error",
+        "There was a problem contacting the server. Please try again later."
+      );
+    }
+
+    setGetJourneyLoading(false);
+  };
+
+  useEffect(() => {
+    getJourneys();
+  }, []);
 
   return (
     <main>
@@ -193,10 +223,34 @@ export default function Journeys() {
           Add
         </Button>
       </div>
-      <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md border-slate-100 bg-slate-50 text-slate-400">
-        <GiPathDistance size={64} />
-        <h2 className="text-xs md:text-lg">You haven't taken a journey yet</h2>
-      </div>
+      {journeys && journeys.length === 0 && (
+        <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md border-slate-100 bg-slate-50 text-slate-400">
+          <GiPathDistance size={64} />
+          <h2 className="text-xs md:text-lg">You haven't taken a journey yet</h2>
+        </div>
+      )}
+
+      {getJourneyLoading && (
+        <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md border-slate-100 bg-slate-50 text-slate-400">
+          <Loader size={32} color="gray" />
+          <h2 className="text-xs md:text-lg">Loading your journeys</h2>
+        </div>
+      )}
+
+      {journeys &&
+        journeys.map((journey, i) => (
+          <div
+            key={i}
+            className="mt-10 mx-10 px-5 py-3 border-2 rounded-md border-slate-100 bg-[#E8EFEC]"
+          >
+            <Link href={`/journeys/${journey.id}`}>
+              <h2 className="font-semibold mt-5">{journey.name}</h2>
+              <h3 className="mt-3">Date: {journey.dateCreated}</h3>
+              <h3 className="mt-2">Distance: {journey.totalDistance.toFixed(2)}</h3>
+            </Link>
+          </div>
+        ))}
+
       <Modal opened={opened} onClose={close} title="Upload Journey" size="lg">
         <div className="flex flex-col gap-3">
           <TextInput label="Name" {...form.getInputProps("name")} />
@@ -247,8 +301,8 @@ export default function Journeys() {
           </label>
         </div>
         <Button
-          onClick={submit}
-          loading={loading}
+          onClick={createJourney}
+          loading={createJourneyLoading}
           className="bg-primary text-white mt-5 w-full"
         >
           Save Journey
