@@ -1032,6 +1032,12 @@ class AdminRoutes:
     """
     
     def createAdminRole():
+        """
+        Creates an 'admin' role in the database if it doesn't already exist.
+        Returns:
+            Role: The 'admin' role object.
+        """
+
         admin_role = models.Role.query.filter_by(name='admin').first()
         if not admin_role:
             admin_role = models.Role(name='admin')
@@ -1040,6 +1046,17 @@ class AdminRoutes:
         return admin_role
     
     def getMembershipPrice(membershipType, duration):
+        """
+        Retrieves the price of a membership based on its type and duration.
+        
+        Args:
+            membershipType (str): The type of membership.
+            duration (str): The duration of the membership.
+
+        Returns:
+            float: The price of the specified membership type and duration.
+        """
+
         membershipType = membershipType.upper()
 
         prices = {
@@ -1061,6 +1078,13 @@ class AdminRoutes:
 
     @app.route('/admin/create_admin_user', methods=['POST'])
     def careateAdminUser():
+        """
+        Creates an admin user with the provided details from the request.
+        
+        Returns:
+            Tuple[Response, int]: JSON response indicating success or error, HTTP status code.
+        """
+
         data = request.json
         if not data:
             return jsonify({"status": 0, "error": "No JSON Data found"}), 400
@@ -1098,6 +1122,13 @@ class AdminRoutes:
     @app.route('/admin/check_if_admin', methods=['GET'])
     @jwt_required()
     def isUserAdmin():
+        """
+        Checks if the currently authenticated user has admin privileges.
+        
+        Returns:
+            Tuple[Response, int]: JSON response indicating whether the user is an admin, HTTP status code.
+        """
+
         current_user_email = get_jwt_identity()
         user = models.User.query.filter_by(email=current_user_email).first()
         if not user:
@@ -1108,6 +1139,13 @@ class AdminRoutes:
     @app.route('/admin/get_all_users', methods=['GET'])
     @jwt_required()
     def getAllUsers():
+        """
+        Retrieves a paginated list of all users except admin users.
+        
+        Returns:
+            Tuple[Response, int]: JSON response containing a list of users, HTTP status code.
+        """
+
         current_user_email = get_jwt_identity()
         current_user = models.User.query.filter_by(email=current_user_email).first()
 
@@ -1155,7 +1193,13 @@ class AdminRoutes:
     @jwt_required()
     def deleteUser(userId):
         """
-        Deletes a user with the given userId.
+        Deletes a user based on the provided userID.
+        
+        Args:
+            userId (int): The ID of the user to delete.
+
+        Returns:
+            Tuple[Response, int]: JSON response indicating the outcome of the deletion, HTTP status code.
         """
 
         current_user_email = get_jwt_identity()
@@ -1178,6 +1222,17 @@ class AdminRoutes:
     @app.route('/admin/get_revenues', methods=['GET'])
     @jwt_required()
     def displayRevenues():
+        """
+        Retrieves revenue data based on the specified period (weekly/monthly) and limit.
+        
+        Query Parameters:
+            period (str): The period to aggregate revenue data by ('week' or 'month').
+            limit (int): The number of recent periods to return data for.
+
+        Returns:
+            Tuple[Response, int]: JSON response containing revenue data, HTTP status code.
+        """
+
         current_user_email = get_jwt_identity()
         current_user = models.User.query.filter_by(email=current_user_email).first()
 
@@ -1224,6 +1279,17 @@ class AdminRoutes:
     @app.route('/admin/get_future_revenue', methods=['GET'])
     @jwt_required()
     def getFutureRevenue():
+        """
+        Predicts future revenue based on the specified period (weekly/monthly) and limit.
+
+        Query Parameters:
+            period (str): Specifies the frequency ('weekly' or 'monthly') for predicting future revenue.
+            limit (int): Specifies how many periods into the future to predict revenues for.
+
+        Returns:
+            Tuple[Response, int]: JSON response containing predicted future revenues, HTTP status code.
+        """
+        
         current_user_email = get_jwt_identity()
         current_user = models.User.query.filter_by(email=current_user_email).first()
 
