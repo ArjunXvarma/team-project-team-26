@@ -50,6 +50,10 @@ cd backend
 echo "Installing backend dependencies..."
 pip install -r requirements.txt
 
+# Create the database
+echo "Creating the database..."
+python3 db_create.py
+
 # Start the Flask application in the background
 echo "Starting backend server..."
 flask run &

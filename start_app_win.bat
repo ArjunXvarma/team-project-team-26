@@ -34,9 +34,16 @@ call .venv\Scripts\activate.bat
 echo Installing backend dependencies...
 pip install -r requirements.txt
 
+:: Create the database
+echo Creating the database...
+python db_create.py
+
 :: Start the Flask application in the background
 echo Starting backend server...
 start /b flask run
+
+:: Store the backend process ID to allow for graceful shutdown later
+set BACKEND_PID=%!
 
 :: Navigate to the frontend directory
 cd ..
