@@ -54,9 +54,6 @@ backend/app.db
 !backend/tests/conftest.py
 ignore.py
 backend/README.md
-<<<<<<< HEAD
 vr_flask
-=======
 
 /swe
->>>>>>> f9d89c67c370ebd29a18c216bc9b42a3746870c5

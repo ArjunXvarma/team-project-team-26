@@ -68,6 +68,7 @@ export default function Login() {
       } else {
         showSuccessMessage("Success", "Logging you in!");
         Cookie.set("token", loginResponse.session_token!);
+        Cookie.set("username", loginResponse.name!);
         router.push("/");
       }
     } catch (error) {

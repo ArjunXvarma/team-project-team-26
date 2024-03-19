@@ -14,7 +14,7 @@ class User(db.Model):
     last_name = db.Column(db.String(80))
     email = db.Column(db.String(80), nullable=False, unique=True)
     date_of_birth = db.Column(db.DateTime, nullable=False)
-
+    account_created = db.Column(db.DateTime, default=datetime.now(), nullable=False)
     hashed_password = db.Column(db.String(300), nullable=False)
     # Establish relationship with roles
     roles = db.relationship('Role', secondary=user_roles, 
@@ -34,7 +34,7 @@ class Membership(db.Model):
     mode_of_payment = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     auto_renew = db.Column(db.Boolean, default=False)
-    date_created = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date_created = db.Column(db.DateTime, default=datetime.now(), nullable=False)
 
 class Role(db.Model):
     __tablename__ = 'role'
@@ -59,7 +59,7 @@ class Journey(db.Model):
     
     startTime = db.Column(db.Time, nullable=False)
     endTime = db.Column(db.Time, nullable=False)
-    dateCreated = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    dateCreated = db.Column(db.DateTime, default=datetime.now(), nullable=False)
     
 class Admin(db.Model):
     __tablename__ = 'admin'
@@ -72,6 +72,6 @@ class Friendship(db.Model):
     requester_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     addressee_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     status = db.Column(db.String(20), nullable=False, default='pending')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
     requester = db.relationship('User', foreign_keys=[requester_id], backref=db.backref('sent_requests', lazy='dynamic'))
     addressee = db.relationship('User', foreign_keys=[addressee_id], backref=db.backref('received_requests', lazy='dynamic'))
