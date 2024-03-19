@@ -1,5 +1,5 @@
 from app import app, db, models
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, make_response
 from flask_bcrypt import Bcrypt
 from typing import Tuple
 from datetime import datetime, timedelta, timezone
@@ -12,6 +12,28 @@ import constants
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
 bcrypt = Bcrypt(app)
+
+#Enabling CORS for all the routes
+def add_cors_headers(response=None):
+    if response is None:
+        response = make_response()
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'true' 
+    return response
+
+
+@app.before_request
+def before_request():
+    if request.method == 'OPTIONS':
+        return add_cors_headers()
+
+@app.after_request
+def after_request(response):
+    return add_cors_headers(response)
 
 class AuthenticationRoutes:
     """
