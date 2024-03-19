@@ -10,8 +10,6 @@ from flask_jwt_extended import (
 from sqlalchemy import func, extract
 from functools import wraps
 
-from functools import wraps
-
 # Initializing the flask app
 app = Flask(__name__)
 app.config.from_object('config')

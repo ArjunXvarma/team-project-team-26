@@ -15,7 +15,6 @@ class User(db.Model):
     email = db.Column(db.String(80), nullable=False, unique=True)
     date_of_birth = db.Column(db.DateTime, nullable=False)
     account_created = db.Column(db.DateTime, default=datetime.now(), nullable=False)
-
     hashed_password = db.Column(db.String(300), nullable=False)
     # Establish relationship with roles
     roles = db.relationship('Role', secondary=user_roles, 

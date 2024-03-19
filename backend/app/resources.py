@@ -1,7 +1,5 @@
-from app import (app, db, models, create_access_token,
-    get_jwt, get_jwt_identity, unset_jwt_cookies, jwt_required
-    )
-from flask import Flask, request, jsonify, Response
+from app import app, db, models
+from flask import Flask, request, jsonify, Response, make_response
 from flask_bcrypt import Bcrypt
 from typing import Tuple
 from datetime import datetime, timedelta, timezone
