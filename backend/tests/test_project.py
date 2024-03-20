@@ -677,6 +677,7 @@ class TestGPSRoutes:
         assert response.status_code == 400
 
 class TestGetStats:
+    '''Class for testing getStats api functionality'''
 
     def stats(self, client, clean_db):
         user = models.User(
@@ -752,7 +753,6 @@ class TestGetStats:
             "dateCreated": "2024-03-13"
         }
 
-
         # Create journeys using the provided journey data
         r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
         r2 = client.post("/create_journey", json=journey_data_2, headers={"Authorization": f"Bearer {token}"})
@@ -760,10 +760,7 @@ class TestGetStats:
 
         return token
 
-
-
     def test_stats_with_JWT(self, client, clean_db):
-
         # get stats user token
         token = self.stats(client, clean_db)
 
@@ -771,13 +768,10 @@ class TestGetStats:
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
 
-
-
     def test_stats_without_JWT(self, client, clean_db):
 
         response = client.get("/getStats")
         assert response.status_code == 401
-
 
     def test_stats_byModes_cycle(self, client, clean_db):
 
@@ -792,7 +786,6 @@ class TestGetStats:
         assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutMinutes"] == 45
         assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutSeconds"] == 0
 
-
     def test_stats_byModes_running(self, client, clean_db):
 
          # get stats user token
@@ -805,7 +798,6 @@ class TestGetStats:
         assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutHours"] == 0
         assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutMinutes"] == 45
         assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutSeconds"] == 0
-
 
     def test_stats_byModes_walking(self, client, clean_db):
 
@@ -820,12 +812,10 @@ class TestGetStats:
         assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutMinutes"] == 45
         assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutSeconds"] == 0
 
-
     def test_stats_journeyData(self, client, clean_db):
 
          # get stats user token
         token = self.stats(client, clean_db)
-
 
         # Test if the getStats api returns correct data for journeysData[0]
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
@@ -837,9 +827,6 @@ class TestGetStats:
         assert response.json["data"]["journeysData"][0]["mode"] == "Running"
         assert response.json["data"]["journeysData"][0]["totalDistance"] == 5
 
-
-
-
     def test_stats_totals_for_user(self, client, clean_db):
 
          # get stats user token
@@ -848,13 +835,11 @@ class TestGetStats:
         # Test if the getStats api returns correct values for the users total Stats, all journeys combined
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
 
-
         assert response.json["data"]["totalCaloriesBurned"] == 1236.9
         assert response.json["data"]["totalDistanceCombined"] == 16.5
         assert response.json["data"]["totalTimeWorkingOutHours"] == 3
         assert response.json["data"]["totalTimeWorkingOutMinutes"] == 0
         assert response.json["data"]["totalTimeWorkingOutSeconds"] == 0
-
 
 class TestMembershipRoutes:
     """Class for testing membership routes functionality."""
