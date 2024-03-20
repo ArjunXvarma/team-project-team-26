@@ -238,6 +238,10 @@ class AdminRoutes:
 
         if not any(role.name == 'admin' for role in current_user.roles):
             return jsonify({'status': 401, 'message': 'Unauthorized access'}), 401
+    
+        # New check: Ensure there are memberships to work with
+        if models.Membership.query.count() == 0:
+            return jsonify({'status': 404, 'message': 'No memberships found'}), 404
 
         period = request.args.get('period', default='week', type=str)
         limit = request.args.get('limit', default=10, type=int)
@@ -295,6 +299,10 @@ class AdminRoutes:
 
         if not any(role.name == 'admin' for role in current_user.roles):
             return jsonify({'status': 401, 'message': 'Unauthorized access'}), 401
+        
+        # New check: Ensure there are memberships to work with
+        if models.Membership.query.count() == 0:
+            return jsonify({'status': 404, 'message': 'No memberships found'}), 404
 
         memberships = models.Membership.query.order_by(models.Membership.date_created.desc()).all()
         revenue_data = {}
@@ -302,7 +310,6 @@ class AdminRoutes:
         period = request.args.get('period', 'week')
         limit = int(request.args.get('limit', 0))  # 0 means no limit
 
-        memberships = models.Membership.query.order_by(models.Membership.date_created.desc()).all()
         revenue_data = {}
 
         date_format = None
