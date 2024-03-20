@@ -10,10 +10,8 @@ import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
 import { AuthAPIResponse } from "@/types";
-import { BiSolidError } from "react-icons/bi";
-import { notifications } from "@mantine/notifications";
-import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
+import { formatDate, showErrorMessage, showSuccessMessage } from "@/utils";
 
 export default function Login() {
   const router = useRouter();
@@ -64,13 +62,6 @@ export default function Login() {
     return exitCode;
   };
 
-  function formatDate(date: Date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
   const submit = async () => {
     setLoading(true);
 
@@ -101,30 +92,18 @@ export default function Login() {
       const signupResponse: AuthAPIResponse = await response.json();
 
       if (signupResponse.return_code == 0) {
-        notifications.show({
-          color: "red",
-          title: "Server Error",
-          icon: <BiSolidError />,
-          message: "There was a problem contacting the server. Please try again later.",
-        });
+        showErrorMessage("Error", signupResponse.error!);
       } else {
-        notifications.show({
-          color: "green",
-          title: "Success",
-          icon: <IoMdCheckmarkCircleOutline />,
-          message: "Logging you in",
-        });
-        Cookie.set("token", signupResponse.access_token!);
+        showSuccessMessage("Success", "Logging you in!");
+        Cookie.set("token", signupResponse.access_token! as string);
         router.push("/");
       }
     } catch (error) {
       console.log(error);
-      notifications.show({
-        color: "red",
-        title: "Server Error",
-        icon: <BiSolidError />,
-        message: "There was a problem contacting the server. Please try again later.",
-      });
+      showErrorMessage(
+        "Server Error",
+        "There was a problem contacting the server. Please try again later."
+      );
     }
 
     setLoading(false);
