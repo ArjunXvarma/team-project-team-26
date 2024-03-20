@@ -299,17 +299,17 @@ class AdminRoutes:
         memberships = models.Membership.query.order_by(models.Membership.date_created.desc()).all()
         revenue_data = {}
 
-        period = request.args.get('period', 'weekly')
+        period = request.args.get('period', 'week')
         limit = int(request.args.get('limit', 0))  # 0 means no limit
 
         memberships = models.Membership.query.order_by(models.Membership.date_created.desc()).all()
         revenue_data = {}
 
         date_format = None
-        if period == 'weekly':
+        if period == 'week':
             date_format = '%Y-%W'
 
-        elif period == 'monthly':
+        elif period == 'month':
             date_format = '%Y-%m'
 
         else:
