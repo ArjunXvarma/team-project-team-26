@@ -7,9 +7,6 @@ import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
 import { AuthAPIResponse } from "@/types";
 import { useRouter } from "next/navigation";
-import { BiSolidError } from "react-icons/bi";
-import { notifications } from "@mantine/notifications";
-import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
 
@@ -58,7 +55,7 @@ export default function Login() {
         }),
       });
 
-      const loginResponse: AuthAPIResponse = await response.json();
+      const loginResponse = await response.json();
 
       // handle errors
       if (response.status == 404) {
@@ -72,8 +69,7 @@ export default function Login() {
         router.push("/");
       }
     } catch (error) {
-      console.log(error);
-      showSuccessMessage(
+      showErrorMessage(
         "Server Error",
         "There was a problem contacting the server. Please try again later."
       );
