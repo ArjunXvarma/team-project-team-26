@@ -7,10 +7,8 @@ import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
 import { AuthAPIResponse } from "@/types";
 import { useRouter } from "next/navigation";
-import { BiSolidError } from "react-icons/bi";
-import { notifications } from "@mantine/notifications";
-import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
+import { showErrorMessage, showSuccessMessage } from "@/utils";
 
 export default function Login() {
   const router = useRouter();
@@ -57,7 +55,7 @@ export default function Login() {
         }),
       });
 
-      const loginResponse: AuthAPIResponse = await response.json();
+      const loginResponse = await response.json();
 
       // handle errors
       if (response.status == 404) {
@@ -65,24 +63,16 @@ export default function Login() {
       } else if (response.status == 401) {
         form.setFieldError("password", loginResponse.error);
       } else {
-        notifications.show({
-          color: "green",
-          title: "Success",
-          icon: <IoMdCheckmarkCircleOutline />,
-          message: "Logging you in",
-        });
+        showSuccessMessage("Success", "Logging you in!");
         Cookie.set("token", loginResponse.session_token!);
         Cookie.set("username", loginResponse.name!);
         router.push("/");
       }
     } catch (error) {
-      console.log(error);
-      notifications.show({
-        color: "red",
-        title: "Server Error",
-        icon: <BiSolidError />,
-        message: "There was a problem contacting the server. Please try again later.",
-      });
+      showErrorMessage(
+        "Server Error",
+        "There was a problem contacting the server. Please try again later."
+      );
     }
 
     setLoading(false);
