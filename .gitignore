@@ -43,6 +43,7 @@ backend/app.db
 
 # Virtual Environment
 **/virtual_env
+**/venv
 /.venv
 
 /backend/app/__pycache__
