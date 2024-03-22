@@ -5,6 +5,7 @@ import Cookie from "js-cookie";
 import { useState } from "react";
 import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
+import { AuthAPIResponse } from "@/types";
 import { useRouter } from "next/navigation";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
