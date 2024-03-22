@@ -424,10 +424,11 @@ class GPSRoutes:
             return jsonify({'status': 400, 'message': f'Missing field: {str(e)}'}), 400
 
         try:
-            startTime = datetime.strptime(data['startTime'], '%H:%M:%S').time()
-            endTime = datetime.strptime(data['endTime'], '%H:%M:%S').time()
+            startTime = datetime.strptime(data['startTime'], '%H:%M').time()
+            endTime = datetime.strptime(data['endTime'], '%H:%M').time()
             dateCreated = datetime.strptime(data['dateCreated'], '%Y-%m-%d').date()
         except ValueError as e:
+            print(e)
             return jsonify({'status': 400, 'message': 'Invalid date/time format'}), 400
 
         journey = models.Journey(
