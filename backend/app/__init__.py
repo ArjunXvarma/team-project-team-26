@@ -23,3 +23,4 @@ jwt = JWTManager(app)
 
 # Importing all the modules
 from app import resources, models
+from app.Admin import Admin
