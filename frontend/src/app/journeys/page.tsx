@@ -194,7 +194,7 @@ export default function Journeys() {
       const journeyData: GetJourneyAPIResponse = await response.json();
       console.log(journeyData);
       if (response.status === 404) {
-        showErrorMessage("Error", journeyData.message!);
+        setJourneys([]);
       } else {
         setJourneys(journeyData.data!);
         [];
