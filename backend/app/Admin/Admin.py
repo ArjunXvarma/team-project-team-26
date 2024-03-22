@@ -308,9 +308,7 @@ class AdminRoutes:
         revenue_data = {}
 
         period = request.args.get('period', 'week')
-        limit = int(request.args.get('limit', 0))  # 0 means no limit
-
-        revenue_data = {}
+        limit = int(request.args.get('limit', 1))
 
         date_format = None
         if period == 'week':
@@ -340,8 +338,10 @@ class AdminRoutes:
 
         # Extracting and sorting the periods in descending order
         sorted_periods = sorted(revenue_data.keys(), reverse=True)
-        # Prepare the result for only the most recent revenues as specified by the limit
+        
         revenues = generateFutureRevenueData([dict(period=period, **revenue_data[period]) for period in sorted_periods], period)
+        if (len(revenues) == 0):
+            return jsonify({"status": 400, "message": "Error returning predicted revenues"}), 400
         
         result = {
             'status': 200,

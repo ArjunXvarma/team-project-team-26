@@ -3,11 +3,11 @@ import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from pandas.tseries.offsets import MonthBegin, Week
 
-def generateFutureRevenueData(requestData, frequency='monthly'):
+def generateFutureRevenueData(requestData, frequency='month'):
     if len(requestData) == 0: 
         return []
     
-    if frequency not in ['monthly', 'weekly']:
+    if frequency not in ['month', 'week']:
         return []
     
     data = []
@@ -21,9 +21,9 @@ def generateFutureRevenueData(requestData, frequency='monthly'):
     df = pd.DataFrame(data)
     
     # Adjusted part for handling different frequencies
-    if frequency == 'monthly':
+    if frequency == 'month':
         df['period'] = pd.to_datetime(df['period'], format='%Y-%m')
-    elif frequency == 'weekly':
+    elif frequency == 'week':
         # Assuming weekly data might be in a 'YYYY-WW' format
         df['period'] = pd.to_datetime(df['period'] + '-1', format='%Y-%W-%w')
 
@@ -46,9 +46,9 @@ def generateFutureRevenueData(requestData, frequency='monthly'):
     model.fit(X, y)
 
     # Define future periods based on the specified frequency
-    if frequency == 'monthly':
+    if frequency == 'month':
         future_periods = pd.date_range(df['period'].max() + pd.offsets.MonthBegin(), periods=12, freq='M')
-    elif frequency == 'weekly':
+    elif frequency == 'week':
         future_periods = pd.date_range(df['period'].max() + pd.offsets.Week(), periods=52, freq='W')
 
     future_df = pd.DataFrame(future_periods, columns=['period'])
@@ -60,11 +60,6 @@ def generateFutureRevenueData(requestData, frequency='monthly'):
     # Add dummy variables for future data
     for i in range(1, 13):
         future_df[f'month_{i}'] = (future_df['month'] == i).astype(int)
-
-    # Adjust features based on the frequency if needed
-    if frequency == 'weekly':
-        # Add additional features or modify existing ones for weekly predictions
-        pass
 
     future_revenues = model.predict(future_df.drop(['period'], axis=1))
     return {
