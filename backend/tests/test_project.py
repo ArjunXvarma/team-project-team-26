@@ -175,47 +175,8 @@ class TestGPSRoutes:
         assert GPSRoutes.validate_points(points_different_order)[0] == True
 
 
-    def test_validate_points(self):
-        points_valid = [
-            {'lat': 10, 'lon': 20, 'ele': 5},
-            {'lat': 15, 'lon': 25, 'ele': 10}
-        ]
-        assert GPSRoutes.validate_points(points_valid)[0] == True
-
-    def validate_points_missing_keys(self):
-        points_missing_key = [
-            {'lat': 10, 'lon': 20, 'ele': 5},
-            {'lat': 15, 'lon': 25}
-        ]
-        assert GPSRoutes.validate_points(points_missing_key)[0] == False
-
-    def validate_points_extra_keys(self):
-        points_extra_key = [
-            {'lat': 10, 'lon': 20, 'ele': 5},
-            {'lat': 15, 'lon': 25, 'ele': 10, 'temp': 50}
-        ]
-        assert GPSRoutes.validate_points(points_extra_key)[0] == False
-
-    def validate_points_missing_and_extra_keys(self):
-        points_missing_and_extra_keys = [
-            {'lat': 10, 'lon': 20, 'ele': 5},
-            {'lat': 15, 'temp': 50}
-        ]
-        assert GPSRoutes.validate_points(points_missing_and_extra_keys)[0] == False
-
-    def validate_points_empty(self):
-        points_empty = []
-        assert GPSRoutes.validate_points(points_empty)[0] == False
-
-    def validate_points_different_order(self):
-        points_different_order = [
-            {'ele': 5, 'lon': 20, 'lat': 10}
-        ]
-        assert GPSRoutes.validate_points(points_different_order)[0] == True
-
-
-    def test_get_journies_without_jwt(self, client):
-        """Test getting user journies without a JWT."""
+    def test_get_journeys_without_jwt(self, client):
+        """Test getting user journeys without a JWT."""
         response = client.get("/get_journeys_of_user")
         assert response.status_code == 401
 
@@ -296,7 +257,6 @@ class TestGPSRoutes:
         assert response.status_code == 404
 
 
-
     def test_create_journey_without_jwt(self, client):
         """Test creating a journey without a JWT."""
 
@@ -313,6 +273,147 @@ class TestGPSRoutes:
         # if there is a missing token, dont make journey
         response = client.post("/create_journey", json=journey_data)
         assert response.status_code == 401
+
+
+    def test_create_journey_with_jwt(self, client, clean_db):
+        """Test creating a journey with JWT."""
+
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Journey to be added
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        # Test if journey is created successfully
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 201
+
+
+    def test_create_journey_invalid_points_array(self, client, clean_db):
+        """Test creating a journey with JWT and invalid data."""
+
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Make a request with JWT, invalid Points array format
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "ele": 10000000},
+                {"lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        # Test the output of creating a journey with invalid points data
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 400
+
+
+    def test_create_journey_invalid_date_time(self, client, clean_db):
+        """Test creating a journey with JWT and invalid data."""
+
+        # Creation of an user
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Make a request with JWT, invalid Time and date data
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "30:00",
+            "endTime": "080400",
+            "dateCreated": "2024-0"
+        }
+
+        # Test output when creating a journey with invalid date and time formats
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 400
 
 
     def test_delete_journey_without_jwt(self, client):
@@ -413,43 +514,170 @@ class TestGPSRoutes:
         response = client.put("/update_journey/1", json=journey_update_data)
         assert response.status_code == 401
 
-    def test_validate_points(self):
-        points_valid = [
-            {'lat': 10, 'lon': 20, 'ele': 5},
-            {'lat': 15, 'lon': 25, 'ele': 10}
-        ]
-        assert GPSRoutes.validate_points(points_valid)[0] == True
 
-    def validate_points_missing_keys(self):
-        points_missing_key = [
-            {'lat': 10, 'lon': 20, 'ele': 5},
-            {'lat': 15, 'lon': 25}
-        ]
-        assert GPSRoutes.validate_points(points_missing_key)[0] == False
+    def test_update_journey_with_jwt(self, client, clean_db):
+        """Test updating a journey with a JWT."""
 
-    def validate_points_extra_keys(self):
-        points_extra_key = [
-            {'lat': 10, 'lon': 20, 'ele': 5},
-            {'lat': 15, 'lon': 25, 'ele': 10, 'temp': 50}
-        ]
-        assert GPSRoutes.validate_points(points_extra_key)[0] == False
+        # Create User
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
 
-    def validate_points_missing_and_extra_keys(self):
-        points_missing_and_extra_keys = [
-            {'lat': 10, 'lon': 20, 'ele': 5},
-            {'lat': 15, 'temp': 50}
-        ]
-        assert GPSRoutes.validate_points(points_missing_and_extra_keys)[0] == False
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
 
-    def validate_points_empty(self):
-        points_empty = []
-        assert GPSRoutes.validate_points(points_empty)[0] == False
+        # Get token
+        token = login_response.json['session_token']
 
-    def validate_points_different_order(self):
-        points_different_order = [
-            {'ele': 5, 'lon': 20, 'lat': 10}
-        ]
-        assert GPSRoutes.validate_points(points_different_order)[0] == True
+        # Create a journey to update
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+
+        # Fields to be updated
+        journey_update_data = {
+            "type": "Walking",
+            "totalDistance": 2.0,
+            "elevation": {
+                "avg": 110,
+                "min": 101,
+                "max": 145
+            },
+            "points": [
+                {"lat": 21.5, "lon": -110.2, "ele": 210},
+                {"lat": 48.6, "lon": -123.3, "ele": 120}
+            ]
+        }
+
+        # Test if journey is updated successfully
+        response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+
+    def test_update_journey_non_existing_journey(self, client, clean_db):
+        """Test updating a journey that doesn't exist."""
+
+        # Create User
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Field to be updated, no journey exists
+        journey_update_data = {
+            "type": "Walking",
+            "totalDistance": 2.0,
+            "elevation": {
+                "avg": 110,
+                "min": 101,
+                "max": 145
+            },
+            "points": [
+                {"lat": 21.5, "lon": -110.2, "ele": 210},
+                {"lat": 48.6, "lon": -123.3, "ele": 120}
+            ]
+        }
+
+        # Test if updating a non existing journey is handled correctly
+        response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 404
+
+
+
+    def test_update_journey_invalid_date_time(self, client, clean_db):
+        """Test updating a journey using invalid date and time formatted data."""
+
+        # Create User
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+
+        # Get token
+        token = login_response.json['session_token']
+
+        # Create a journey to update
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+
+        # Fields to be updated, invalid date and time data
+        journey_update_data = {
+            "type": "Walking",
+            "startTime": "07:3",
+            "endTime": "08:1:00",
+            "dateCreated": "20240312"
+        }
+
+        # Test if updating a journey with invalid data is handled correctly
+        response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 400
+
+
 
 class TestMembershipRoutes:
     """Class for testing membership routes functionality."""
@@ -1060,3 +1288,168 @@ class TestGenerateFutureRevenueData:
     def test_generate_future_revenue_invalid_frequency(self):
         result = generateFutureRevenueData(self.requestDataMonthly, 'daily')
         assert result == []
+
+class TestGetStats:
+    '''Class for testing getStats api functionality'''
+
+    def stats(self, client, clean_db):
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        # Get token
+        token = login_response.json['session_token']
+
+        # Create a Journey to test with
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        journey_data_2 = {
+            "name": "Evening Walk",
+            "type": "Walking",
+            "totalDistance": 3.5,
+            "elevation": {
+                "avg": 90,
+                "min": 80,
+                "max": 100
+            },
+            "points": [
+                {"lat": 38.7, "lon": -120.1, "ele": 95},
+                {"lat": 38.8, "lon": -120.4, "ele": 85}
+            ],
+            "startTime": "18:00:00",
+            "endTime": "18:45:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        journey_data_3 = {
+            "name": "Afternoon Cycling",
+            "type": "Cycling",
+            "totalDistance": 8.0,
+            "elevation": {
+                "avg": 110,
+                "min": 100,
+                "max": 120
+            },
+            "points": [
+                {"lat": 38.6, "lon": -120.0, "ele": 105},
+                {"lat": 38.7, "lon": -120.5, "ele": 115}
+            ],
+            "startTime": "14:00:00",
+            "endTime": "15:30:00",
+            "dateCreated": "2024-03-13"
+        }
+
+        # Create journeys using the provided journey data
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+        r2 = client.post("/create_journey", json=journey_data_2, headers={"Authorization": f"Bearer {token}"})
+        r3 = client.post("/create_journey", json=journey_data_3, headers={"Authorization": f"Bearer {token}"})
+
+        return token
+
+    def test_stats_with_JWT(self, client, clean_db):
+        # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if getStats runs successfully success, return status code 200
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+    def test_stats_without_JWT(self, client, clean_db):
+
+        response = client.get("/getStats")
+        assert response.status_code == 401
+
+    def test_stats_byModes_cycle(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: cycling
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+        assert response.json["data"]["byModes"]["cycle"]["totalDistance"] == 8
+        assert response.json["data"]["byModes"]["cycle"]["totalCaloriesBurned"] == 651
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_byModes_running(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: running
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+        assert response.json["data"]["byModes"]["running"]["totalDistance"] == 5
+        assert response.json["data"]["byModes"]["running"]["totalCaloriesBurned"] == 418.5
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_byModes_walking(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: walking
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+        assert response.json["data"]["byModes"]["walking"]["totalDistance"] == 3.5
+        assert response.json["data"]["byModes"]["walking"]["totalCaloriesBurned"] == 167.4
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_journeyData(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for journeysData[0]
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.json["data"]["journeysData"][0]["averageSpeed"] == 6
+        assert response.json["data"]["journeysData"][0]["caloriesBurned"] == 418.5
+        assert response.json["data"]["journeysData"][0]["hours_taken"] == 0
+        assert response.json["data"]["journeysData"][0]["journeyId"] == 1
+        assert response.json["data"]["journeysData"][0]["mode"] == "Running"
+        assert response.json["data"]["journeysData"][0]["totalDistance"] == 5
+
+    def test_stats_totals_for_user(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct values for the users total Stats, all journeys combined
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.json["data"]["totalCaloriesBurned"] == 1236.9
+        assert response.json["data"]["totalDistanceCombined"] == 16.5
+        assert response.json["data"]["totalTimeWorkingOutHours"] == 3
+        assert response.json["data"]["totalTimeWorkingOutMinutes"] == 0
+        assert response.json["data"]["totalTimeWorkingOutSeconds"] == 0
