@@ -52,6 +52,7 @@ backend/app.db
 !backend/tests/test_project.py
 !backend/tests/__init__.py
 !backend/tests/conftest.py
+backend/statstest.py
 ignore.py
 backend/README.md
 vr_flask
