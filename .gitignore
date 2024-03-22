@@ -54,6 +54,4 @@ backend/app.db
 !backend/tests/conftest.py
 ignore.py
 backend/README.md
-vr_flask
-
-/swe
+backend/app/Admin/__pycache__

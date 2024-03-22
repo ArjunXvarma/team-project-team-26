@@ -10,6 +10,7 @@ import constants
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
 from constants import PaymentMethod, MembershipType, MembershipDuration, MembershipPriceMonthly, MembershipPriceAnnually
+from revenuePrediction import generateFutureRevenueData
 
 bcrypt = Bcrypt(app)
 

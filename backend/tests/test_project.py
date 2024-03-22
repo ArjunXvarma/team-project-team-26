@@ -5,6 +5,7 @@ from flask_jwt_extended import create_access_token
 import pytest
 import constants
 from app.resources import GPSRoutes
+from revenuePrediction import generateFutureRevenueData
 
 # Initialize bcrypt
 bcrypt = Bcrypt(app)
@@ -1252,3 +1253,38 @@ class TestFriendshipRoutes:
         assert len(response.json['friends']) == 1
         assert response.json['friends'][0]['email'] == "bob@example.com"
         assert response.json['friends'][0]['name'] == "Bob Johnson"
+
+class TestGenerateFutureRevenueData:
+    """ Class for testing generateFutureRevenue function """
+
+    # Ensure these are defined within the setUp method
+    requestDataMonthly = [
+        {'period': '2023-01', 'total_revenue': 1000, 'total_sold': 10},
+        {'period': '2023-02', 'total_revenue': 1500, 'total_sold': 15},
+    ]
+    requestDataWeekly = [
+        {'period': '2023-01', 'total_revenue': 500, 'total_sold': 5},
+        {'period': '2023-02', 'total_revenue': 700, 'total_sold': 7},
+    ]
+
+    def test_generate_future_revenue_monthly(self):
+        result = generateFutureRevenueData(self.requestDataMonthly, 'monthly')
+        assert len(result['future_revenues']) == 12
+        assert result['frequency'] == 'monthly'
+
+    def test_generate_future_revenue_weekly(self):
+        result = generateFutureRevenueData(self.requestDataWeekly, 'weekly')
+        assert len(result['future_revenues']) == 52
+        assert result['frequency'] == 'weekly'
+
+    def test_generate_future_revenue_empty_data_monthly(self):
+        result = generateFutureRevenueData([], 'monthly')
+        assert len(result) == 0
+
+    def test_generate_future_revenue_empty_data_weekly(self):
+        result = generateFutureRevenueData([], 'weekly')
+        assert len(result) == 0
+
+    def test_generate_future_revenue_invalid_frequency(self):
+        result = generateFutureRevenueData(self.requestDataMonthly, 'daily')
+        assert result == []
