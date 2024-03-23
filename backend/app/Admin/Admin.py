@@ -18,7 +18,6 @@ def add_cors_headers(response=None):
     response.headers['Access-Control-Allow-Credentials'] = 'true' 
     return response
 
-
 @app.before_request
 def before_request():
     if request.method == 'OPTIONS':
