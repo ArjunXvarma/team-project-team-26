@@ -18,6 +18,7 @@ def add_cors_headers(response=None):
     response.headers['Access-Control-Allow-Credentials'] = 'true' 
     return response
 
+
 @app.before_request
 def before_request():
     if request.method == 'OPTIONS':
@@ -26,6 +27,7 @@ def before_request():
 @app.after_request
 def after_request(response):
     return add_cors_headers(response)
+
 
 class AdminRoutes:
     """
@@ -196,11 +198,11 @@ class AdminRoutes:
                 "id" : user.id,
                 "name": f"{user.first_name} {user.last_name}",
                 "email": user.email,
+                "id" : user.id,
                 "dob": user.date_of_birth.strftime('%d-%m-%Y'),
                 "account_created": user.account_created.strftime('%d-%m-%Y'),
                 "membership_type": membership_type,
-                "payment_method": payment_method,
-                "account_type": user.isPrivate
+                "payment_method": payment_method
             }
             users_data.append(user_info)
 

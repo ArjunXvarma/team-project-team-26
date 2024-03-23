@@ -17,6 +17,7 @@ export function middleware(req: NextRequest) {
   if (logoutRoute.test(req.nextUrl.pathname)) {
     let response = NextResponse.next();
     response.cookies.delete("token");
+    response.cookies.delete("username");
     return response;
   }
 
