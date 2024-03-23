@@ -1,5 +1,5 @@
 from app import (app, db, models, get_jwt_identity, jwt_required)
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, make_response
 from flask_bcrypt import Bcrypt
 from typing import Tuple
 from datetime import datetime
@@ -7,6 +7,26 @@ from constants import MembershipPriceMonthly, MembershipPriceAnnually
 from revenuePrediction import generateFutureRevenueData
 
 bcrypt = Bcrypt(app)
+def add_cors_headers(response=None):
+    if response is None:
+        response = make_response()
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'true' 
+    return response
+
+
+@app.before_request
+def before_request():
+    if request.method == 'OPTIONS':
+        return add_cors_headers()
+
+@app.after_request
+def after_request(response):
+    return add_cors_headers(response)
 
 class AdminRoutes:
     """
@@ -16,7 +36,7 @@ class AdminRoutes:
     -------
     createAdminRole() -> (Role | Any):
         Assigns an admin role to an ordinary user.
-    careateAdminUser() -> Tuple[Response, int]:
+    createAdminUser() -> Tuple[Response, int]:
         Allows the creation of an admin user.
     isUserAdmin() -> Tuple[Response, int]:
         Checks if a user has admin privileges.
@@ -74,6 +94,7 @@ class AdminRoutes:
         return prices.get(membershipType, {}).get(duration, 0)
 
     @app.route('/admin/create_admin_user', methods=['POST'])
+    @jwt_required()
     def createAdminUser() -> Tuple[Response, int]:
         """
         Creates an admin user with the provided details from the request.
@@ -84,7 +105,11 @@ class AdminRoutes:
 
         data = request.json
         if not data:
-            return jsonify({"status": 0, "error": "No JSON Data found"}), 400
+            return jsonify({"status": 400, "error": "No JSON Data found"}), 400
+        
+        isAdmin = any(role.name == 'admin' for role in user.roles)
+        if not isAdmin:
+            return jsonify({"status": 400, "error": "Current user is not an admin"})
         
         first_name = data.get("first_name")
         last_name = data.get("last_name")
@@ -114,7 +139,7 @@ class AdminRoutes:
         db.session.add(user)
         db.session.commit()
         
-        return jsonify({"status": 200, "message": "Admin user created successfully"}), 201
+        return jsonify({"status": 200, "message": "Admin user created successfully"}), 200
     
     @app.route('/admin/check_if_admin', methods=['GET'])
     @jwt_required()
@@ -163,15 +188,20 @@ class AdminRoutes:
         users_data = []
         for user in non_admin_users:
             membership_type = 'No membership'
+            payment_method  = 'No payment method'
             if user.membership:
                 membership_type = user.membership.membership_type
+                payment_method = user.membership.mode_of_payment
                 
             user_info = {
+                "id" : user.id,
                 "name": f"{user.first_name} {user.last_name}",
                 "email": user.email,
                 "dob": user.date_of_birth.strftime('%d-%m-%Y'),
                 "account_created": user.account_created.strftime('%d-%m-%Y'),
-                "membership_type": membership_type
+                "membership_type": membership_type,
+                "payment_method": payment_method,
+                "account_type": user.isPrivate
             }
             users_data.append(user_info)
 

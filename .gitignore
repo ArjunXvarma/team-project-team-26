@@ -56,3 +56,5 @@ backend/app.db
 ignore.py
 backend/README.md
 backend/app/Admin/__pycache__
+backend/testUsers.py
+backend/testFriends.py
