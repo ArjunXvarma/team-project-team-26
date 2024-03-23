@@ -134,6 +134,7 @@ export default function Friends() {
                     icon: <IoMdCheckmarkCircleOutline />,
                     message: "Friended Sucessfully",
                     });
+                    window.location.reload();
             } else {
                 console.log(acceptResponse.error);
                 notifications.show({
