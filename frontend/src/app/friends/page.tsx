@@ -134,7 +134,7 @@ export default function Friends() {
                     icon: <IoMdCheckmarkCircleOutline />,
                     message: "Friended Sucessfully",
                     });
-                    window.location.reload();
+                    setTimeout(function(){ window. location. reload(); }, 1500);
             } else {
                 console.log(acceptResponse.error);
                 notifications.show({
@@ -155,7 +155,7 @@ export default function Friends() {
         try {
         const token = Cookies.get("token"); 
 
-        const response = await fetch(`${API_URL}/accept_friend_request`, {
+        const response = await fetch(`${API_URL}/reject_friend_request`, {
             method: "POST",
             credentials: "include",
             headers: {  "Content-Type": "application/json",
@@ -174,6 +174,7 @@ export default function Friends() {
                     icon: <IoMdCheckmarkCircleOutline />,
                     message: "Friendship Request Declined",
                     });
+                    setTimeout(function(){ window. location. reload(); }, 1500);
             } else {
                 console.log(acceptResponse.error);
                 notifications.show({

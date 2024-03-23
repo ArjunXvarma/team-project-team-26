@@ -3,7 +3,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from 'react';
-import React, { useEffect, useState } from 'react';
 import { Button, UnstyledButton } from "@mantine/core";
 import Cookies from "js-cookie";
 import { API_URL } from "@/constants";
@@ -69,6 +68,7 @@ export default function Landing(){
                         </Link>
                     </div>
                 )}
+                </div>
                 <div className="flex items-center hover:text-green-700">
                     {isLoggedIn ? (
                     <div className="flex justify-center">
