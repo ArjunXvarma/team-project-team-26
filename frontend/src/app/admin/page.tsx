@@ -173,14 +173,14 @@ export default function Admin() {
             const response = await fetch(`${API_URL}/admin/delete_user/${id}`, {
                 method: "DELETE",
                 credentials: "include",
-                headers: { "Authorization": `Bearer ${token}`,
-                            "user_id": id.toString() }
+                headers: { "Authorization": `Bearer ${token}`}
             });
             console.log(response);
                 const deleteUser= await response.json();
 
                 if (deleteUser.status == 200) {
                     showSuccessMessage("Success", deleteUser.message);
+                    window.location.reload();
                   } else {
                     showErrorMessage("Error", deleteUser.message!);
                   }
