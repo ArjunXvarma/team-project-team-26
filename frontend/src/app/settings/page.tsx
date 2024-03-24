@@ -9,7 +9,6 @@ import { Switch } from '@mantine/core';
 import { useRouter } from "next/navigation";
 import { SegmentedControl } from '@mantine/core';
 import { API_URL } from "@/constants";
-import { AuthAPIResponse } from "@/types";
 import { BiSolidError } from "react-icons/bi";
 import Cookie from "js-cookie";
 import { notifications } from "@mantine/notifications";
@@ -46,7 +45,7 @@ export default function Settings() {
             headers: { "Authorization": `Bearer ${token}` },
           });
     
-            const cancelResponse: AuthAPIResponse = await response.json();
+            const cancelResponse = await response.json();
             // handle errors
             if (response.status == 404) {
                 console.log(cancelResponse.error);

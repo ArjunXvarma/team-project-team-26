@@ -1268,21 +1268,21 @@ class TestGenerateFutureRevenueData:
     ]
 
     def test_generate_future_revenue_monthly(self):
-        result = generateFutureRevenueData(self.requestDataMonthly, 'monthly')
+        result = generateFutureRevenueData(self.requestDataMonthly, 'month')
         assert len(result['future_revenues']) == 12
-        assert result['frequency'] == 'monthly'
+        assert result['frequency'] == 'month'
 
     def test_generate_future_revenue_weekly(self):
-        result = generateFutureRevenueData(self.requestDataWeekly, 'weekly')
+        result = generateFutureRevenueData(self.requestDataWeekly, 'week')
         assert len(result['future_revenues']) == 52
-        assert result['frequency'] == 'weekly'
+        assert result['frequency'] == 'week'
 
     def test_generate_future_revenue_empty_data_monthly(self):
-        result = generateFutureRevenueData([], 'monthly')
+        result = generateFutureRevenueData([], 'month')
         assert len(result) == 0
 
     def test_generate_future_revenue_empty_data_weekly(self):
-        result = generateFutureRevenueData([], 'weekly')
+        result = generateFutureRevenueData([], 'week')
         assert len(result) == 0
 
     def test_generate_future_revenue_invalid_frequency(self):

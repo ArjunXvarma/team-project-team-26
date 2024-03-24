@@ -157,6 +157,8 @@ export default function Journeys() {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           ...form.values,
+          endTime: `${form.values.endTime}:00`,
+          startTime: `${form.values.startTime}:00`,
           dateCreated: formatDate(form.values.eventDate!),
         }),
       });

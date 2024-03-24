@@ -43,6 +43,7 @@ backend/app.db
 
 # Virtual Environment
 **/virtual_env
+**/venv
 /.venv
 
 /backend/app/__pycache__
@@ -56,3 +57,8 @@ backend/statstest.py
 ignore.py
 backend/README.md
 backend/app/Admin/__pycache__
+
+/swe
+
+backend/testUsers.py
+backend/testFriends.py
