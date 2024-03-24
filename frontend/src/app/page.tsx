@@ -4,7 +4,7 @@ import Image from "next/image";
 import Cookies from "js-cookie";
 import { useState } from "react";
 import { SlDrop } from "react-icons/sl";
-import Navbar from "./components/navbar";
+import Navbar from "../components/navbar";
 import { FaRegHeart } from "react-icons/fa";
 import { AiOutlineFire } from "react-icons/ai";
 import { GiHamburgerMenu } from "react-icons/gi";
