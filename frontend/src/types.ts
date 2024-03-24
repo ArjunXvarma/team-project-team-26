@@ -29,6 +29,11 @@ export interface GetJourneyAPIResponse {
   status: 200 | 404;
 }
 
+export interface FriendsJourneysAPIResponse {
+  data: Journey[];
+  status: 200 | 404;
+}
+
 export interface Journey {
   id: number;
   name: String;

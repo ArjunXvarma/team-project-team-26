@@ -337,14 +337,7 @@ export default function Friends() {
                     </div>
                     <p className="text-2xl">{friend.name}</p>
                     <div className="flex-grow"> </div>
-                    <Link
-                      href={{
-                        pathname: "/friendInfo",
-                        query: {
-                          friendName: friend.name.toString(),
-                        },
-                      }}
-                    >
+                    <Link href={`/friends/${friend.email}`}>
                       <HiArrowLongRight size={48} color="gray" />
                     </Link>
                   </div>
