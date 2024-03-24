@@ -30,8 +30,9 @@ export interface GetJourneyAPIResponse {
 }
 
 export interface FriendsJourneysAPIResponse {
+  status: any;
   data: Journey[];
-  status: 200 | 404;
+  message: string;
 }
 
 export interface Journey {

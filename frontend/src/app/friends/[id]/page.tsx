@@ -22,14 +22,18 @@ export default function FriendInfo({ params }: { params: { id: string } }) {
     setGetJourneyLoading(true);
 
     const token = Cookie.get("token");
+    console.log(token);
     try {
-      const response = await fetch(`${API_URL}//get_friends_journey?friend=${params.id}`, {
+      const response = await fetch(`${API_URL}/get_friends_journey?friend=${params.id}`, {
         credentials: "include",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       const friendsJourneys: FriendsJourneysAPIResponse = await response.json();
-      if (response.status === 404) {
+      console.log(friendsJourneys);
+      if (friendsJourneys.status === "error") {
+        showErrorMessage("Error", friendsJourneys.message);
+      } else if (response.status === 404) {
         showErrorMessage("Error", "Friends journeys are not available");
       } else {
         if (friendsJourneys.data.length === 0) {
@@ -87,7 +91,7 @@ export default function FriendInfo({ params }: { params: { id: string } }) {
                   <h2 className="text-xs md:text-lg">Loading journeys</h2>
                 </div>
               )}
-              {journeys.length > 0 ? (
+              {journeys && journeys.length > 0 ? (
                 <div className="mt-3 h-1/2">
                   <MapContainer
                     center={[
@@ -128,7 +132,11 @@ export default function FriendInfo({ params }: { params: { id: string } }) {
                     ))}
                   </MapContainer>
                 </div>
-              ) : null}
+              ) : (
+                <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10  text-slate-400">
+                  <h2 className="text-xs md:text-lg">No Journeys Found</h2>
+                </div>
+              )}
             </div>
           ) : (
             <p>Statistics</p>
