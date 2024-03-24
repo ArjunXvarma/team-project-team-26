@@ -58,3 +58,6 @@ backend/README.md
 backend/app/Admin/__pycache__
 
 /swe
+
+backend/testUsers.py
+backend/testFriends.py

@@ -260,6 +260,7 @@ class AuthenticationRoutes:
         response = jsonify({"msg": "logout successful"})
         unset_jwt_cookies(response)
         return response
+    
 class GPSRoutes:
     """
     Class for querying the journey data.
@@ -367,6 +368,7 @@ class GPSRoutes:
             return jsonify({'status': 200, 'data': journey_data}), 200
         else:
             return jsonify({'status': 404, 'message': 'No journeys found for given userId'}), 404
+    
     @app.route("/create_journey", methods=["POST"])
     @jwt_required()
     def createJourney() -> Tuple[dict, int]:
@@ -449,6 +451,7 @@ class GPSRoutes:
         db.session.commit()
 
         return jsonify({'status': 201, 'message': 'Journey created successfully'}), 201
+    
     @app.route("/delete_journey/<int:journeyId>", methods=["DELETE"])
     @jwt_required()
     def deleteJourney(journeyId) -> Tuple[dict, int]:
@@ -556,6 +559,7 @@ class GPSRoutes:
         db.session.commit()
 
         return jsonify({'status': 200, 'message': 'Journey updated successfully'}), 200
+
 class MembershipRoutes:
     """
     Class for handling membership routes.
@@ -655,6 +659,7 @@ class MembershipRoutes:
         db.session.commit()
 
         return jsonify({"return_code": 1, "message": "Membership purchased successfully"}), 200
+    
     @app.route("/cancel_membership", methods=["DELETE"])
     @jwt_required()
     def cancel_membership() -> Tuple[Response, int]:
@@ -1029,6 +1034,116 @@ class FriendshipRoutes:
         for friend in friends:
             friend_id = friend.addressee_id if friend.requester_id == current_user.id else friend.requester_id
             friend_info = models.User.query.get(friend_id)
-            friends_list.append({"email": friend_info.email, "name": friend_info.first_name + " " + friend_info.last_name})
+            friends_list.append({"email": friend_info.email, "name": friend_info.first_name + " " + friend_info.last_name, "account_type": friend_info.isPrivate})
 
         return jsonify({"friends": friends_list}), 200
+    
+    @app.route('/privacy_status', methods=['GET'])
+    @jwt_required()
+    def getPrivacyStatus():
+        """
+        Returns the privacy status of the user (false - public, true - private)
+
+        Returns
+        -------
+        json
+            A JSON response containing the privacy value.
+            A status code.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Successfully returned the valid JSON output.
+        """
+
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not user:
+            return jsonify({'status': 'error', 'message': 'User not found'}), 404
+
+        return jsonify({
+            'status': 200,
+            'account_type': user.isPrivate
+        })
+    
+    @app.route('/update_privacy', methods=['POST'])
+    @jwt_required()
+    def update_privacy():
+        """
+        Updates the privacy status of the user. (false - public, true - private)
+
+        Returns
+        -------
+        json
+            A JSON response containing output message.
+            A status code.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Successfully returned the valid JSON output.
+        """
+
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not user:
+            return jsonify({'status': 400, 'message': 'User not found'}), 404
+
+        data = request.get_json()
+        is_private = data.get('isPrivate')
+
+        if is_private is None:
+            return jsonify({'status': 400, 'message': 'isPrivate value is missing'}), 400
+        
+        user.isPrivate = is_private
+        db.session.commit()
+        
+        return jsonify({'status': 200, 'message': 'Privacy setting updated successfully'}), 200
+    
+    @app.route('/get_friends_journey', methods=['GET'])
+    @jwt_required()
+    def getFriendsJourney():
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not current_user:
+            return jsonify({'status': 'error', 'message': 'User not found'}), 404
+        
+        friend_email = request.args.get('friend')
+        if not friend_email:
+            return jsonify({'status': 'error', 'message': 'Friend email is required'}), 400
+
+        friend_user = models.User.query.filter_by(email=friend_email).first()
+        if not friend_user:
+            return jsonify({'status': 'error', 'message': 'Friend not found'}), 404
+
+        if not (models.Friendship.query.filter_by(requester_id=current_user.id, addressee_id=friend_user.id, status='accepted').first() or
+                models.Friendship.query.filter_by(requester_id=friend_user.id, addressee_id=current_user.id, status='accepted').first()):
+            return jsonify({'status': 'error', 'message': 'Not friends'}), 403
+
+        if friend_user.isPrivate:
+            return jsonify({'status': 'error', 'message': 'Friend\'s account is private'}), 403
+
+        journeys = models.Journey.query.filter_by(userId=friend_user.id).all()
+        journeys_data = [{
+            'id': journey.id,
+            'name': journey.name,
+            'type': journey.type,
+            'totalDistance': journey.totalDistance,
+            'elevation': {
+                'avg': journey.avgEle,
+                'min': journey.minEle,
+                'max': journey.maxEle,
+            },
+            'points': json.loads(journey.points) if journey.points else [],
+            'startTime': journey.startTime.strftime('%H:%M:%S') if journey.startTime else None,
+            'endTime': journey.endTime.strftime('%H:%M:%S') if journey.endTime else None,
+            'dateCreated': journey.dateCreated.strftime('%d-%m-%Y') if journey.dateCreated else None,
+        } for journey in journeys]
+
+        return jsonify({
+            "status": 200, 
+            "data": journeys_data
+        }), 200

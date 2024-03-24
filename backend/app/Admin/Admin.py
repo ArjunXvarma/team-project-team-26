@@ -95,6 +95,7 @@ class AdminRoutes:
         return prices.get(membershipType, {}).get(duration, 0)
 
     @app.route('/admin/create_admin_user', methods=['POST'])
+    @jwt_required()
     def createAdminUser() -> Tuple[Response, int]:
         """
         Creates an admin user with the provided details from the request.
@@ -105,7 +106,11 @@ class AdminRoutes:
 
         data = request.json
         if not data:
-            return jsonify({"status": 0, "error": "No JSON Data found"}), 400
+            return jsonify({"status": 400, "error": "No JSON Data found"}), 400
+        
+        isAdmin = any(role.name == 'admin' for role in user.roles)
+        if not isAdmin:
+            return jsonify({"status": 400, "error": "Current user is not an admin"})
         
         first_name = data.get("first_name")
         last_name = data.get("last_name")
@@ -190,6 +195,7 @@ class AdminRoutes:
                 payment_method = user.membership.mode_of_payment
                 
             user_info = {
+                "id" : user.id,
                 "name": f"{user.first_name} {user.last_name}",
                 "email": user.email,
                 "id" : user.id,
