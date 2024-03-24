@@ -1,18 +1,18 @@
 "use client";
+import Cookie from "js-cookie";
 import "leaflet/dist/leaflet.css";
 import { API_URL } from "@/constants";
-import { GetJourneyAPIResponse, Journey } from "@/types";
-import { showErrorMessage } from "@/utils";
 import { Loader } from "@mantine/core";
+import { showErrorMessage } from "@/utils";
 import { useEffect, useState } from "react";
-import Cookie from "js-cookie";
-import { Polyline } from "react-leaflet/Polyline";
-import { Circle, CircleMarker, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import { RiRunFill } from "react-icons/ri";
-import { BsPersonWalking } from "react-icons/bs";
-import { PiBicycleLight } from "react-icons/pi";
 import { useRouter } from "next/navigation";
 import { FaRegClock } from "react-icons/fa6";
+import { PiBicycleLight } from "react-icons/pi";
+import { BsPersonWalking } from "react-icons/bs";
+import { Polyline } from "react-leaflet/Polyline";
+import { GetJourneyAPIResponse, Journey } from "@/types";
+import { Circle, MapContainer, TileLayer } from "react-leaflet";
 
 export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
