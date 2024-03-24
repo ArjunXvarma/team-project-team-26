@@ -566,6 +566,7 @@ If the access token is missing or invalid:
 - **Example output:**
     ```
     - If the access token valid:
+    ```
 
     ```json
     {
