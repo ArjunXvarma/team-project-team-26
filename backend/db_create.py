@@ -1,5 +1,5 @@
 from app import db, app
-from app.models import User, Role  # Ensure this import matches your project structure
+from app.models import User, Role  
 from flask_bcrypt import Bcrypt
 import datetime
 
