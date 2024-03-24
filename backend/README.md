@@ -590,9 +590,7 @@ If the access token is missing or invalid:
     - friend: email of the friend.
 
 - **Example output:**
-    ```
     - If the access token valid and the user is a friend of the requested friend email:
-    ```
 
     ```json
     { 
