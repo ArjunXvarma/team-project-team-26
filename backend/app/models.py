@@ -16,12 +16,12 @@ class User(db.Model):
     date_of_birth = db.Column(db.DateTime, nullable=False)
     account_created = db.Column(db.DateTime, default=datetime.now(), nullable=False)
     hashed_password = db.Column(db.String(300), nullable=False)
-    # Establish relationship with roles
-    roles = db.relationship('Role', secondary=user_roles, 
-                            backref=db.backref('users', lazy='dynamic'))
+    isPrivate = db.Column(db.Boolean, default=False, nullable=False)
+    # Relationships
+    roles = db.relationship('Role', secondary=user_roles, backref=db.backref('users', lazy='dynamic'))
     journeys = db.relationship('Journey', backref='user', lazy=True)
     membership = db.relationship('Membership', backref='user', uselist=False)
-
+    
 class Membership(db.Model):
     __tablename__ = 'membership'
 
