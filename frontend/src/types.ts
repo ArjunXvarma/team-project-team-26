@@ -7,6 +7,17 @@ export interface AuthAPIResponse {
   session_token?: String;
 }
 
+export interface CheckAdminAPIResponse {
+  status: number;
+  isAdmin: boolean;
+  access_token: String;
+}
+
+export interface GetUserPrivacyAPIResponse {
+  status: number;
+  account_type: boolean;
+}
+
 export interface CreateJourneyAPIResponse {
   message: String;
   status: 201 | 400;
