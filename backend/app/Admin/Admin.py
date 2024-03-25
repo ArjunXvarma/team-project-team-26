@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, Response, make_response
 from flask_bcrypt import Bcrypt
 from typing import Tuple
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 from constants import MembershipPriceMonthly, MembershipPriceAnnually
 from revenuePrediction import generateFutureRevenueData
 
@@ -103,31 +104,32 @@ class AdminRoutes:
         Returns:
             Tuple[Response, int]: JSON response indicating success or error, HTTP status code.
         """
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        # Check if the current user exists and is an admin
+        if not current_user or not any(role.name == 'admin' for role in current_user.roles):
+            return jsonify({"status": 401, "error": "Unauthorized. Admin privileges required."}), 401
 
         data = request.json
         if not data:
             return jsonify({"status": 400, "error": "No JSON Data found"}), 400
-        current_user_email = get_jwt_identity()
-        user = models.User.query.filter_by(email=current_user_email).first()
-        isAdmin = any(role.name == 'admin' for role in user.roles)
-        if not isAdmin:
-            return jsonify({"status": 400, "error": "Current user is not an admin"})
-        
+
         first_name = data.get("first_name")
         last_name = data.get("last_name")
         email = data.get("email")
         password = data.get("password")
         date_of_birth_str = data.get("date_of_birth")
-        
+
         if not all([password, email, first_name, date_of_birth_str]):
             return jsonify({"status": 400, "error": "Missing Required Fields"}), 400
-        
+
         if models.User.query.filter_by(email=email).first():
             return jsonify({"status": 409, "error": "User Already Exists"}), 409
-        
+
         hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
         date_of_birth = datetime.strptime(date_of_birth_str, "%Y-%m-%d")
-        
+
         user = models.User(
             first_name=first_name,
             last_name=last_name,
@@ -135,13 +137,22 @@ class AdminRoutes:
             date_of_birth=date_of_birth,
             hashed_password=hashed_password
         )
-        
-        admin_role = AdminRoutes.createAdminRole()
+
+        # Ensure the 'admin' role exists and assign it to the new user
+        admin_role = models.Role.query.filter_by(name='admin').first()
+        if not admin_role:
+            admin_role = models.Role(name='admin')
+            db.session.add(admin_role)
+            db.session.commit()
+
         user.roles.append(admin_role)
         db.session.add(user)
-        db.session.commit()
-        
-        return jsonify({"status": 200, "message": "Admin user created successfully"}), 200
+        try:
+            db.session.commit()
+            return jsonify({"status": 200, "message": "Admin user created successfully"}), 200
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({"status": 500, "error": "Failed to create admin user due to an internal error"}), 500
     
     @app.route('/admin/check_if_admin', methods=['GET'])
     @jwt_required()
