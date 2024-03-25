@@ -9,7 +9,7 @@ import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
-import { AuthAPIResponse } from "@/types";
+import { AuthAPIResponse, CheckAdminAPIResponse } from "@/types";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 import { formatDate, showErrorMessage, showSuccessMessage } from "@/utils";
 
@@ -71,7 +71,7 @@ export default function Login() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/signup`, {
+      let response = await fetch(`${API_URL}/signup`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -95,7 +95,19 @@ export default function Login() {
         showErrorMessage("Error", signupResponse.error!);
       } else {
         showSuccessMessage("Success", "Logging you in!");
+        response = await fetch(`${API_URL}/admin/check_if_admin`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${signupResponse.access_token!}`,
+          },
+        });
+
+        let checkAdminResponse: CheckAdminAPIResponse = await response.json();
+
+        showSuccessMessage("Success", "Logging you in!");
         Cookie.set("token", signupResponse.access_token! as string);
+        Cookie.set("username", signupResponse.name! as string);
+        Cookie.set("isAdmin", checkAdminResponse.isAdmin.toString());
         router.push("/");
       }
     } catch (error) {
