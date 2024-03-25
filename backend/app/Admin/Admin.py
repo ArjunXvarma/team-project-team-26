@@ -107,7 +107,8 @@ class AdminRoutes:
         data = request.json
         if not data:
             return jsonify({"status": 400, "error": "No JSON Data found"}), 400
-        
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
         isAdmin = any(role.name == 'admin' for role in user.roles)
         if not isAdmin:
             return jsonify({"status": 400, "error": "Current user is not an admin"})
