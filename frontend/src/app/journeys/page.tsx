@@ -219,8 +219,10 @@ export default function Journeys() {
   return (
     <main>
       <div className="flex justify-between items-center mt-5 px-3">
-        <h1 className="font-black text-2xl text-primary">Journey</h1>
-        <h3 className="font-bold text-xl">Every journey begins with a single step</h3>
+        <h1 className="font-black text-2xl text-primary"></h1>
+        <p className="text-center text-lg font-serif flex-grow">
+          “Every journey begins with a single step”
+        </p>
         <Button className="bg-primary" leftSection={<GrAdd />} onClick={open}>
           Add
         </Button>

@@ -8,6 +8,7 @@ import { useForm } from "@mantine/form";
 import { useRouter } from "next/navigation";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
+import { CheckAdminAPIResponse } from "@/types";
 
 export default function Login() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function Login() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/login`, {
+      let response = await fetch(`${API_URL}/login`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -62,12 +63,23 @@ export default function Login() {
       } else if (response.status == 401) {
         form.setFieldError("password", loginResponse.error);
       } else {
+        response = await fetch(`${API_URL}/admin/check_if_admin`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${loginResponse.session_token!}`,
+          },
+        });
+
+        let checkAdminResponse: CheckAdminAPIResponse = await response.json();
+
         showSuccessMessage("Success", "Logging you in!");
         Cookie.set("token", loginResponse.session_token!);
         Cookie.set("username", loginResponse.name!);
+        Cookie.set("isAdmin", checkAdminResponse.isAdmin.toString());
         router.push("/");
       }
     } catch (error) {
+      console.log(error);
       showErrorMessage(
         "Server Error",
         "There was a problem contacting the server. Please try again later."

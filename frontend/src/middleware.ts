@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-  const protectedRoutes = /^\/$|^\/journeys$/;
+  const protectedRoutes = /^\/(journeys|payment|membership|settings|dashboard|admin|statistics|friends)$/;
   const logoutRoute = /^\/logout$/;
   const loginSingupRoutes = /^\/(login|signup)$/;
 
@@ -15,6 +15,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
+ 
   //   check token expiry
   let token = req.cookies.get("token");
   if (token) {
