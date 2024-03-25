@@ -1,89 +1,98 @@
-"use client";
-import Link from "next/link";
+"use client"
 import Image from "next/image";
+import Link from "next/link";
+import React, { useEffect, useState } from 'react';
+import { Button, UnstyledButton } from "@mantine/core";
 import Cookies from "js-cookie";
-import { useState } from "react";
-import { SlDrop } from "react-icons/sl";
-import Navbar from "../components/navbar";
-import { FaRegHeart } from "react-icons/fa";
-import { AiOutlineFire } from "react-icons/ai";
-import { GiHamburgerMenu } from "react-icons/gi";
-import { ActionIcon, Button } from "@mantine/core";
+import { API_URL } from "@/constants";
 
-export default function Home() {
-  const [data, _] = useState([
-    { day: "Mon", distance: 10 },
-    { day: "Tue", distance: 15 },
-    { day: "Wed", distance: 20 },
-    { day: "Thur", distance: 18 },
-    { day: "Fri", distance: 25 },
-    { day: "Sat", distance: 30 },
-    { day: "Sun", distance: 28 },
-  ]);
+export default function Landing(){
 
-  const [username, __] = useState(Cookies.get("username"));
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [hasActiveMembership, sethasActiveMembership] = useState(false);
+ 
 
-  return (
-    <Navbar>
-      <main>
-        <div className="w-full h-full">
-          <div className="flex w-full h-20 justify-around items-center pt-6 px-5">
-            <p className="text-center text-lg font-serif flex-grow">
-              “Every journey begins with a single step”
-            </p>
-          </div>
+    useEffect(() => {
+        const token = Cookies.get('token');
+        // setting isLoggedIn to true if token exists
+        setIsLoggedIn(!!token); 
+        async function fetchMembershipStatus() {
+        try {
+            const response = await fetch(`${API_URL}/has_active_membership`, {
+                method: 'GET',
+                credentials: "include",
+                headers: {"Content-Type": "application/json",
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
 
-          <div className="px-20 mb-20">
-            <p className="font-serif text-2xl mt-10 ">Hi {username},</p>
+            const membershipResponse = await response.json();
+            
+            if (response.status == 200) {
+                sethasActiveMembership(membershipResponse.has_active_membership);
+            } else if (response.status == 401) {
+                sethasActiveMembership(membershipResponse.has_active_membership);
+                console.log(membershipResponse.error);
+            }
+        } catch (error) {
+            console.error('Error fetching membership status:',error);
+        } 
+    
+    }
+    fetchMembershipStatus();
+}, []);
+ 
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 mt-10">
-              <div className="w-auto border-2 border-primary bg-tertiary h-80 rounded-lg justify-start p-2 px-4">
-                <p className="font-sans font-semibold text-2xl">Weather Today</p>
-                <div className="flex justify-around p-10">
-                  <Image src="/sun.png" alt="Sun Image" width={180} height={180} />
-                  <div className="self-center">
-                    <p className="text-4xl">Sunny</p>
-                    <p className="text-4xl"> 22 C</p>
-                  </div>
-                </div>
-              </div>
-              <div className="w-auto border-2 border-primary bg-tertiary h-80 rounded-lg justify-start p-2 px-4">
-                <p className="font-sans font-semibold text-2xl"> Distance covered</p>
-                <div className="flex items-end justify-around mx-8 mt-10">
-                  {data.map((item, index) => (
-                    <div key={index} className="flex flex-col flex-grow items-center">
-                      <p>{item.distance} km</p>
-                      <div
-                        className="bg-primary w-12 md:w-10 lg:w-12"
-                        style={{ height: `${item.distance * 5}px` }}
-                      ></div>
-                      <p className="mt-2">{item.day}</p>
+    return (
+        <main> 
+          <div className="w-full h-full">
+            <header className=" flex items-center justify-between px-16 pt-10">
+
+                <p className="ml-4 text-2xl font-bold text-green-700">MyApp</p>
+            
+                <div className="flex items-center hover:text-green-700">
+                    {isLoggedIn ? (
+                    <div className="flex justify-center">
+                        <Link href={"/logout"}>
+                            <UnstyledButton className="font-semibold text-lg hover:text-green-700">Logout</UnstyledButton>
+                        </Link>
                     </div>
-                  ))}
+                ) : (
+                    <div className="flex justify-center">
+                        <Link href={"/login"} >
+                            <UnstyledButton className="font-semibold text-lg hover:text-green-700">Login</UnstyledButton>
+                        </Link>
+                        <p className="text-lg mx-2">/</p>
+                        <Link href={"/signup"}>
+                            <UnstyledButton className="font-semibold text-lg hover:text-green-700">SignUp</UnstyledButton>
+                        </Link>
+                    </div>
+                )}
                 </div>
-              </div>
+            </header>
+            
+            <p className="text-center text-lg font-serif">“ Every journey begins with a single step ”</p>
+            <div className="flex items-start justify-between">
+                <div className="ml-24 py-40">
+                    <p className="text-4xl font-serif font-medium underline">Heading</p>
+                    <p className="text-xl font-serif ">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eu dui non diam eleifend egestas id a ligula.</p>
+                    {isLoggedIn && hasActiveMembership? (
+                        <Link href={"/home"} className="flex w-full py-10">
+                            <Button variant="filled" className="bg-green-700 hover:bg-green-800"  size="md" radius="xl">View your Dashboard</Button>
+                        </Link> 
+                    ):(
+                        <Link href={"/membership"} className="flex w-full py-10">
+                            <Button variant="filled" className="bg-green-700 hover:bg-green-800"  size="md" radius="xl">Join Now</Button>
+                        </Link>
+                    )}
+                </div>
+                <div className="flex items-center justify-end">
+                    <Image src="/landing.png" alt="Running People Image" width={990} height={680} />
+                </div> 
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="w-auto border-2 border-primary bg-tertiary h-60 flex flex-col justify-between rounded-lg  p-2 px-4 ">
-                <FaRegHeart size={26} />
-                <p className="font-sans self-center text-4xl">75 bpm</p>
-                <p className="font-sans font-semibold text-lg">Pulse</p>
-              </div>
-              <div className="w-auto border-2 border-primary bg-tertiary h-60 flex flex-col justify-between rounded-lg p-2 px-4 ">
-                <AiOutlineFire size={30} />
-                <p className="font-sans self-center text-4xl">580 cal</p>
-                <p className="font-sans font-semibold text-lg">Calories</p>
-              </div>
-              <div className="w-auto border-2 border-primary bg-tertiary h-60 flex flex-col justify-between rounded-lg p-2 px-4 ">
-                <SlDrop size={27} />
-                <p className="font-sans self-center text-4xl">88%</p>
-                <p className="font-sans font-semibold  text-lg">Hydration</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </Navbar>
-  );
-}
+         </div>
+            
+        </main>
+    )
+  }
+  
