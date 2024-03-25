@@ -17,6 +17,8 @@ import { GetUserPrivacyAPIResponse } from "@/types";
 export default function Settings() {
   const [darkMode, setDarkMode] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
+
+  const [isAdmin, setIsAdmin] = useState(Cookie.get("isAdmin") === "true");
   const [privacyMode, setPrivacyMode] = useState<"Public" | "Private">("Public");
 
   const handleDarkModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,17 +152,14 @@ export default function Settings() {
               Make {privacyMode == "Public" ? "Private" : "Public"}
             </Button>
           </div>
-          <div className="flex justify-between items-center bg-tertiary rounded-lg p-8  w-full">
-            <p className="text-xl">Switch to admin mode</p>
-            <Switch
-              color={adminMode ? "rgba(5, 150, 105, 1)" : "gray"}
-              size="lg"
-              onLabel="ON"
-              offLabel="OFF"
-              checked={adminMode}
-              onChange={handleAdminModeChange}
-            />
-          </div>
+          {isAdmin && (
+            <div className="flex justify-between items-center bg-tertiary rounded-lg p-8  w-full">
+              <p className="text-xl">Switch to admin mode</p>
+              <Button component="a" href="/admin" className="bg-primary">
+                Admin Mode
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </main>
