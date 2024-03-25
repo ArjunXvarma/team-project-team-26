@@ -337,7 +337,7 @@ export default function Admin() {
             {filter && (method || type) ? (
               <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
                 {userData &&
-                  userData.map((data) => {
+                  userData.map((data, i) => {
                     let renderRow = false;
                     if (filter === "Membership Type" && data.type === type) {
                       renderRow = true;
@@ -348,7 +348,7 @@ export default function Admin() {
                     if (renderRow) {
                       return (
                         <tr
-                          key={data.email}
+                          key={i}
                           className="border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800"
                         >
                           <td className="px-4 py-3 ">{data.name}</td>
@@ -370,12 +370,12 @@ export default function Admin() {
             ) : name ? (
               <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
                 {userData &&
-                  userData.map((data) => {
+                  userData.map((data, i) => {
                     if (nameOptions.some((option) => option.name === data.name)) {
                       return (
                         <tr
+                          key={i}
                           className="border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800"
-                          key={data.email}
                         >
                           <td className="px-4 py-3 ">{data.name}</td>
                           <td className="px-4 py-3 ">{data.account_created}</td>
@@ -396,10 +396,10 @@ export default function Admin() {
             ) : (
               <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
                 {userData &&
-                  userData.map((data) => (
+                  userData.map((data, i) => (
                     <tr
+                      key={i}
                       className="border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800"
-                      key={data.email}
                     >
                       <td className="px-4 py-3 ">{data.name}</td>
                       <td className="px-4 py-3 ">{data.account_created}</td>

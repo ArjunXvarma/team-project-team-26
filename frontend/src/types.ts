@@ -35,6 +35,14 @@ export interface FriendsJourneysAPIResponse {
   message: string;
 }
 
+export interface FutureRevenuePredictionAPIResponse {
+  data: {
+    period: String;
+    future_revenues: number[];
+  };
+  status: number;
+}
+
 export interface Journey {
   id: number;
   name: String;
@@ -45,4 +53,24 @@ export interface Journey {
   type: "Walk" | "Run" | "Cycle";
   elevation: { avg: number; min: number; max: number };
   points: { lat: number; lon: number; ele: number }[];
+}
+
+export interface Revenue {
+  period: string;
+  total_sold: number;
+  total_revenue: number;
+  by_type: {
+    Basic?: {
+      total_sold: number;
+      total_revenue: number;
+    };
+    Standard?: {
+      total_sold: number;
+      total_revenue: number;
+    };
+    Premium?: {
+      total_sold: number;
+      total_revenue: number;
+    };
+  };
 }
