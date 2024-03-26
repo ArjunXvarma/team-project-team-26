@@ -44,26 +44,26 @@ class Role(db.Model):
 
 class Journey(db.Model):
     __tablename__ = 'journey'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     userId = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String, nullable=False)
     type = db.Column(db.String, nullable=False)
     totalDistance = db.Column(db.Float, nullable=False)
-    
+
     avgEle = db.Column(db.Float, nullable=False)
     minEle = db.Column(db.Float, nullable=False)
     maxEle = db.Column(db.Float, nullable=False)
-    
-    points = db.Column(db.String, nullable=False)  
-    
+
+    points = db.Column(db.String, nullable=False)
+
     startTime = db.Column(db.Time, nullable=False)
     endTime = db.Column(db.Time, nullable=False)
     dateCreated = db.Column(db.DateTime, default=datetime.now(), nullable=False)
-    
+
 class Admin(db.Model):
     __tablename__ = 'admin'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     isAdmin = db.Column(db.Boolean, nullable=False, default=False)
 
