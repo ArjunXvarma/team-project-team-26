@@ -1,17 +1,40 @@
-from app import app, db, models
-from flask import Flask, request, jsonify, Response
+from app import (app, db, models, create_access_token,
+    get_jwt, get_jwt_identity, unset_jwt_cookies, jwt_required
+    )
+from flask import Flask, request, jsonify, Response, make_response
 from flask_bcrypt import Bcrypt
 from typing import Tuple
 from datetime import datetime, timedelta, timezone
-from flask_jwt_extended import (
-    create_access_token, get_jwt, get_jwt_identity,
-    unset_jwt_cookies, jwt_required
-)
 import json
 import constants
 from apscheduler.schedulers.background import BackgroundScheduler
 from functools import wraps
+from constants import PaymentMethod, MembershipType, MembershipDuration, MembershipPriceMonthly, MembershipPriceAnnually
+from revenuePrediction import generateFutureRevenueData
+
 bcrypt = Bcrypt(app)
+
+#Enabling CORS for all the routes
+def add_cors_headers(response=None):
+    if response is None:
+        response = make_response()
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    return response
+
+
+@app.before_request
+def before_request():
+    if request.method == 'OPTIONS':
+        return add_cors_headers()
+
+@app.after_request
+def after_request(response):
+    return add_cors_headers(response)
 
 class AuthenticationRoutes:
     """
@@ -63,7 +86,6 @@ class AuthenticationRoutes:
             If unsuccessful, returns:
                 - "return_code": 0
                 - "error": Details about the error encountered during registration.
-        
         HTTP Status Codes
         -----------------
         200 : OK
@@ -165,10 +187,8 @@ class AuthenticationRoutes:
         user = models.User.query.filter_by(email=email).first()
         if user is None:
             return jsonify({"return_code":0, "error": "User Not found with the given Email"}), 404
-        
         if not bcrypt.check_password_hash(user.hashed_password, password):
             return jsonify({"return_code":1, "error": "Incorrect password, please try again"}), 401
-       
         access_token = create_access_token(identity=email)
         full_user_name = (user.first_name+" "+user.last_name)
         return jsonify({
@@ -215,7 +235,7 @@ class AuthenticationRoutes:
                 access_token = create_access_token(identity=get_jwt_identity())
                 data = response.get_json()
                 if isinstance(data, dict):
-                    data["access_token"] = access_token 
+                    data["access_token"] = access_token
                     response.data = json.dumps(data)
             return response
         except (RuntimeError, KeyError):
@@ -240,7 +260,7 @@ class AuthenticationRoutes:
         response = jsonify({"msg": "logout successful"})
         unset_jwt_cookies(response)
         return response
-    
+
 class GPSRoutes:
     """
     Class for querying the journey data.
@@ -251,9 +271,11 @@ class GPSRoutes:
 
     Methods
     -------
-    getJournies(userId) -> json:
-        returns the journies of a user.
-    createJourny() -> json:
+    validate_points(points) -> json:
+        Returns if the points are valid or not.
+    getJourneys(userId) -> json:
+        returns the journeys of a user.
+    createJourney() -> json:
         creates a journey for a user.
     deleteJourney(journeyId) -> json:
         deletes a particular journey.
@@ -261,26 +283,53 @@ class GPSRoutes:
         updates the data of a particular journey.
     """
 
-    @app.route("/get_journies_of_user", methods=["GET"])
-    @jwt_required()
-    def getJournies() -> Tuple[dict, int]:
+    def validate_points(points):
         """
-        Returns all the journies of a user.
+        Validates that each item in the points list contains exactly 'lat', 'lon', and 'ele' keys.
+
+        Parameters:
+        - points (list): The list of point dictionaries to validate.
+
+        Returns:
+        - (bool, str): Tuple containing a boolean indicating if the validation passed,
+                    and a string with an error message if it failed.
+        """
+        if points != []:
+            required_keys = {'lat', 'lon', 'ele'}
+            for point in points:
+                point_keys = set(point.keys())
+                if point_keys != required_keys:
+                    missing_keys = required_keys - point_keys
+                    extra_keys = point_keys - required_keys
+                    error_message = []
+                    if missing_keys:
+                        error_message.append(f"Missing keys: {', '.join(missing_keys)}")
+                    if extra_keys:
+                        error_message.append(f"Extra keys: {', '.join(extra_keys)}")
+                    return False, '; '.join(error_message)
+            return True, ""
+        return False, "No data provided"
+
+    @app.route("/get_journeys_of_user", methods=["GET"])
+    @jwt_required()
+    def getJourneys() -> Tuple[dict, int]:
+        """
+        Returns all the journeys of a user.
 
         Parameters
         ----------
         userId : int
-            The user for which you want to query the journies.
+            The user for which you want to query the journeys.
 
         Returns
         -------
         Json
-            A JSON object that contains the userId and an array of all 
-            the journies that belong to the user.
+            A JSON object that contains the userId and an array of all
+            the journeys that belong to the user.
 
         Notes
         -----
-        If there are no journies that belong to the user a 404 error will be sent as there was no
+        If there are no journeys that belong to the user a 404 error will be sent as there was no
         journey data found. If the journey data exists, it is returned with a response of 200.
 
         Exceptions
@@ -297,22 +346,29 @@ class GPSRoutes:
         journeys = models.Journey.query.filter_by(userId=user.id).all()
         journey_data = []
         for journey in journeys:
+            points = json.loads(journey.points) if journey.points else []
+
             journey_data.append({
                 'id': journey.id,
-                'gpxData': json.loads(journey.gpxData) if journey.gpxData else None,
+                'name': journey.name,
+                'type': journey.type,
+                'totalDistance': journey.totalDistance,
+                'elevation': {
+                    'avg': journey.avgEle,
+                    'min': journey.minEle,
+                    'max': journey.maxEle,
+                },
+                'points': points,
                 'startTime': journey.startTime.strftime('%H:%M:%S') if journey.startTime else None,
                 'endTime': journey.endTime.strftime('%H:%M:%S') if journey.endTime else None,
                 'dateCreated': journey.dateCreated.strftime('%d-%m-%Y') if journey.dateCreated else None,
             })
 
         if journey_data:
-            return jsonify({'status': 200, 'data': {
-                'userId': user.id,
-                'journies': journey_data
-            }}), 200
+            return jsonify({'status': 200, 'data': journey_data}), 200
         else:
             return jsonify({'status': 404, 'message': 'No journeys found for given userId'}), 404
-        
+
     @app.route("/create_journey", methods=["POST"])
     @jwt_required()
     def createJourney() -> Tuple[dict, int]:
@@ -330,18 +386,17 @@ class GPSRoutes:
 
         Notes
         -----
-        The format of the date/time variables must be handled with caution as the table only 
-        accepts a particular data/time format. A response of 201 is returned if the data is 
+        The format of the date/time variables must be handled with caution as the table only
+        accepts a particular data/time format. A response of 201 is returned if the data is
         created successfully, else a code of 400 is returned (Incorrect data).
 
         Exceptions
         ----------
         ValueError
-            Raised when the startTime, endTime or dateCreated variables are not in the correct 
+            Raised when the startTime, endTime or dateCreated variables are not in the correct
             format.
 
         """
-        
         current_user_email = get_jwt_identity()
         user = models.User.query.filter_by(email=current_user_email).first()
         if not user:
@@ -349,29 +404,54 @@ class GPSRoutes:
 
         data = request.get_json()
 
+        # Validate points before processing further
+        points = data.get('points')
+        if points is None:
+            return jsonify({'status': 400, 'message': 'Missing field: points'}), 400
+
+        valid, error_message = GPSRoutes.validate_points(points)
+        if not valid:
+            return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
+
         try:
-            if 'startTime' in data:
-                data['startTime'] = datetime.strptime(data['startTime'], '%H:%M:%S').time()
-            if 'endTime' in data:
-                data['endTime'] = datetime.strptime(data['endTime'], '%H:%M:%S').time()
-            if 'dateCreated' in data:
-                data['dateCreated'] = datetime.strptime(data['dateCreated'], '%d-%m-%Y').date()
+            name = data['name']
+            journey_type = data['type']
+            totalDistance = data['totalDistance']
+            elevation = data['elevation']
+            avgEle = elevation['avg']
+            minEle = elevation['min']
+            maxEle = elevation['max']
+            points = json.dumps(data['points'])
+
+        except KeyError as e:
+            return jsonify({'status': 400, 'message': f'Missing field: {str(e)}'}), 400
+
+        try:
+            startTime = datetime.strptime(data['startTime'], '%H:%M:%S').time()
+            endTime = datetime.strptime(data['endTime'], '%H:%M:%S').time()
+            dateCreated = datetime.strptime(data['dateCreated'], '%Y-%m-%d').date()
         except ValueError as e:
             return jsonify({'status': 400, 'message': 'Invalid date/time format'}), 400
 
         journey = models.Journey(
-            userId=user.id,  
-            gpxData=data.get('gpxData'),  
-            startTime=data.get('startTime'),  
-            endTime=data.get('endTime'),  
-            dateCreated=data.get('dateCreated')  
+            userId=user.id,
+            name=name,
+            type=journey_type,
+            totalDistance=totalDistance,
+            avgEle=avgEle,
+            minEle=minEle,
+            maxEle=maxEle,
+            points=points,
+            startTime=startTime,
+            endTime=endTime,
+            dateCreated=dateCreated
         )
 
         db.session.add(journey)
         db.session.commit()
 
         return jsonify({'status': 201, 'message': 'Journey created successfully'}), 201
-    
+
     @app.route("/delete_journey/<int:journeyId>", methods=["DELETE"])
     @jwt_required()
     def deleteJourney(journeyId) -> Tuple[dict, int]:
@@ -401,18 +481,15 @@ class GPSRoutes:
         user = models.User.query.filter_by(email=current_user_email).first()
         if not user:
             return jsonify({'status': 404, 'message': 'User not found'}), 404
-        
-        journies = models.Journey.query.filter_by(userId=user.id).all()
+        journeys = models.Journey.query.filter_by(userId=user.id).all()
 
-        for journey in journies:
+        for journey in journeys:
             if journeyId == journey.id:
                 db.session.delete(journey)
                 db.session.commit()
                 return {'status': 200, 'message': 'Journey deleted successfully'}, 200
-                
         return {'status': 404, 'message': 'Journey not found'}, 404
-        
-        
+
     @app.route("/update_journey/<int:journeyId>", methods=["PUT"])
     @jwt_required()
     def updateJourney(journeyId) -> Tuple[dict, int]:
@@ -440,11 +517,34 @@ class GPSRoutes:
         """
 
         journey = models.Journey.query.get(journeyId)
-        
         if not journey:
             return jsonify({'status': 404, 'message': 'Journey not found'}), 404
 
         data = request.get_json()
+
+        # Update the journey object with new data if available
+        if 'name' in data:
+            journey.name = data['name']
+        if 'type' in data:
+            journey.type = data['type']
+        if 'totalDistance' in data:
+            journey.totalDistance = data['totalDistance']
+        if 'elevation' in data:
+            elevation = data['elevation']
+            if 'avg' in elevation:
+                journey.avgEle = elevation['avg']
+            if 'min' in elevation:
+                journey.minEle = elevation['min']
+            if 'max' in elevation:
+                journey.maxEle = elevation['max']
+
+        # Validate points directly from the request JSON
+        if 'points' in data:
+            points = data['points']
+            valid, error_message = GPSRoutes.validate_points(points)
+            if not valid:
+                return jsonify({'status': 400, 'message': f'Invalid points data: {error_message}'}), 400
+            journey.points = json.dumps(points)
 
         try:
             if 'startTime' in data:
@@ -453,23 +553,13 @@ class GPSRoutes:
                 data['endTime'] = datetime.strptime(data['endTime'], '%H:%M:%S').time()
             if 'dateCreated' in data:
                 data['dateCreated'] = datetime.strptime(data['dateCreated'], '%d-%m-%Y').date()
-
         except ValueError as e:
             return jsonify({'status': 400, 'message': 'Invalid date/time format'}), 400
-
-        # Update the journey object with new data if available
-        if 'gpxData' in data:
-            journey.gpxData = data['gpxData']
-        if 'startTime' in data:
-            journey.startTime = data['startTime']
-        if 'endTime' in data:
-            journey.endTime = data['endTime']
-        if 'dateCreated' in data:
-            journey.dateCreated = data['dateCreated']
 
         db.session.commit()
 
         return jsonify({'status': 200, 'message': 'Journey updated successfully'}), 200
+
 class MembershipRoutes:
     """
     Class for handling membership routes.
@@ -484,6 +574,8 @@ class MembershipRoutes:
         Allows a user to purchase a membership.
     cancel_membership() -> json:
         Cancels the auto renewal of membership of a user.
+    has_active_membership() -> bool:
+        Returns if an user have an active membership or not.
     """
 
     @app.route("/buy_membership", methods=["POST"])
@@ -533,7 +625,6 @@ class MembershipRoutes:
         membership_type = data.get("membership_type")
         duration = data.get("duration")
         mode_of_payment = data.get("mode_of_payment")
-        
         if not all([membership_type, duration, mode_of_payment]):
             return jsonify({"return_code": 0, "error": "Missing Required Fields"}), 400
 
@@ -550,13 +641,10 @@ class MembershipRoutes:
             end_date = start_date + timedelta(days=30)
         elif duration.lower() == 'annually':
             end_date = start_date + timedelta(days=365)
-        
         if not constants.is_valid_membership_type(membership_type):
             return jsonify({"return_code": 0, "error": "Invalid membership type"}), 400
-        
         if not constants.is_valid_payment_method(mode_of_payment):
             return jsonify({"return_code": 0, "error": "Invalid mode of payment"}), 400
-        
         new_membership = models.Membership(
             user_id=user.id,
             membership_type=membership_type,
@@ -565,13 +653,13 @@ class MembershipRoutes:
             end_date=end_date,
             mode_of_payment=mode_of_payment,
             is_active=True,
-            auto_renew=True 
+            auto_renew=True
         )
         db.session.add(new_membership)
         db.session.commit()
 
         return jsonify({"return_code": 1, "message": "Membership purchased successfully"}), 200
-    
+
     @app.route("/cancel_membership", methods=["DELETE"])
     @jwt_required()
     def cancel_membership() -> Tuple[Response, int]:
@@ -619,6 +707,39 @@ class MembershipRoutes:
         db.session.commit()
 
         return jsonify({"return_code": 1, "message": message}), 200
+
+    @app.route("/has_active_membership", methods=["GET"])
+    @jwt_required()
+    def has_active_membership() -> Tuple[Response, int]:
+        """
+        Checks if the user has an active membership.
+
+        Returns
+        -------
+        json
+            A JSON response indicating whether the user has an active membership.
+            If user has an active membership, returns:
+                - "has_active_membership": true
+            If user does not have an active membership, returns:
+                - "has_active_membership": false
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Membership status checked successfully.
+        401 : Unauthorized
+            Missing or invalid access token.
+        """
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        # Check if user has an active membership
+        user_has_active_membership = models.Membership.query.filter_by(user_id=user.id, is_active=True).first()
+
+        if user_has_active_membership:
+            return jsonify({"has_active_membership": True}), 200
+        else:
+            return jsonify({"has_active_membership": False}), 200
 
     def auto_renew_memberships():
         """
@@ -793,7 +914,6 @@ class FriendshipRoutes:
         db.session.commit()
 
         return jsonify({"message": "Friend request accepted"}), 200
-    
     @app.route("/reject_friend_request", methods=["POST"])
     @jwt_required()
     def reject_friend_request() -> Tuple[Response, int]:
@@ -905,8 +1025,8 @@ class FriendshipRoutes:
 
         # Assuming friendships are symmetrical and both users can initiate a friendship
         friends = models.Friendship.query.filter(
-            ((models.Friendship.requester_id == current_user.id) | 
-            (models.Friendship.addressee_id == current_user.id)) & 
+            ((models.Friendship.requester_id == current_user.id) |
+            (models.Friendship.addressee_id == current_user.id)) &
             (models.Friendship.status == 'accepted')
         ).all()
 
@@ -914,6 +1034,669 @@ class FriendshipRoutes:
         for friend in friends:
             friend_id = friend.addressee_id if friend.requester_id == current_user.id else friend.requester_id
             friend_info = models.User.query.get(friend_id)
-            friends_list.append({"email": friend_info.email, "name": friend_info.first_name + " " + friend_info.last_name})
+            friends_list.append({"email": friend_info.email, "name": friend_info.first_name + " " + friend_info.last_name, "account_type": friend_info.isPrivate, "account_type": friend_info.isPrivate})
 
         return jsonify({"friends": friends_list}), 200
+
+    @app.route('/get_friends_journey', methods=['GET'])
+    @jwt_required()
+    def getFriendsJourney():
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not current_user:
+            return jsonify({'status': 'error', 'message': 'User not found'}), 404
+
+        friend_email = request.args.get('friend')
+        if not friend_email:
+            return jsonify({'status': 'error', 'message': 'Friend email is required'}), 400
+
+        friend_user = models.User.query.filter_by(email=friend_email).first()
+        if not friend_user:
+            return jsonify({'status': 'error', 'message': 'Friend not found'}), 404
+
+        if not (models.Friendship.query.filter_by(requester_id=current_user.id, addressee_id=friend_user.id, status='accepted').first() or
+                models.Friendship.query.filter_by(requester_id=friend_user.id, addressee_id=current_user.id, status='accepted').first()):
+            return jsonify({'status': 'error', 'message': 'Not friends'}), 403
+
+        if friend_user.isPrivate:
+            return jsonify({'status': 'error', 'message': 'Friend\'s account is private'}), 403
+
+        journeys = models.Journey.query.filter_by(userId=friend_user.id).all()
+        journeys_data = [{
+            'id': journey.id,
+            'name': journey.name,
+            'type': journey.type,
+            'totalDistance': journey.totalDistance,
+            'elevation': {
+                'avg': journey.avgEle,
+                'min': journey.minEle,
+                'max': journey.maxEle,
+            },
+            'points': json.loads(journey.points) if journey.points else [],
+            'startTime': journey.startTime.strftime('%H:%M:%S') if journey.startTime else None,
+            'endTime': journey.endTime.strftime('%H:%M:%S') if journey.endTime else None,
+            'dateCreated': journey.dateCreated.strftime('%d-%m-%Y') if journey.dateCreated else None,
+        } for journey in journeys]
+
+        return jsonify({
+            "status": 200,
+            "data": journeys_data
+        }), 200
+
+
+    @app.route('/privacy_status', methods=['GET'])
+    @jwt_required()
+    def getPrivacyStatus():
+        """
+        Returns the privacy status of the user (false - public, true - private)
+
+        Returns
+        -------
+        json
+            A JSON response containing the privacy value.
+            A status code.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Successfully returned the valid JSON output.
+        """
+
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not user:
+            return jsonify({'status': 'error', 'message': 'User not found'}), 404
+
+        return jsonify({
+            'status': 200,
+            'account_type': user.isPrivate
+        })
+
+    @app.route('/update_privacy', methods=['POST'])
+    @jwt_required()
+    def update_privacy():
+        """
+        Updates the privacy status of the user. (false - public, true - private)
+
+        Returns
+        -------
+        json
+            A JSON response containing output message.
+            A status code.
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Successfully returned the valid JSON output.
+        """
+
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not user:
+            return jsonify({'status': 400, 'message': 'User not found'}), 404
+
+        data = request.get_json()
+        is_private = data.get('isPrivate')
+
+        if is_private is None:
+            return jsonify({'status': 400, 'message': 'isPrivate value is missing'}), 400
+
+        user.isPrivate = is_private
+        db.session.commit()
+
+        return jsonify({'status': 200, 'message': 'Privacy setting updated successfully'}), 200
+
+
+class StatisticsRoutes():
+    """
+    Class for retrieving journey statistics data for a user.
+
+    Methods
+    -------
+    getStats() -> Tuple[dict, int]:
+        returns the statistics of all the journeys for a certain user.
+
+    """
+
+    @app.route("/getStats", methods=["GET"])
+    @jwt_required()
+    def getStats() -> Tuple[dict, int]:
+
+        """
+        Get all the statistical data for a user and their journeys in a 'data' dictionary
+
+        Parameters
+        ----------
+        None.
+
+        Returns
+        -------
+        Json
+            A JSON object that contains statistical information about a user and their journeys.
+            This includes:
+
+                data:
+                Dictionary containing all user data
+
+                    journeyData:
+                    list containing statistical information about each journey of a user(each stored as dictionaries)
+
+                    byModes:
+                    contains totalled data for each mode of transport
+
+                    Also contains a users stats summing all their journeys
+
+            this is the exact structure, where totalTimeWorkingOut is broken down into totalTimeWorkingOutHours,
+            totalTimeWorkingOutMinutes and totalTimeWorkingOutSeconds:
+
+
+
+
+        Notes
+        -----
+        The time taken variables return the hours in a journey,
+        the remaining minutes of the journey excluding the hours,
+        the remaining seconds excluding both.
+        These 3 essentially give the exact amount of time a journey took
+        HH:MM:SS
+
+
+        Exceptions
+        ----------
+        None.
+
+        """
+
+        # Get the current user's email from JWT token
+        current_user_email = get_jwt_identity()
+
+        # get user
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        # Check if user exists
+        if not user:
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+
+        # Retrieve all journeys associated with the user
+        journeys = models.Journey.query.filter_by(userId=user.id).all()
+
+        # Initialize variables to store journey data and totals for each mode
+
+        # List to store individual journey data
+        journeysData = []
+        total_distance_cycling = 0
+        total_calories_burned_cycling = 0
+        total_time_taken_hours_cycling = 0
+        total_time_taken_minutes_cycling = 0
+        total_time_taken_seconds_cycling = 0
+        total_time_in_seconds_cycling = 0
+
+        total_distance_walking = 0
+        total_calories_burned_walking = 0
+        total_time_taken_hours_walking = 0
+        total_time_taken_minutes_walking = 0
+        total_time_taken_seconds_walking = 0
+        total_time_in_seconds_walking = 0
+
+        total_distance_running = 0
+        total_calories_burned_running = 0
+        total_time_taken_hours_running = 0
+        total_time_taken_minutes_running = 0
+        total_time_taken_seconds_running = 0
+        total_time_in_seconds_running = 0
+
+
+        # Iterate over each journey
+        for journey in journeys:
+
+            # Temporary dictionary to store data for each journey
+            temp_dictionary = {}
+
+            # Check if journey exists
+            if not journey:
+                return jsonify({'status': 404, 'message': 'Journey not found'}), 404
+
+
+            # Calculate time taken for the journey
+
+            # Extract start time and end time from the journey object
+            start_time = journey.startTime
+            end_time = journey.endTime
+
+            # Check if start time or end time is missing
+            if not start_time or not end_time:
+                return jsonify({'status': 400, 'message': 'Start time or end time missing for this journey'}), 400
+
+            # Calculate the time difference in seconds between start time and end time
+            start_seconds = start_time.hour * 3600 + start_time.minute * 60 + start_time.second
+            end_seconds = end_time.hour * 3600 + end_time.minute * 60 + end_time.second
+            time_diff_seconds = end_seconds - start_seconds
+
+            # breakdown time difference to hours, minutes, and seconds
+            hours = time_diff_seconds // 3600
+            minutes = (time_diff_seconds % 3600) // 60
+            seconds = (time_diff_seconds % 3600) % 60
+
+            # Add time data to the temporary dictionary
+            temp_dictionary["hours_taken"] = hours
+            temp_dictionary["minutes_taken"] = minutes
+            temp_dictionary["seconds_taken"] = seconds
+
+
+            # Calculate calories burned for the journey
+
+            # MET(metabolic equivalent of task) x Body Weight(kg) x Duration(hours)
+            exact_hours = time_diff_seconds / 3600
+            average_weight = 62
+
+            if journey.type == "Walking":
+                MET = 3.6
+            elif journey.type == "Running":
+                MET = 9
+            else:
+                MET = 7
+
+            calories_burned = MET * average_weight * exact_hours
+
+            # Add calories burned data to the temporary dictionary
+            temp_dictionary["caloriesBurned"] = calories_burned
+
+
+            # Add distance data to the temporary dictionary
+            distance = journey.totalDistance
+            temp_dictionary["totalDistance"]  = distance
+
+
+            # Calculate average speed for the journey
+            mph = (distance // (time_diff_seconds / 3600))
+            temp_dictionary["averageSpeed"] = mph
+
+            # Add mode of transport of journey to the temporary dictionary
+            mode = journey.type
+            temp_dictionary["mode"] = mode
+
+            # Add journey ID data to the temporary dictionary
+            journeyID = journey.id
+            temp_dictionary["journeyId"] = journeyID
+
+            # Append the journeys data to the journeysData list
+            journeysData.append(temp_dictionary)
+
+
+            # Update totals for each mode
+            if journey.type == "Walking":
+                total_distance_walking += distance
+                total_calories_burned_walking += calories_burned
+                total_time_in_seconds_walking += time_diff_seconds
+
+            elif journey.type == "Running":
+                total_distance_running += distance
+                total_calories_burned_running += calories_burned
+                total_time_in_seconds_running += time_diff_seconds
+
+            else:
+                total_distance_cycling += distance
+                total_calories_burned_cycling += calories_burned
+                total_time_in_seconds_cycling += time_diff_seconds
+
+
+        # Calculate total time for each mode
+        total_time_taken_hours_walking = total_time_in_seconds_walking // 3600
+        total_time_taken_minutes_walking = (total_time_in_seconds_walking % 3600) // 60
+        total_time_taken_seconds_walking = (total_time_in_seconds_walking % 3600) % 60
+
+
+        total_time_taken_hours_running = total_time_in_seconds_running // 3600
+        total_time_taken_minutes_running = (total_time_in_seconds_running % 3600) // 60
+        total_time_taken_seconds_running = (total_time_in_seconds_running % 3600) % 60
+
+
+        total_time_taken_hours_cycling = total_time_in_seconds_walking // 3600
+        total_time_taken_minutes_cycling = (total_time_in_seconds_walking % 3600) // 60
+        total_time_taken_seconds_cycling = (total_time_in_seconds_walking % 3600) % 60
+
+        # Initialize dictionaries to store data for each mode
+        byModes = {}
+        cycle = {}
+        walking = {}
+        running = {}
+
+        cycle["totalDistance"] = total_distance_cycling
+        cycle["totalCaloriesBurned"] = total_calories_burned_cycling
+        cycle["totalTimeWorkingOutHours"] = total_time_taken_hours_cycling
+        cycle["totalTimeWorkingOutMinutes"] = total_time_taken_minutes_cycling
+        cycle["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_cycling
+
+        walking["totalDistance"] = total_distance_walking
+        walking["totalCaloriesBurned"] = total_calories_burned_walking
+        walking["totalTimeWorkingOutHours"] = total_time_taken_hours_walking
+        walking["totalTimeWorkingOutMinutes"] = total_time_taken_minutes_walking
+        walking["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_walking
+
+        running["totalDistance"] = total_distance_running
+        running["totalCaloriesBurned"] = total_calories_burned_running
+        running["totalTimeWorkingOutHours"] = total_time_taken_hours_running
+        running["totalTimeWorkingOutMinutes"] = total_time_taken_minutes_running
+        running["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_running
+
+        # Add each mode of transports dictionary to byModes
+        byModes["cycle"] = cycle
+        byModes["walking"] = walking
+        byModes["running"] = running
+
+        # Calculate totals for all journeys
+
+        total_distance_all_journeys = total_distance_cycling + total_distance_walking + total_distance_running
+        total_calories_burned_all_journeys = total_calories_burned_cycling + total_calories_burned_walking + total_calories_burned_running
+
+        total_time_app_used = total_time_in_seconds_walking + total_time_in_seconds_running + total_time_in_seconds_cycling
+        total_time_taken_hours_total = total_time_app_used // 3600
+        total_time_taken_minutes_total = (total_time_app_used % 3600) // 60
+        total_time_taken_seconds_total = (total_time_app_used % 3600) % 60
+
+        # Create final data dictionary, this will contain all the other data for a user and their journeys
+        data = {}
+
+        # fill data dictionary with the relevant data
+        data["journeysData"] = journeysData
+        data["byModes"] = byModes
+        data["totalDistanceCombined"] = total_distance_all_journeys
+        data["totalCaloriesBurned"] = total_calories_burned_all_journeys
+        data["totalTimeWorkingOutHours"] = total_time_taken_hours_total
+        data["totalTimeWorkingOutMinutes"] = total_time_taken_minutes_total
+        data["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_total
+
+        # Return status, indicating successful completion of Api, and the data dictionary
+        return jsonify({'status': 200, 'data': data}), 200
+
+
+    @app.route("/get_friends_stats", methods=["GET"])
+    @jwt_required()
+    def getFriendsStats() -> Tuple[dict, int]:
+
+        """
+        Get all the statistical data for a users friend and their journeys in a 'data' dictionary
+
+        Parameters
+        ----------
+        None.
+
+        Returns
+        -------
+        Json
+            A JSON object that contains statistical information about a users friend and their journeys.
+            This includes:
+
+                data:
+                Dictionary containing all user data
+
+                    journeyData:
+                    list containing statistical information about each journey of a user(each stored as dictionaries)
+
+                    byModes:
+                    contains totalled data for each mode of transport
+
+                    Also contains a users stats summing all their journeys
+
+            this is the exact structure, where totalTimeWorkingOut is broken down into totalTimeWorkingOutHours,
+            totalTimeWorkingOutMinutes and totalTimeWorkingOutSeconds:
+
+
+
+
+        Notes
+        -----
+        The time taken variables return the hours in a journey,
+        the remaining minutes of the journey excluding the hours,
+        the remaining seconds excluding both.
+        These 3 essentially give the exact amount of time a journey took
+        HH:MM:SS
+
+
+        Exceptions
+        ----------
+        None.
+
+        """
+        # get current user
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        # Check if user exists
+        if not current_user:
+            return jsonify({'status': 'error', 'message': 'User not found'}), 404
+
+        # check if email parameter inputted
+        friend_email = request.args.get('friend')
+        if not friend_email:
+            return jsonify({'status': 'error', 'message': 'Friend email is required'}), 400
+
+        # check if friend exists
+        friend_user = models.User.query.filter_by(email=friend_email).first()
+        if not friend_user:
+            return jsonify({'status': 'error', 'message': 'Friend not found'}), 404
+
+        # check if current user and friend are actually friends
+        if not (models.Friendship.query.filter_by(requester_id=current_user.id, addressee_id=friend_user.id, status='accepted').first() or
+                models.Friendship.query.filter_by(requester_id=friend_user.id, addressee_id=current_user.id, status='accepted').first()):
+            return jsonify({'status': 'error', 'message': 'Not friends'}), 403
+
+        # if account is set to private we cant access it and dispaly its information
+        if friend_user.isPrivate:
+            return jsonify({'status': 'error', 'message': 'Friend\'s account is private'}), 403
+
+
+        # get friend
+        user = models.User.query.filter_by(email=friend_email).first()
+
+        # Check if user exists
+        if not user:
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+
+        # Retrieve all journeys associated with the user
+        journeys = models.Journey.query.filter_by(userId=user.id).all()
+
+        # Initialize variables to store journey data and totals for each mode
+
+        # List to store individual journey data
+        journeysData = []
+        total_distance_cycling = 0
+        total_calories_burned_cycling = 0
+        total_time_taken_hours_cycling = 0
+        total_time_taken_minutes_cycling = 0
+        total_time_taken_seconds_cycling = 0
+        total_time_in_seconds_cycling = 0
+
+        total_distance_walking = 0
+        total_calories_burned_walking = 0
+        total_time_taken_hours_walking = 0
+        total_time_taken_minutes_walking = 0
+        total_time_taken_seconds_walking = 0
+        total_time_in_seconds_walking = 0
+
+        total_distance_running = 0
+        total_calories_burned_running = 0
+        total_time_taken_hours_running = 0
+        total_time_taken_minutes_running = 0
+        total_time_taken_seconds_running = 0
+        total_time_in_seconds_running = 0
+
+
+        # Iterate over each journey
+        for journey in journeys:
+
+            # Temporary dictionary to store data for each journey
+            temp_dictionary = {}
+
+            # Check if journey exists
+            if not journey:
+                return jsonify({'status': 404, 'message': 'Journey not found'}), 404
+
+
+            # Calculate time taken for the journey
+
+            # Extract start time and end time from the journey object
+            start_time = journey.startTime
+            end_time = journey.endTime
+
+            # Check if start time or end time is missing
+            if not start_time or not end_time:
+                return jsonify({'status': 400, 'message': 'Start time or end time missing for this journey'}), 400
+
+            # Calculate the time difference in seconds between start time and end time
+            start_seconds = start_time.hour * 3600 + start_time.minute * 60 + start_time.second
+            end_seconds = end_time.hour * 3600 + end_time.minute * 60 + end_time.second
+            time_diff_seconds = end_seconds - start_seconds
+
+            # breakdown time difference to hours, minutes, and seconds
+            hours = time_diff_seconds // 3600
+            minutes = (time_diff_seconds % 3600) // 60
+            seconds = (time_diff_seconds % 3600) % 60
+
+            # Add time data to the temporary dictionary
+            temp_dictionary["hours_taken"] = hours
+            temp_dictionary["minutes_taken"] = minutes
+            temp_dictionary["seconds_taken"] = seconds
+
+
+            # Calculate calories burned for the journey
+
+            # MET(metabolic equivalent of task) x Body Weight(kg) x Duration(hours)
+            exact_hours = time_diff_seconds / 3600
+            average_weight = 62
+
+            if journey.type == "Walking":
+                MET = 3.6
+            elif journey.type == "Running":
+                MET = 9
+            else:
+                MET = 7
+
+            calories_burned = MET * average_weight * exact_hours
+
+            # Add calories burned data to the temporary dictionary
+            temp_dictionary["caloriesBurned"] = calories_burned
+
+
+            # Add distance data to the temporary dictionary
+            distance = journey.totalDistance
+            temp_dictionary["totalDistance"]  = distance
+
+
+            # Calculate average speed for the journey
+            mph = (distance // (time_diff_seconds / 3600))
+            temp_dictionary["averageSpeed"] = mph
+
+            # Add mode of transport of journey to the temporary dictionary
+            mode = journey.type
+            temp_dictionary["mode"] = mode
+
+            # Add journey ID data to the temporary dictionary
+            journeyID = journey.id
+            temp_dictionary["journeyId"] = journeyID
+
+            # Append the journeys data to the journeysData list
+            journeysData.append(temp_dictionary)
+
+
+            # Update totals for each mode
+            if journey.type == "Walking":
+                total_distance_walking += distance
+                total_calories_burned_walking += calories_burned
+                total_time_in_seconds_walking += time_diff_seconds
+
+            elif journey.type == "Running":
+                total_distance_running += distance
+                total_calories_burned_running += calories_burned
+                total_time_in_seconds_running += time_diff_seconds
+
+            else:
+                total_distance_cycling += distance
+                total_calories_burned_cycling += calories_burned
+                total_time_in_seconds_cycling += time_diff_seconds
+
+
+        # Calculate total time for each mode
+        total_time_taken_hours_walking = total_time_in_seconds_walking // 3600
+        total_time_taken_minutes_walking = (total_time_in_seconds_walking % 3600) // 60
+        total_time_taken_seconds_walking = (total_time_in_seconds_walking % 3600) % 60
+
+
+        total_time_taken_hours_running = total_time_in_seconds_running // 3600
+        total_time_taken_minutes_running = (total_time_in_seconds_running % 3600) // 60
+        total_time_taken_seconds_running = (total_time_in_seconds_running % 3600) % 60
+
+
+        total_time_taken_hours_cycling = total_time_in_seconds_walking // 3600
+        total_time_taken_minutes_cycling = (total_time_in_seconds_walking % 3600) // 60
+        total_time_taken_seconds_cycling = (total_time_in_seconds_walking % 3600) % 60
+
+        # Initialize dictionaries to store data for each mode
+        byModes = {}
+        cycle = {}
+        walking = {}
+        running = {}
+
+        cycle["totalDistance"] = total_distance_cycling
+        cycle["totalCaloriesBurned"] = total_calories_burned_cycling
+        cycle["totalTimeWorkingOutHours"] = total_time_taken_hours_cycling
+        cycle["totalTimeWorkingOutMinutes"] = total_time_taken_minutes_cycling
+        cycle["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_cycling
+
+        walking["totalDistance"] = total_distance_walking
+        walking["totalCaloriesBurned"] = total_calories_burned_walking
+        walking["totalTimeWorkingOutHours"] = total_time_taken_hours_walking
+        walking["totalTimeWorkingOutMinutes"] = total_time_taken_minutes_walking
+        walking["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_walking
+
+        running["totalDistance"] = total_distance_running
+        running["totalCaloriesBurned"] = total_calories_burned_running
+        running["totalTimeWorkingOutHours"] = total_time_taken_hours_running
+        running["totalTimeWorkingOutMinutes"] = total_time_taken_minutes_running
+        running["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_running
+
+        # Add each mode of transports dictionary to byModes
+        byModes["cycle"] = cycle
+        byModes["walking"] = walking
+        byModes["running"] = running
+
+        # Calculate totals for all journeys
+
+        total_distance_all_journeys = total_distance_cycling + total_distance_walking + total_distance_running
+        total_calories_burned_all_journeys = total_calories_burned_cycling + total_calories_burned_walking + total_calories_burned_running
+
+        total_time_app_used = total_time_in_seconds_walking + total_time_in_seconds_running + total_time_in_seconds_cycling
+        total_time_taken_hours_total = total_time_app_used // 3600
+        total_time_taken_minutes_total = (total_time_app_used % 3600) // 60
+        total_time_taken_seconds_total = (total_time_app_used % 3600) % 60
+
+        # Create final data dictionary, this will contain all the other data for a user and their journeys
+        data = {}
+
+        # fill data dictionary with the relevant data
+        data["journeysData"] = journeysData
+        data["byModes"] = byModes
+        data["totalDistanceCombined"] = total_distance_all_journeys
+        data["totalCaloriesBurned"] = total_calories_burned_all_journeys
+        data["totalTimeWorkingOutHours"] = total_time_taken_hours_total
+        data["totalTimeWorkingOutMinutes"] = total_time_taken_minutes_total
+        data["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_total
+
+        # Return status, indicating successful completion of Api, and the data dictionary
+        return jsonify({'status': 200, 'data': data}), 200
+
+
+
+
+
+
+
+
+
+
+
+
+
