@@ -4,7 +4,11 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token
 import pytest
 import constants
-from app.resources import GPSRoutes
+from app.Client.GPS import GPSRoutes
+from app.Client.Auth import AuthenticationRoutes
+from app.Client.Friends import FriendshipRoutes
+from app.Client.Membership import MembershipRoutes
+from app.Client.Stats import StatisticsRoutes
 from revenuePrediction import generateFutureRevenueData
 
 # Initialize bcrypt
