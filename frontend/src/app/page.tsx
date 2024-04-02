@@ -71,13 +71,13 @@ export default function Landing(){
                 </div>
             </header>
             
-            <p className="text-center text-lg font-serif">“ Every journey begins with a single step ”</p>
+
             <div className="flex items-start justify-between">
                 <div className="ml-24 py-40">
                     <p className="text-4xl font-serif font-medium underline">Heading</p>
                     <p className="text-xl font-serif ">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed eu dui non diam eleifend egestas id a ligula.</p>
                     {isLoggedIn && hasActiveMembership? (
-                        <Link href={"/home"} className="flex w-full py-10">
+                        <Link href={"/dashboard"} className="flex w-full py-10">
                             <Button variant="filled" className="bg-green-700 hover:bg-green-800"  size="md" radius="xl">View your Dashboard</Button>
                         </Link> 
                     ):(

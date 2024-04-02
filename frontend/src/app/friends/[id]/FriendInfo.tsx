@@ -47,16 +47,17 @@ export default function FriendInfo({ params }: { params: { id: string } }) {
   }, []);
 
   return (
-    <main className="w-screen h-screen">
+    <main>
       <div className="w-full h-full">
-        <header className="flex w-full h-20 justify-around items-center mt-6 ">
+        <header className="flex w-full h-20 justify-around items-center pt-6">
           <div className="flex flex-col w-full flex-grow">
-            <p className="text-center text-3xl font-serif "></p>
+            <p className="text-center text-3xl font-semibold font-domine"></p>
             <p className="text-center text-lg font-serif">
               “Every journey begins with a single step”
             </p>
           </div>
         </header>
+
 
         <div className="flex justify-center mt-10">
           <SegmentedControl
