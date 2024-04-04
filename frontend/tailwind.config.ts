@@ -16,6 +16,7 @@ const config: Config = {
       fontFamily: {
         'domine': ['Domine', 'serif'],
       },
+      dropShadow: {sharp: '0px 3px 3px rgba(0, 0, 0, 0.4)'},
     },
   },
   plugins: [],

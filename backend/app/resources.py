@@ -1263,6 +1263,7 @@ class StatisticsRoutes():
             # Calculate time taken for the journey
 
             # Extract start time and end time from the journey object
+            date =  journey.dateCreated
             start_time = journey.startTime
             end_time = journey.endTime
 
@@ -1281,6 +1282,7 @@ class StatisticsRoutes():
             seconds = (time_diff_seconds % 3600) % 60
 
             # Add time data to the temporary dictionary
+            temp_dictionary["date"] = date
             temp_dictionary["hours_taken"] = hours
             temp_dictionary["minutes_taken"] = minutes
             temp_dictionary["seconds_taken"] = seconds

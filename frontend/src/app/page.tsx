@@ -50,7 +50,7 @@ export default function Landing(){
 
                 <p className="ml-4 text-2xl font-bold text-green-700">MyApp</p>
             
-                <div className="flex items-center hover:text-green-700">
+                <div className="flex items-center">
                     {isLoggedIn ? (
                     <div className="flex justify-center">
                         <Link href={"/logout"}>
