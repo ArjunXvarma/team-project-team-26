@@ -1,5 +1,5 @@
 from app import db, app
-from app.models import User, Role  
+from app.models import User, Role
 from flask_bcrypt import Bcrypt
 import datetime
 
@@ -7,7 +7,7 @@ bcrypt = Bcrypt(app)
 
 # Admin user details
 admin_email = "admin@gmail.com"
-admin_password = "admin"  
+admin_password = "admin"
 hashed_password = bcrypt.generate_password_hash(admin_password).decode('utf-8')
 first_name = "Super"
 last_name = "Admin"
@@ -28,9 +28,9 @@ def create_admin_user(admin_role):
             hashed_password=hashed_password,
             first_name=first_name,
             last_name=last_name,
-            date_of_birth=datetime.datetime(1990, 1, 1)  
+            date_of_birth=datetime.datetime(1990, 1, 1)
         )
-        admin_user.roles.append(admin_role)  
+        admin_user.roles.append(admin_role)
         db.session.add(admin_user)
         db.session.commit()
 
