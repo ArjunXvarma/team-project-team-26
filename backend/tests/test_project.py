@@ -5,6 +5,7 @@ from flask_jwt_extended import create_access_token
 import pytest
 import constants
 from app.resources import GPSRoutes
+from revenuePrediction import generateFutureRevenueData
 
 # Initialize bcrypt
 bcrypt = Bcrypt(app)
@@ -1253,3 +1254,326 @@ class TestFriendshipRoutes:
         assert len(response.json['friends']) == 1
         assert response.json['friends'][0]['email'] == "bob@example.com"
         assert response.json['friends'][0]['name'] == "Bob Johnson"
+
+class TestGenerateFutureRevenueData:
+    """ Class for testing generateFutureRevenue function """
+
+    # Ensure these are defined within the setUp method
+    requestDataMonthly = [
+        {'period': '2023-01', 'total_revenue': 1000, 'total_sold': 10},
+        {'period': '2023-02', 'total_revenue': 1500, 'total_sold': 15},
+    ]
+    requestDataWeekly = [
+        {'period': '2023-01', 'total_revenue': 500, 'total_sold': 5},
+        {'period': '2023-02', 'total_revenue': 700, 'total_sold': 7},
+    ]
+
+    def test_generate_future_revenue_monthly(self):
+        result = generateFutureRevenueData(self.requestDataMonthly, 'month')
+        assert len(result['future_revenues']) == 12
+        assert result['frequency'] == 'month'
+
+    def test_generate_future_revenue_weekly(self):
+        result = generateFutureRevenueData(self.requestDataWeekly, 'week')
+        assert len(result['future_revenues']) == 52
+        assert result['frequency'] == 'week'
+
+    def test_generate_future_revenue_empty_data_monthly(self):
+        result = generateFutureRevenueData([], 'month')
+        assert len(result) == 0
+
+    def test_generate_future_revenue_empty_data_weekly(self):
+        result = generateFutureRevenueData([], 'week')
+        assert len(result) == 0
+
+    def test_generate_future_revenue_invalid_frequency(self):
+        result = generateFutureRevenueData(self.requestDataMonthly, 'daily')
+        assert result == []
+
+class TestGetStats:
+    '''Class for testing getStats api functionality'''
+
+    def stats(self, client, clean_db):
+        user = models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        # Get token
+        token = login_response.json['session_token']
+
+        # Create a Journey to test with
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Running",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        journey_data_2 = {
+            "name": "Evening Walk",
+            "type": "Walking",
+            "totalDistance": 3.5,
+            "elevation": {
+                "avg": 90,
+                "min": 80,
+                "max": 100
+            },
+            "points": [
+                {"lat": 38.7, "lon": -120.1, "ele": 95},
+                {"lat": 38.8, "lon": -120.4, "ele": 85}
+            ],
+            "startTime": "18:00:00",
+            "endTime": "18:45:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        journey_data_3 = {
+            "name": "Afternoon Cycling",
+            "type": "Cycling",
+            "totalDistance": 8.0,
+            "elevation": {
+                "avg": 110,
+                "min": 100,
+                "max": 120
+            },
+            "points": [
+                {"lat": 38.6, "lon": -120.0, "ele": 105},
+                {"lat": 38.7, "lon": -120.5, "ele": 115}
+            ],
+            "startTime": "14:00:00",
+            "endTime": "15:30:00",
+            "dateCreated": "2024-03-13"
+        }
+
+        # Create journeys using the provided journey data
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+        r2 = client.post("/create_journey", json=journey_data_2, headers={"Authorization": f"Bearer {token}"})
+        r3 = client.post("/create_journey", json=journey_data_3, headers={"Authorization": f"Bearer {token}"})
+
+
+
+        user2 = models.User(
+            first_name="Bob",
+            last_name="Johnson",
+            email="bob@example.com",
+            date_of_birth=datetime(1991, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add_all([user, user2])
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "bob@example.com",
+            "password": "password"
+        })
+        # Get token
+        token2 = login_response.json['session_token']
+
+        # Create journeys using the provided journey data
+        r4 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token2}"})
+        r5 = client.post("/create_journey", json=journey_data_2, headers={"Authorization": f"Bearer {token2}"})
+        r6 = client.post("/create_journey", json=journey_data_3, headers={"Authorization": f"Bearer {token2}"})
+
+
+
+        # Create a friendship between user1 and user2
+        friendship = models.Friendship(requester_id=user.id, addressee_id=user2.id, status="accepted")
+        clean_db.session.add(friendship)
+        clean_db.session.commit()
+
+        return token
+
+    def test_stats_with_JWT(self, client, clean_db):
+        # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if getStats runs successfully success, return status code 200
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+    def test_stats_without_JWT(self, client, clean_db):
+
+        response = client.get("/getStats")
+        assert response.status_code == 401
+
+    def test_stats_byModes_cycle(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: cycling
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+        assert response.json["data"]["byModes"]["cycle"]["totalDistance"] == 8
+        assert response.json["data"]["byModes"]["cycle"]["totalCaloriesBurned"] == 651
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_byModes_running(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: running
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+        assert response.json["data"]["byModes"]["running"]["totalDistance"] == 5
+        assert response.json["data"]["byModes"]["running"]["totalCaloriesBurned"] == 418.5
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_byModes_walking(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: walking
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+        assert response.json["data"]["byModes"]["walking"]["totalDistance"] == 3.5
+        assert response.json["data"]["byModes"]["walking"]["totalCaloriesBurned"] == 167.4
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_journeyData(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for journeysData[0]
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.json["data"]["journeysData"][0]["averageSpeed"] == 6
+        assert response.json["data"]["journeysData"][0]["caloriesBurned"] == 418.5
+        assert response.json["data"]["journeysData"][0]["hours_taken"] == 0
+        assert response.json["data"]["journeysData"][0]["journeyId"] == 1
+        assert response.json["data"]["journeysData"][0]["mode"] == "Running"
+        assert response.json["data"]["journeysData"][0]["totalDistance"] == 5
+
+    def test_stats_totals_for_user(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct values for the users total Stats, all journeys combined
+        response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.json["data"]["totalCaloriesBurned"] == 1236.9
+        assert response.json["data"]["totalDistanceCombined"] == 16.5
+        assert response.json["data"]["totalTimeWorkingOutHours"] == 3
+        assert response.json["data"]["totalTimeWorkingOutMinutes"] == 0
+        assert response.json["data"]["totalTimeWorkingOutSeconds"] == 0
+
+
+
+    def test_stats_friend_with_JWT(self, client, clean_db):
+        # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if getStats runs successfully success, return status code 200
+        url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
+        response = client.get(url, headers={'Authorization': f'Bearer {token}'})
+        assert response.status_code == 200
+
+    def test_stats_friend_without_JWT(self, client, clean_db):
+
+        url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
+        response = client.get(url)
+        assert response.status_code == 401
+
+    def test_stats_friend_byModes_cycle(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: cycling
+        url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
+        response = client.get(url, headers={'Authorization': f'Bearer {token}'})
+        assert response.json["data"]["byModes"]["cycle"]["totalDistance"] == 8
+        assert response.json["data"]["byModes"]["cycle"]["totalCaloriesBurned"] == 651
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_friend_byModes_running(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: running
+        url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
+        response = client.get(url, headers={'Authorization': f'Bearer {token}'})
+        assert response.json["data"]["byModes"]["running"]["totalDistance"] == 5
+        assert response.json["data"]["byModes"]["running"]["totalCaloriesBurned"] == 418.5
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_friend_byModes_walking(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for byModes: walking
+        url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
+        response = client.get(url, headers={'Authorization': f'Bearer {token}'})
+        assert response.json["data"]["byModes"]["walking"]["totalDistance"] == 3.5
+        assert response.json["data"]["byModes"]["walking"]["totalCaloriesBurned"] == 167.4
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutSeconds"] == 0
+
+    def test_stats_friend_journeyData(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct data for journeysData[0]
+        url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
+        response = client.get(url, headers={'Authorization': f'Bearer {token}'})
+
+        assert response.json["data"]["journeysData"][0]["averageSpeed"] == 6
+        assert response.json["data"]["journeysData"][0]["caloriesBurned"] == 418.5
+        assert response.json["data"]["journeysData"][0]["hours_taken"] == 0
+        assert response.json["data"]["journeysData"][0]["journeyId"] == 4
+        assert response.json["data"]["journeysData"][0]["mode"] == "Running"
+        assert response.json["data"]["journeysData"][0]["totalDistance"] == 5
+
+    def test_stats_friend_totals_for_user(self, client, clean_db):
+
+         # get stats user token
+        token = self.stats(client, clean_db)
+
+        # Test if the getStats api returns correct values for the users total Stats, all journeys combined
+        url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
+        response = client.get(url, headers={'Authorization': f'Bearer {token}'})
+
+        assert response.json["data"]["totalCaloriesBurned"] == 1236.9
+        assert response.json["data"]["totalDistanceCombined"] == 16.5
+        assert response.json["data"]["totalTimeWorkingOutHours"] == 3
+        assert response.json["data"]["totalTimeWorkingOutMinutes"] == 0
+        assert response.json["data"]["totalTimeWorkingOutSeconds"] == 0
+

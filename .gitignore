@@ -42,7 +42,8 @@ backend/app/views.py
 backend/app.db
 
 # Virtual Environment
-/virtual_env
+**/virtual_env
+**/venv
 /.venv
 
 /backend/app/__pycache__
@@ -52,8 +53,12 @@ backend/app.db
 !backend/tests/test_project.py
 !backend/tests/__init__.py
 !backend/tests/conftest.py
+backend/statstest.py
 ignore.py
 backend/README.md
-vr_flask
+backend/app/Admin/__pycache__
 
 /swe
+
+backend/testUsers.py
+backend/testFriends.py
