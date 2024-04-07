@@ -984,7 +984,6 @@ class TestMembershipRoutes:
             "email": "john.doe@example.com",
             "password": "password"
         })
-        print(login_response.json)
         token = login_response.json['session_token']
 
         # Attempt to cancel the membership
