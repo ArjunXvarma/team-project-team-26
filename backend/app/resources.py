@@ -1329,12 +1329,12 @@ class StatisticsRoutes():
 
 
             # Update totals for each mode
-            if journey.type == "Walking":
+            if journey.type == "Walk":
                 total_distance_walking += distance
                 total_calories_burned_walking += calories_burned
                 total_time_in_seconds_walking += time_diff_seconds
 
-            elif journey.type == "Running":
+            elif journey.type == "Run":
                 total_distance_running += distance
                 total_calories_burned_running += calories_burned
                 total_time_in_seconds_running += time_diff_seconds
