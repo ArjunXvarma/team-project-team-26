@@ -1035,7 +1035,7 @@ Please ensure to authenticate using a valid JWT token obtained through the login
 
 ```python
 url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
-    response = client.get(url, headers={'Authorization': f'Bearer {token}'})
+response = client.get(url, headers={'Authorization': f'Bearer {token}'})
 ```
 
 
