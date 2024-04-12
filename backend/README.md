@@ -1127,12 +1127,40 @@ response = client.get(url, headers={'Authorization': f'Bearer {token}'})
     "error": "User not found."
 }, 404 NOT FOUND
 ```
+- If friend is not found:
+
+```json
+{
+    "error": "Friend not found."
+}, 404 NOT FOUND
+```
 - If a journey trying to be accessed is not found:
 
 ```json
 {
     "error": "Journey not found"
 }, 404 NOT FOUND
+```
+- Friends email is required:
+
+```json
+{
+    "error": "Friend email is required"
+}, 400 BAD REQUEST
+```
+- If user and friend are not friends:
+
+```json
+{
+    "error": "Not friends."
+}, 403
+```
+- If friends account is set to private:
+
+```json
+{
+    "error": "Friend's account is private."
+}, 403
 ```
 
 
