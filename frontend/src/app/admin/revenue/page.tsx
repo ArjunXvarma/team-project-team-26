@@ -71,8 +71,8 @@ export default function Statistics() {
   }, []);
   return (
     <main>
-      <div className="h-full">
-        <div className="h-full m-8 drop-shadow-xl rounded-md bg-gray-100 py-4 px-20">
+     <div className="min-h-screen bg-background">
+        <div className="h-full m-8 drop-shadow-xl rounded-md bg-white py-4 px-20">
           <p className="flex justify-center text-green-800 font-bold text-xl mb-4">
             Weekly Revenue
           </p>
