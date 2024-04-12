@@ -1314,7 +1314,7 @@ class TestGetStats:
         # Create a Journey to test with
         journey_data = {
             "name": "Morning Run",
-            "type": "Running",
+            "type": "Run",
             "totalDistance": 5.0,
             "elevation": {
                 "avg": 120,
@@ -1332,7 +1332,7 @@ class TestGetStats:
 
         journey_data_2 = {
             "name": "Evening Walk",
-            "type": "Walking",
+            "type": "Walk",
             "totalDistance": 3.5,
             "elevation": {
                 "avg": 90,
@@ -1350,7 +1350,7 @@ class TestGetStats:
 
         journey_data_3 = {
             "name": "Afternoon Cycling",
-            "type": "Cycling",
+            "type": "Cycle",
             "totalDistance": 8.0,
             "elevation": {
                 "avg": 110,
@@ -1425,11 +1425,11 @@ class TestGetStats:
 
         # Test if the getStats api returns correct data for byModes: cycling
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
-        assert response.json["data"]["byModes"]["cycle"]["totalDistance"] == 8
-        assert response.json["data"]["byModes"]["cycle"]["totalCaloriesBurned"] == 651
-        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutHours"] == 0
-        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutMinutes"] == 45
-        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutSeconds"] == 0
+        assert response.json["data"]["byModes"]["Cycle"]["totalDistance"] == 8
+        assert response.json["data"]["byModes"]["Cycle"]["totalCaloriesBurned"] == 651
+        assert response.json["data"]["byModes"]["Cycle"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["Cycle"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["Cycle"]["totalTimeWorkingOutSeconds"] == 0
 
     def test_stats_byModes_running(self, client, clean_db):
 
@@ -1438,11 +1438,11 @@ class TestGetStats:
 
         # Test if the getStats api returns correct data for byModes: running
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
-        assert response.json["data"]["byModes"]["running"]["totalDistance"] == 5
-        assert response.json["data"]["byModes"]["running"]["totalCaloriesBurned"] == 418.5
-        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutHours"] == 0
-        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutMinutes"] == 45
-        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutSeconds"] == 0
+        assert response.json["data"]["byModes"]["Run"]["totalDistance"] == 5
+        assert response.json["data"]["byModes"]["Run"]["totalCaloriesBurned"] == 418.5
+        assert response.json["data"]["byModes"]["Run"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["Run"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["Run"]["totalTimeWorkingOutSeconds"] == 0
 
     def test_stats_byModes_walking(self, client, clean_db):
 
@@ -1451,11 +1451,11 @@ class TestGetStats:
 
         # Test if the getStats api returns correct data for byModes: walking
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
-        assert response.json["data"]["byModes"]["walking"]["totalDistance"] == 3.5
-        assert response.json["data"]["byModes"]["walking"]["totalCaloriesBurned"] == 167.4
-        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutHours"] == 0
-        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutMinutes"] == 45
-        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutSeconds"] == 0
+        assert response.json["data"]["byModes"]["Walk"]["totalDistance"] == 3.5
+        assert response.json["data"]["byModes"]["Walk"]["totalCaloriesBurned"] == 167.4
+        assert response.json["data"]["byModes"]["Walk"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["Walk"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["Walk"]["totalTimeWorkingOutSeconds"] == 0
 
     def test_stats_journeyData(self, client, clean_db):
 
@@ -1469,7 +1469,7 @@ class TestGetStats:
         assert response.json["data"]["journeysData"][0]["caloriesBurned"] == 418.5
         assert response.json["data"]["journeysData"][0]["hours_taken"] == 0
         assert response.json["data"]["journeysData"][0]["journeyId"] == 1
-        assert response.json["data"]["journeysData"][0]["mode"] == "Running"
+        assert response.json["data"]["journeysData"][0]["mode"] == "Run"
         assert response.json["data"]["journeysData"][0]["totalDistance"] == 5
 
     def test_stats_totals_for_user(self, client, clean_db):
@@ -1511,11 +1511,12 @@ class TestGetStats:
         # Test if the getStats api returns correct data for byModes: cycling
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
         response = client.get(url, headers={'Authorization': f'Bearer {token}'})
-        assert response.json["data"]["byModes"]["cycle"]["totalDistance"] == 8
-        assert response.json["data"]["byModes"]["cycle"]["totalCaloriesBurned"] == 651
-        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutHours"] == 0
-        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutMinutes"] == 45
-        assert response.json["data"]["byModes"]["cycle"]["totalTimeWorkingOutSeconds"] == 0
+        print(response.json["data"])
+        assert response.json["data"]["byModes"]["Cycle"]["totalDistance"] == 8
+        assert response.json["data"]["byModes"]["Cycle"]["totalCaloriesBurned"] == 651
+        assert response.json["data"]["byModes"]["Cycle"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["Cycle"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["Cycle"]["totalTimeWorkingOutSeconds"] == 0
 
     def test_stats_friend_byModes_running(self, client, clean_db):
 
@@ -1525,11 +1526,11 @@ class TestGetStats:
         # Test if the getStats api returns correct data for byModes: running
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
         response = client.get(url, headers={'Authorization': f'Bearer {token}'})
-        assert response.json["data"]["byModes"]["running"]["totalDistance"] == 5
-        assert response.json["data"]["byModes"]["running"]["totalCaloriesBurned"] == 418.5
-        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutHours"] == 0
-        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutMinutes"] == 45
-        assert response.json["data"]["byModes"]["running"]["totalTimeWorkingOutSeconds"] == 0
+        assert response.json["data"]["byModes"]["Run"]["totalDistance"] == 5
+        assert response.json["data"]["byModes"]["Run"]["totalCaloriesBurned"] == 418.5
+        assert response.json["data"]["byModes"]["Run"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["Run"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["Run"]["totalTimeWorkingOutSeconds"] == 0
 
     def test_stats_friend_byModes_walking(self, client, clean_db):
 
@@ -1539,11 +1540,11 @@ class TestGetStats:
         # Test if the getStats api returns correct data for byModes: walking
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
         response = client.get(url, headers={'Authorization': f'Bearer {token}'})
-        assert response.json["data"]["byModes"]["walking"]["totalDistance"] == 3.5
-        assert response.json["data"]["byModes"]["walking"]["totalCaloriesBurned"] == 167.4
-        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutHours"] == 0
-        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutMinutes"] == 45
-        assert response.json["data"]["byModes"]["walking"]["totalTimeWorkingOutSeconds"] == 0
+        assert response.json["data"]["byModes"]["Walk"]["totalDistance"] == 3.5
+        assert response.json["data"]["byModes"]["Walk"]["totalCaloriesBurned"] == 167.4
+        assert response.json["data"]["byModes"]["Walk"]["totalTimeWorkingOutHours"] == 0
+        assert response.json["data"]["byModes"]["Walk"]["totalTimeWorkingOutMinutes"] == 45
+        assert response.json["data"]["byModes"]["Walk"]["totalTimeWorkingOutSeconds"] == 0
 
     def test_stats_friend_journeyData(self, client, clean_db):
 
@@ -1558,7 +1559,7 @@ class TestGetStats:
         assert response.json["data"]["journeysData"][0]["caloriesBurned"] == 418.5
         assert response.json["data"]["journeysData"][0]["hours_taken"] == 0
         assert response.json["data"]["journeysData"][0]["journeyId"] == 4
-        assert response.json["data"]["journeysData"][0]["mode"] == "Running"
+        assert response.json["data"]["journeysData"][0]["mode"] == "Run"
         assert response.json["data"]["journeysData"][0]["totalDistance"] == 5
 
     def test_stats_friend_totals_for_user(self, client, clean_db):

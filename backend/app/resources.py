@@ -1294,9 +1294,9 @@ class StatisticsRoutes():
             exact_hours = time_diff_seconds / 3600
             average_weight = 62
 
-            if journey.type == "Walking":
+            if journey.type == "Walk":
                 MET = 3.6
-            elif journey.type == "Running":
+            elif journey.type == "Run":
                 MET = 9
             else:
                 MET = 7
@@ -1385,9 +1385,9 @@ class StatisticsRoutes():
         running["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_running
 
         # Add each mode of transports dictionary to byModes
-        byModes["cycle"] = cycle
-        byModes["walking"] = walking
-        byModes["running"] = running
+        byModes["Cycle"] = cycle
+        byModes["Walk"] = walking
+        byModes["Run"] = running
 
         # Calculate totals for all journeys
 
@@ -1541,6 +1541,7 @@ class StatisticsRoutes():
             # Calculate time taken for the journey
 
             # Extract start time and end time from the journey object
+            date =  journey.dateCreated
             start_time = journey.startTime
             end_time = journey.endTime
 
@@ -1559,6 +1560,7 @@ class StatisticsRoutes():
             seconds = (time_diff_seconds % 3600) % 60
 
             # Add time data to the temporary dictionary
+            temp_dictionary["date"] = date
             temp_dictionary["hours_taken"] = hours
             temp_dictionary["minutes_taken"] = minutes
             temp_dictionary["seconds_taken"] = seconds
@@ -1570,9 +1572,9 @@ class StatisticsRoutes():
             exact_hours = time_diff_seconds / 3600
             average_weight = 62
 
-            if journey.type == "Walking":
+            if journey.type == "Walk":
                 MET = 3.6
-            elif journey.type == "Running":
+            elif journey.type == "Run":
                 MET = 9
             else:
                 MET = 7
@@ -1605,12 +1607,12 @@ class StatisticsRoutes():
 
 
             # Update totals for each mode
-            if journey.type == "Walking":
+            if journey.type == "Walk":
                 total_distance_walking += distance
                 total_calories_burned_walking += calories_burned
                 total_time_in_seconds_walking += time_diff_seconds
 
-            elif journey.type == "Running":
+            elif journey.type == "Run":
                 total_distance_running += distance
                 total_calories_burned_running += calories_burned
                 total_time_in_seconds_running += time_diff_seconds
@@ -1661,9 +1663,9 @@ class StatisticsRoutes():
         running["totalTimeWorkingOutSeconds"] = total_time_taken_seconds_running
 
         # Add each mode of transports dictionary to byModes
-        byModes["cycle"] = cycle
-        byModes["walking"] = walking
-        byModes["running"] = running
+        byModes["Cycle"] = cycle
+        byModes["Walk"] = walking
+        byModes["Run"] = running
 
         # Calculate totals for all journeys
 
