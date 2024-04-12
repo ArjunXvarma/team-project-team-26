@@ -1020,4 +1020,121 @@ Please ensure to authenticate using a valid JWT token obtained through the login
 ```
 
 
+#### GET ``/get_friends_Stats``
+
+- **General:**
+   - Get a dictionary of all the journey data of one of the current users friends
+
+- **Authentication:**
+
+  - This endpoint require a valid JWT for the route. It also requires the email of the specified friend.
+
+- **parameters:**
+   - This is an example of how to use the API and how to pass in a token as well as the friends email
+   - "bob@example.com"
+
+```python
+url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
+    response = client.get(url, headers={'Authorization': f'Bearer {token}'})
+```
+
+
+- **Returns:**
+- A JSON response containing the status (if it executed correctly) and a dictionary called data containing all journey data of the users friend.
+
+- journeysData - a list of dictionaries with data on each indiviual journey
+
+- byModes - A dictionary containing 3 dictionaries: cycling, running and walking. Each contains totals from journeys using that particular mode of transport.
+
+```json
+{
+    "data": {
+        "byModes": {
+            "cycle": {
+                "totalCaloriesBurned": 397.8333333333333,
+                "totalDistance": 15.0,
+                "totalTimeWorkingOutHours": 0,
+                "totalTimeWorkingOutMinutes": 55,
+                "totalTimeWorkingOutSeconds": 0
+            },
+            "running": {
+                "totalCaloriesBurned": 418.5,
+                "totalDistance": 5.0,
+                "totalTimeWorkingOutHours": 0,
+                "totalTimeWorkingOutMinutes": 45,
+                "totalTimeWorkingOutSeconds": 0
+            },
+            "walking": {
+                "totalCaloriesBurned": 204.6,
+                "totalDistance": 10.0,
+                "totalTimeWorkingOutHours": 0,
+                "totalTimeWorkingOutMinutes": 55,
+                "totalTimeWorkingOutSeconds": 0
+            }
+        },
+        "journeysData": [
+            {
+                "averageSpeed": 6.0,
+                "caloriesBurned": 418.5,
+                "hours_taken": 0,
+                "journeyId": 1,
+                "minutes_taken": 45,
+                "mode": "Running",
+                "seconds_taken": 0,
+                "totalDistance": 5.0
+            },
+            {
+                "averageSpeed": 10.0,
+                "caloriesBurned": 204.6,
+                "hours_taken": 0,
+                "journeyId": 2,
+                "minutes_taken": 55,
+                "mode": "Walking",
+                "seconds_taken": 0,
+                "totalDistance": 10.0
+            },
+            {
+                "averageSpeed": 16.0,
+                "caloriesBurned": 397.8333333333333,
+                "hours_taken": 0,
+                "journeyId": 3,
+                "minutes_taken": 55,
+                "mode": "Cycling",
+                "seconds_taken": 0,
+                "totalDistance": 15.0
+            }
+        ],
+        "totalCaloriesBurned": 1020.9333333333333,
+        "totalDistanceCombined": 30.0,
+        "totalTimeWorkingOutHours": 2,
+        "totalTimeWorkingOutMinutes": 35,
+        "totalTimeWorkingOutSeconds": 0
+    },
+    "status": 200
+}
+```
+- If the access token is missing or invalid:
+
+```json
+{
+    "error": "Missing or invalid access token."
+}, 401 UNAUTHORIZED
+```
+- If user is not found:
+
+```json
+{
+    "error": "User not found."
+}, 404 NOT FOUND
+```
+- If a journey trying to be accessed is not found:
+
+```json
+{
+    "error": "Journey not found"
+}, 404 NOT FOUND
+```
+
+
+
 
