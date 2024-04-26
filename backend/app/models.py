@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from app import db
 
 # Association table for many-to-many relationship between users and roles
@@ -35,6 +35,52 @@ class Membership(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     auto_renew = db.Column(db.Boolean, default=False)
     date_created = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+    
+    def auto_renew_memberships():
+        current_date = datetime.now()
+        memberships_to_renew = Membership.query.filter(Membership.end_date == current_date, Membership.auto_renew == True).all()
+        for membership in memberships_to_renew:
+            # Check for pending updates
+            pending_update = PendingMembershipUpdate.query.filter_by(user_id=membership.user_id).first()
+            if pending_update:
+                membership.membership_type = pending_update.membership_type
+                membership.duration = pending_update.duration
+                membership.auto_renew = pending_update.auto_renew 
+                # Calculate new end_date based on duration... 
+                if pending_update.duration.lower() == 'monthly':
+                    membership.end_date += timedelta(days=30)
+                elif pending_update.duration.lower() == 'annually':
+                    membership.end_date += timedelta(days=365)
+                db.session.delete(pending_update) 
+
+            else: # No pending update - proceed with normal renewal 
+                if membership.duration.lower() == 'monthly':
+                    membership.end_date += timedelta(days=30)
+                elif membership.duration.lower() == 'annually':
+                    membership.end_date += timedelta(days=365)
+        db.session.commit()
+    def deactivate_expired_memberships():
+        """
+        Function to deactivate memberships if today is the end date and auto renew is False.
+        """
+        current_date = datetime.utcnow()
+
+        memberships_to_deactivate = Membership.query.filter(Membership.end_date == current_date, Membership.auto_renew == False).all()
+
+        for membership in memberships_to_deactivate:
+            membership.is_active = False
+
+        db.session.commit()
+
+class PendingMembershipUpdate(db.Model):
+    __tablename__ = 'pending_membership_updates'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    membership_type = db.Column(db.String(50), nullable=False)
+    duration = db.Column(db.String(20), nullable=False)
+    auto_renew = db.Column(db.Boolean, default=False)
+
 
 class Role(db.Model):
     __tablename__ = 'role'
