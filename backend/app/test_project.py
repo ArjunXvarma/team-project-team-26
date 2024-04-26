@@ -1,16 +1,4 @@
-from app import models, app, db
-from datetime import datetime, timedelta
-from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token
-import pytest
-import constants
-from app.gps.GPS import GPSRoutes
-from app.auth.Auth import AuthenticationRoutes
-from app.friends.Friends import FriendshipRoutes
-from app.membership.Membership import MembershipRoutes
-from app.stats.Stats import StatisticsRoutes
-from app.Admin.revenuePrediction import generateFutureRevenueData
-from app.TestUsers import users
+from app.imports import imports
 from app.auth.tests.Signup_tests import TestSignup
 from app.auth.tests.Login_tests import TestLogin
 from app.gps.tests.GPS_tests import TestGPSRoutes
@@ -19,7 +7,7 @@ from app.membership.tests.Membership_tests import TestMembershipRoutes
 from app.Admin.tests.FutureRevenue_tests import TestGenerateFutureRevenueData
 from app.stats.tests.Stats_tests import TestGetStats
 # Initialize bcrypt
-bcrypt = Bcrypt(app)
+bcrypt = imports.Bcrypt(imports.app)
 
 class TestAllBackend:
     def test_all_backend(self, client, clean_db):

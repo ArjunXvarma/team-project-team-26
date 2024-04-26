@@ -1,25 +1,14 @@
-from app import models, app, db
-from datetime import datetime, timedelta
-from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token
-import pytest
-import constants
-from app.gps.GPS import GPSRoutes
-from app.auth.Auth import AuthenticationRoutes
-from app.friends.Friends import FriendshipRoutes
-from app.membership.Membership import MembershipRoutes
-from app.stats.Stats import StatisticsRoutes
-from app.Admin.revenuePrediction import generateFutureRevenueData
-from app.TestUsers import users
+from app.imports import imports
+
 # Initialize bcrypt
-bcrypt = Bcrypt(app)
+bcrypt = imports.Bcrypt(imports.app)
 
 class TestGetStats:
     '''Class for testing getStats api functionality'''
 
     def test_stats_with_JWT(self, client, clean_db):
         # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if getStats runs successfully success, return status code 200
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
@@ -33,7 +22,7 @@ class TestGetStats:
     def test_stats_byModes_cycle(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct data for byModes: cycling
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
@@ -46,7 +35,7 @@ class TestGetStats:
     def test_stats_byModes_running(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct data for byModes: running
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
@@ -59,7 +48,7 @@ class TestGetStats:
     def test_stats_byModes_walking(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct data for byModes: walking
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
@@ -72,7 +61,7 @@ class TestGetStats:
     def test_stats_journeyData(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct data for journeysData[0]
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
@@ -87,7 +76,7 @@ class TestGetStats:
     def test_stats_totals_for_user(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct values for the users total Stats, all journeys combined
         response = client.get("/getStats", headers={"Authorization": f"Bearer {token}"})
@@ -102,7 +91,7 @@ class TestGetStats:
 
     def test_stats_friend_with_JWT(self, client, clean_db):
         # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if getStats runs successfully success, return status code 200
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
@@ -118,7 +107,7 @@ class TestGetStats:
     def test_stats_friend_byModes_cycle(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct data for byModes: cycling
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
@@ -132,7 +121,7 @@ class TestGetStats:
     def test_stats_friend_byModes_running(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct data for byModes: running
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
@@ -146,7 +135,7 @@ class TestGetStats:
     def test_stats_friend_byModes_walking(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct data for byModes: walking
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
@@ -160,7 +149,7 @@ class TestGetStats:
     def test_stats_friend_journeyData(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct data for journeysData[0]
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'
@@ -176,7 +165,7 @@ class TestGetStats:
     def test_stats_friend_totals_for_user(self, client, clean_db):
 
          # get stats user token
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the getStats api returns correct values for the users total Stats, all journeys combined
         url = 'http://127.0.0.1:5000/get_friends_stats?friend=bob@example.com'

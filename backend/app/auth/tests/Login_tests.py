@@ -1,26 +1,14 @@
-from app import models, app, db
-from datetime import datetime, timedelta
-from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token
-import pytest
-import constants
-from app.gps.GPS import GPSRoutes
-from app.auth.Auth import AuthenticationRoutes
-from app.friends.Friends import FriendshipRoutes
-from app.membership.Membership import MembershipRoutes
-from app.stats.Stats import StatisticsRoutes
-from app.Admin.revenuePrediction import generateFutureRevenueData
-from app.TestUsers import users
+from app.imports import imports
 
 # Initialize bcrypt
-bcrypt = Bcrypt(app)
+bcrypt = imports.Bcrypt(imports.app)
 
 class TestLogin:
     """Class for testing user login functionality."""
 
     def test_correct_credentials(self, client, clean_db):
         """Test login with correct credentials."""
-        token = users.user2(self, client, clean_db)[0]
+        token = imports.users.user2(self, client, clean_db)[0]
 
         response = client.post("/login", json={
             "email": "alice@example.com",
@@ -33,7 +21,7 @@ class TestLogin:
 
     def test_incorrect_password(self, client, clean_db):
         """Test login with incorrect password."""
-        token = users.user2(self, client, clean_db)[0]
+        token = imports.users.user2(self, client, clean_db)[0]
 
         response = client.post("/login", json={
             "email": "alice@example.com",
@@ -46,7 +34,7 @@ class TestLogin:
 
     def test_incorrect_email(self, client, clean_db):
         """Test login with incorrect email."""
-        token = users.user2(self, client, clean_db)[0]
+        token = imports.users.user2(self, client, clean_db)[0]
 
 
         response = client.post("/login", json={

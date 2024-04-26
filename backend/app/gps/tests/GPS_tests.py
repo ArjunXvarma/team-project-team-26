@@ -1,19 +1,7 @@
-from app import models, app, db
-from datetime import datetime, timedelta
-from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token
-import pytest
-import constants
-from app.gps.GPS import GPSRoutes
-from app.auth.Auth import AuthenticationRoutes
-from app.friends.Friends import FriendshipRoutes
-from app.membership.Membership import MembershipRoutes
-from app.stats.Stats import StatisticsRoutes
-from app.Admin.revenuePrediction import generateFutureRevenueData
-from app.TestUsers import users
+from app.imports import imports
 
 # Initialize bcrypt
-bcrypt = Bcrypt(app)
+bcrypt = imports.Bcrypt(imports.app)
 
 class TestGPSRoutes:
     """Class for testing GPS routes functionality."""
@@ -23,38 +11,38 @@ class TestGPSRoutes:
             {'lat': 10, 'lon': 20, 'ele': 5},
             {'lat': 15, 'lon': 25, 'ele': 10}
         ]
-        assert GPSRoutes.validate_points(points_valid)[0] == True
+        assert imports.GPSRoutes.validate_points(points_valid)[0] == True
 
     def validate_points_missing_keys(self):
         points_missing_key = [
             {'lat': 10, 'lon': 20, 'ele': 5},
             {'lat': 15, 'lon': 25}
         ]
-        assert GPSRoutes.validate_points(points_missing_key)[0] == False
+        assert imports.GPSRoutes.validate_points(points_missing_key)[0] == False
 
     def validate_points_extra_keys(self):
         points_extra_key = [
             {'lat': 10, 'lon': 20, 'ele': 5},
             {'lat': 15, 'lon': 25, 'ele': 10, 'temp': 50}
         ]
-        assert GPSRoutes.validate_points(points_extra_key)[0] == False
+        assert imports.GPSRoutes.validate_points(points_extra_key)[0] == False
 
     def validate_points_missing_and_extra_keys(self):
         points_missing_and_extra_keys = [
             {'lat': 10, 'lon': 20, 'ele': 5},
             {'lat': 15, 'temp': 50}
         ]
-        assert GPSRoutes.validate_points(points_missing_and_extra_keys)[0] == False
+        assert imports.GPSRoutes.validate_points(points_missing_and_extra_keys)[0] == False
 
     def validate_points_empty(self):
         points_empty = []
-        assert GPSRoutes.validate_points(points_empty)[0] == False
+        assert imports.GPSRoutes.validate_points(points_empty)[0] == False
 
     def validate_points_different_order(self):
         points_different_order = [
             {'ele': 5, 'lon': 20, 'lat': 10}
         ]
-        assert GPSRoutes.validate_points(points_different_order)[0] == True
+        assert imports.GPSRoutes.validate_points(points_different_order)[0] == True
 
 
     def test_get_journeys_without_jwt(self, client):
@@ -66,7 +54,7 @@ class TestGPSRoutes:
     def test_get_journeys_with_jwt_success(self, client, clean_db):
         """Test successfully getting user journeys."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if journey is returned successfuly
         response = client.get("/get_journeys_of_user", headers={"Authorization": f"Bearer {token}"})
@@ -78,7 +66,7 @@ class TestGPSRoutes:
         """ Test Error handling when getting a journey from an empty list"""
 
         # Creation of a user
-        token = users.user2(self, client, clean_db)[0]
+        token = imports.users.user2(self, client, clean_db)[0]
 
         # Test getting a journey when none exist
         response = client.get("/get_journeys_of_user", headers={"Authorization": f"Bearer {token}"})
@@ -105,7 +93,7 @@ class TestGPSRoutes:
     def test_create_journey_with_jwt(self, client, clean_db):
         """Test creating a journey with JWT."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Journey to be added
         journey_data = {
@@ -134,7 +122,7 @@ class TestGPSRoutes:
     def test_create_journey_invalid_points_array(self, client, clean_db):
         """Test creating a journey with JWT and invalid data."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Make a request with JWT, invalid Points array format
         journey_data = {
@@ -163,7 +151,7 @@ class TestGPSRoutes:
     def test_create_journey_invalid_date_time(self, client, clean_db):
         """Test creating a journey with JWT and invalid data."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Make a request with JWT, invalid Time and date data
         journey_data = {
@@ -199,7 +187,7 @@ class TestGPSRoutes:
     def test_delete_journey_with_jwt(self, client, clean_db):
         """Test deleting a journey with a JWT."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Add a journey before deleting one
         journey_data = {
@@ -230,7 +218,7 @@ class TestGPSRoutes:
     def test_delete_journey_non_existing_journey(self, client, clean_db):
         """Test deleting a journey that doesn't exist."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Test if the program handles deleting a non existing journey successfully
         response = client.delete("/delete_journey/10", headers={"Authorization": f"Bearer {token}"})
@@ -255,7 +243,7 @@ class TestGPSRoutes:
     def test_update_journey_with_jwt(self, client, clean_db):
         """Test updating a journey with a JWT."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Fields to be updated
         journey_update_data = {
@@ -280,7 +268,7 @@ class TestGPSRoutes:
     def test_update_journey_non_existing_journey(self, client, clean_db):
         """Test updating a journey that doesn't exist."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Field to be updated, no journey exists
         journey_update_data = {
@@ -306,7 +294,7 @@ class TestGPSRoutes:
     def test_update_journey_invalid_date_time(self, client, clean_db):
         """Test updating a journey using invalid date and time formatted data."""
 
-        token = users.user1(self, client, clean_db)[0]
+        token = imports.users.user1(self, client, clean_db)[0]
 
         # Fields to be updated, invalid date and time data
         journey_update_data = {
