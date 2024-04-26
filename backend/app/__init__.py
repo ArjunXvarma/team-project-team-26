@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from sqlalchemy import func
 from datetime import timedelta
-from flask_jwt_extended import ( 
+from flask_jwt_extended import (
     JWTManager, jwt_required, get_jwt_identity, verify_jwt_in_request,
     create_access_token, get_jwt, unset_jwt_cookies
 )
@@ -49,4 +49,8 @@ def after_request(response):
 # Importing all the modules
 from app import models
 from app.Admin import Admin
-from app.Client import Auth, GPS, Membership, Friends, Stats
+from app.auth import Auth
+from app.friends import Friends
+from app.stats import Stats
+from app.gps import GPS
+from app.membership import Membership
