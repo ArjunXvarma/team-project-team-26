@@ -48,9 +48,9 @@ def after_request(response):
 
 # Importing all the modules
 from app import models
-from app.Admin import Admin
-from app.auth import Auth
-from app.friends import Friends
-from app.stats import Stats
-from app.gps import GPS
-from app.membership import Membership
+from app.endpoints.Admin import Admin
+from app.endpoints.auth import Auth
+from app.endpoints.friends import Friends
+from app.endpoints.stats import Stats
+from app.endpoints.gps import GPS
+from app.endpoints.membership import Membership

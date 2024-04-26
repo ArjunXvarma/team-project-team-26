@@ -1,11 +1,11 @@
-from app.imports import imports
-from app.auth.tests.Signup_tests import TestSignup
-from app.auth.tests.Login_tests import TestLogin
-from app.gps.tests.GPS_tests import TestGPSRoutes
-from app.friends.tests.Friendship_tests import TestFriendshipRoutes
-from app.membership.tests.Membership_tests import TestMembershipRoutes
-from app.Admin.tests.FutureRevenue_tests import TestGenerateFutureRevenueData
-from app.stats.tests.Stats_tests import TestGetStats
+from app.endpoints.imports import imports
+from app.endpoints.auth.tests.Signup_tests import TestSignup
+from app.endpoints.auth.tests.Login_tests import TestLogin
+from app.endpoints.gps.tests.GPS_tests import TestGPSRoutes
+from app.endpoints.friends.tests.Friendship_tests import TestFriendshipRoutes
+from app.endpoints.membership.tests.Membership_tests import TestMembershipRoutes
+from app.endpoints.Admin.tests.FutureRevenue_tests import TestGenerateFutureRevenueData
+from app.endpoints.stats.tests.Stats_tests import TestGetStats
 # Initialize bcrypt
 bcrypt = imports.Bcrypt(imports.app)
 
