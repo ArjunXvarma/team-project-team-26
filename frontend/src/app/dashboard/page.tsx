@@ -189,9 +189,9 @@ export default function Home() {
                   <span className="text-green-800 font-bold">Cycling</span>
                   <div className="flex justify-between w-full">
                     <small className="">Progress:</small>
-                    <small className="">{Math.floor(((data?.byModes?.cycle.totalDistance  ?? 0)/(cyclingTarget*1000))*100)}%</small>
+                    <small className="">{Math.floor(((data?.byModes?.cycle?.totalDistance ?? 0)/(cyclingTarget*1000))*100)}%</small>
                   </div>
-                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.cycle.totalDistance  ?? 0)/(cyclingTarget*1000))*100)} radius="lg" className="w-60"/>
+                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.cycle?.totalDistance  ?? 0)/(cyclingTarget*1000))*100)} radius="lg" className="w-60"/>
                   <small className="text-gray-600 self-start">Target: {cyclingTarget}Km</small>
                 </div>
               </div>
@@ -204,9 +204,9 @@ export default function Home() {
                   <span className="text-green-800 font-bold">Running</span>
                   <div className="flex justify-between w-full">
                     <small className="">Progress:</small>
-                    <small className="">{Math.floor(((data?.byModes?.running.totalDistance  ?? 0)/(runningTarget*1000))*100)}%</small>
+                    <small className="">{Math.floor(((data?.byModes?.running?.totalDistance  ?? 0)/(runningTarget*1000))*100)}%</small>
                   </div>
-                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.running.totalDistance ?? 0)/(runningTarget*1000))*100)} radius="lg" className="w-60 "/>
+                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.running?.totalDistance ?? 0)/(runningTarget*1000))*100)} radius="lg" className="w-60 "/>
                   <small className="text-gray-600 self-start">Target: {runningTarget}Km</small>
                 </div>
               </div>
@@ -219,9 +219,9 @@ export default function Home() {
                   <span className="text-green-800 font-bold">Walking</span>
                   <div className="flex justify-between w-full">
                     <small className="">Progress:</small>
-                    <small className="">{Math.floor(((data?.byModes?.walking.totalDistance ?? 0)/(walkingTarget*1000))*100)}%</small>
+                    <small className="">{Math.floor(((data?.byModes?.walking?.totalDistance ?? 0)/(walkingTarget*1000))*100)}%</small>
                   </div>
-                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.walking.totalDistance ?? 0)/(walkingTarget*1000))*100)} radius="lg" className="w-60"/>
+                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.walking?.totalDistance ?? 0)/(walkingTarget*1000))*100)} radius="lg" className="w-60"/>
                   <small className="text-gray-600 self-start">Target: {walkingTarget}Km</small>
                 </div>
               </div>
