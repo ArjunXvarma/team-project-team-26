@@ -5,7 +5,7 @@ from typing import Tuple
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
 from constants import MembershipPriceMonthly, MembershipPriceAnnually
-from revenuePrediction import generateFutureRevenueData
+from app.Admin.revenuePrediction import generateFutureRevenueData
 
 bcrypt = Bcrypt(app)
 def add_cors_headers(response=None):
@@ -16,7 +16,7 @@ def add_cors_headers(response=None):
         response.headers['Access-Control-Allow-Origin'] = origin
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Credentials'] = 'true' 
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 
 
@@ -49,7 +49,7 @@ class AdminRoutes:
     displayRevenues() -> Tuple[Response, int]:
         Returns all the weekly revenues.
     """
-    
+
     def createAdminRole():
         """
         Creates an 'admin' role in the database if it doesn't already exist.
@@ -63,11 +63,11 @@ class AdminRoutes:
             db.session.add(admin_role)
             db.session.commit()
         return admin_role
-    
+
     def getMembershipPrice(membershipType, duration):
         """
         Retrieves the price of a membership based on its type and duration.
-        
+
         Args:
             membershipType (str): The type of membership.
             duration (str): The duration of the membership.
@@ -100,7 +100,7 @@ class AdminRoutes:
     def createAdminUser() -> Tuple[Response, int]:
         """
         Creates an admin user with the provided details from the request.
-        
+
         Returns:
             Tuple[Response, int]: JSON response indicating success or error, HTTP status code.
         """
@@ -153,13 +153,13 @@ class AdminRoutes:
         except IntegrityError:
             db.session.rollback()
             return jsonify({"status": 500, "error": "Failed to create admin user due to an internal error"}), 500
-    
+
     @app.route('/admin/check_if_admin', methods=['GET'])
     @jwt_required()
     def isUserAdmin() -> Tuple[Response, int]:
         """
         Checks if the currently authenticated user has admin privileges.
-        
+
         Returns:
             Tuple[Response, int]: JSON response indicating whether the user is an admin, HTTP status code.
         """
@@ -170,13 +170,13 @@ class AdminRoutes:
             return jsonify({'status': 404, 'message': 'User not found'}), 404
         isAdmin = any(role.name == 'admin' for role in user.roles)
         return jsonify({"status": 200, "isAdmin": isAdmin}), 200
-    
+
     @app.route('/admin/get_all_users', methods=['GET'])
     @jwt_required()
     def getAllUsers() -> Tuple[Response, int]:
         """
         Retrieves a paginated list of all users except admin users.
-        
+
         Returns:
             Tuple[Response, int]: JSON response containing a list of users, HTTP status code.
         """
@@ -205,7 +205,7 @@ class AdminRoutes:
             if user.membership:
                 membership_type = user.membership.membership_type
                 payment_method = user.membership.mode_of_payment
-                
+
             user_info = {
                 "id" : user.id,
                 "name": f"{user.first_name} {user.last_name}",
@@ -226,15 +226,15 @@ class AdminRoutes:
             "total": total,
             "page": page,
             "per_page": per_page,
-            "total_pages": (total + per_page - 1) // per_page  
+            "total_pages": (total + per_page - 1) // per_page
         }), 200
-    
+
     @app.route('/admin/delete_user/<int:userId>', methods=['DELETE'])
     @jwt_required()
     def deleteUser(userId) -> Tuple[Response, int]:
         """
         Deletes a user based on the provided userID.
-        
+
         Args:
             userId (int): The ID of the user to delete.
 
@@ -258,13 +258,13 @@ class AdminRoutes:
         db.session.delete(user_to_delete)
         db.session.commit()
         return jsonify({'status': 200, 'message': 'User successfully deleted'}), 200
-    
+
     @app.route('/admin/get_revenues', methods=['GET'])
     @jwt_required()
     def displayRevenues() -> Tuple[Response, int]:
         """
         Retrieves revenue data based on the specified period (weekly/monthly) and limit.
-        
+
         Query Parameters:
             period (str): The period to aggregate revenue data by ('week' or 'month').
             limit (int): The number of recent periods to return data for.
@@ -281,7 +281,7 @@ class AdminRoutes:
 
         if not any(role.name == 'admin' for role in current_user.roles):
             return jsonify({'status': 401, 'message': 'Unauthorized access'}), 401
-    
+
         # New check: Ensure there are memberships to work with
         if models.Membership.query.count() == 0:
             return jsonify({'status': 404, 'message': 'No memberships found'}), 404
@@ -299,7 +299,7 @@ class AdminRoutes:
                 period_key = membership.date_created.strftime('%Y-%W')
             elif period == 'month':
                 period_key = membership.date_created.strftime('%Y-%m')
-            
+
             price = AdminRoutes.getMembershipPrice(membership.membership_type, membership.duration)
 
             if period_key not in revenues:
@@ -317,9 +317,9 @@ class AdminRoutes:
         # Sorting and limiting the revenues based on most recent periods
         sorted_revenues = sorted(revenues.items(), key=lambda x: x[0], reverse=True)[:limit]
         result = [dict(period=period, **data) for period, data in sorted_revenues]
-        
+
         return jsonify(result), 200
-    
+
     @app.route('/admin/get_future_revenue', methods=['GET'])
     @jwt_required()
     def getFutureRevenue() -> Tuple[Response, int]:
@@ -333,7 +333,7 @@ class AdminRoutes:
         Returns:
             Tuple[Response, int]: JSON response containing predicted future revenues, HTTP status code.
         """
-        
+
         current_user_email = get_jwt_identity()
         current_user = models.User.query.filter_by(email=current_user_email).first()
 
@@ -342,7 +342,7 @@ class AdminRoutes:
 
         if not any(role.name == 'admin' for role in current_user.roles):
             return jsonify({'status': 401, 'message': 'Unauthorized access'}), 401
-        
+
         # New check: Ensure there are memberships to work with
         if models.Membership.query.count() == 0:
             return jsonify({'status': 404, 'message': 'No memberships found'}), 404
@@ -381,11 +381,11 @@ class AdminRoutes:
 
         # Extracting and sorting the periods in descending order
         sorted_periods = sorted(revenue_data.keys(), reverse=True)
-        
+
         revenues = generateFutureRevenueData([dict(period=period, **revenue_data[period]) for period in sorted_periods], period)
         if (len(revenues) == 0):
             return jsonify({"status": 400, "message": "Error returning predicted revenues"}), 400
-        
+
         result = {
             'status': 200,
             'data': {
