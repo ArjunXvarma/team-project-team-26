@@ -53,18 +53,21 @@ export default function Home(){
         }
       };
       
-     
+    const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+    };
 
     return (
-        <main className="w-full min-h-screen bg-primary flex justify-center items-center"> 
+        <main> 
+         <div className="w-full min-h-screen bg-background flex justify-center items-center">
             <div className="max-w-screen-lg w-full mb-20">
 
                 <header className="justify-around items-center pt-10 flex-grow">
-                    <p className="text-center text-4xl font-semibold pb-6 font-serif text-white "> Membership</p>
-                    <p className="text-center text-lg text-white font-serif ">“Every journey begins with a single step”</p>
+                    <p className="text-center text-4xl font-semibold pb-2 font-serif  "> Membership</p>
+                    <p className="text-center text-lg  font-serif ">“Every journey begins with a single step”</p>
                 </header>
 
-                <p className="text-2xl text-center text-white font-serif mt-12 mb-6">Choose your membership plan </p>
+                <p className="text-2xl text-center font-serif mt-12 mb-6">Choose your membership plan </p>
                 <div className='flex justify-center'>
                     <Select
                         placeholder="Pick type"
@@ -79,20 +82,23 @@ export default function Home(){
 
                 <div className="flex justify-center items-center mt-10 gap-2 flex-wrap">
                 {selectedPlanType && selectedMembershipPlans?.map((plan, index) => (
-                <div key={index} className={`flex flex-col items-center rounded-xl p-6 w-72 h-80  ${selectedPlan === index ? 'bg-lightGreen w-80 h-96' : 'bg-white'}`}>
-                        <p className="text-2xl font-serif mt-2 ">{membershipData?.MembershipType[index]}</p>
+                <div key={index} className={`flex flex-col items-center rounded-xl p-6 w-72 h-80 drop-shadow-sharp ${selectedPlan === index ? 'w-80 h-96' : 'bg-white'}`}
+                style={{
+                    ...(selectedPlan === index && gradient),
+                }}>
+                        <p className={`text-2xl font-semibold mt-2 ${selectedPlan === index ? "text-white":"text-green-800" }`}>{membershipData?.MembershipType[index]}</p>
                         <div className='divide-y divide-gray-500 flex flex-col justify-between '>
-                            <div className="flex font-serif mb-3 justify-center">
-                                <p className="text-2xl font-domine mt-6">£</p>
+                            <div className={`flex mt-4 mb-3 justify-center font-bold ${selectedPlan === index ? "text-white":"text-green-800" }`}>
+                                <p className="text-2xl mt-6">£</p>
                                 <p className="text-4xl mt-4 ">{plan}</p>
                                 <p className="text-xl mt-7">/{selectedPlanType}</p>
                             </div>
                             
-                            <div className="text-white py-4 flex items-center justify-center">
+                            <div className=" pt-10 py-4 flex items-center justify-center">
                                 {selectedPlan === index ? (
-                                    <Button onClick={() => handleSelectPlan(index)} className=" bg-gray-500" variant="filled" color="gray" radius="sm">Cancel</Button>
+                                    <Button onClick={() => handleSelectPlan(index)} className=" bg-green-600 rounded-full drop-shadow-sharp" variant="filled" color="green" radius="sm">Cancel</Button>
                                 ) : (
-                                    <Button onClick={() => handleSelectPlan(index)} className=" bg-green-700" variant="filled" color="#2EAE69" radius="sm">Select</Button>
+                                    <Button onClick={() => handleSelectPlan(index)} className=" bg-gray-50 rounded-full drop-shadow-sharp text-green-800 font-bold" variant="filled" color="#2EAE69" radius="sm">Select</Button>
                                 )}
                             </div> 
                         </div> 
@@ -114,6 +120,7 @@ export default function Home(){
                     )}
                 </div>
             </div>
+        </div>  
         </main>
     )
 }

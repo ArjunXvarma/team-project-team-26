@@ -10,39 +10,40 @@ export default function Landing(){
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [hasActiveMembership, sethasActiveMembership] = useState(false);
- 
+    
 
-    useEffect(() => {
-        const token = Cookies.get('token');
-        // setting isLoggedIn to true if token exists
-        setIsLoggedIn(!!token); 
-        async function fetchMembershipStatus() {
+    async function fetchMembershipStatus(token:string | undefined) {
         try {
             const response = await fetch(`${API_URL}/has_active_membership`, {
                 method: 'GET',
                 credentials: "include",
-                headers: {"Content-Type": "application/json",
+                headers: {
+                    "Content-Type": "application/json",
                     'Authorization': `Bearer ${token}`,
                 },
             });
-
+    
             const membershipResponse = await response.json();
-            
-            if (response.status == 200) {
+    
+            if (response.status === 200 || response.status === 401) {
                 sethasActiveMembership(membershipResponse.has_active_membership);
-            } else if (response.status == 401) {
-                sethasActiveMembership(membershipResponse.has_active_membership);
-                console.log(membershipResponse.error);
+                if (response.status === 401) {
+                    console.log(membershipResponse.error);
+                }
             }
         } catch (error) {
-            console.error('Error fetching membership status:',error);
-        } 
-    
+            console.error('Error fetching membership status:', error);
+        }
     }
-    fetchMembershipStatus();
-}, []);
- 
-
+    
+    useEffect(() => {
+        const token = Cookies.get('token');
+        setIsLoggedIn(!!token);
+        if (isLoggedIn) {
+            fetchMembershipStatus(token);
+        }
+    }, [isLoggedIn]);
+    
 
   
 

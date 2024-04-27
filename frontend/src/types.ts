@@ -1,3 +1,61 @@
+export interface CurrentMembership{
+  membership_type: String,
+  membership_duration: String,
+  mode_of_payment: String,
+  start_date: String,
+  end_date: String,
+  auto_renew: boolean,
+}
+
+export interface MembershipData {
+  MembershipDuration: string[];
+  MembershipType: string[];
+  MembershipPriceMonthly: string[];
+  MembershipPriceAnnually: string[];
+}
+
+export interface JourneyData {
+  averageSpeed: number;
+  date: number;
+  caloriesBurned: number;
+  hours_taken: number;
+  journeyId: number;
+  minutes_taken: number;
+  mode: string;
+  seconds_taken: number;
+  totalDistance: number;
+}
+
+export interface StatsData {
+  byModes: {
+    cycle: {
+      totalCaloriesBurned: number;
+      totalDistance: number;
+      totalTimeWorkingOutHours: number;
+      totalTimeWorkingOutMinutes: number;
+      totalTimeWorkingOutSeconds: number;
+    };
+    running: {
+      totalCaloriesBurned: number;
+      totalDistance: number;
+      totalTimeWorkingOutHours: number;
+      totalTimeWorkingOutMinutes: number;
+      totalTimeWorkingOutSeconds: number;};
+    walking:{
+      totalCaloriesBurned: number;
+      totalDistance: number;
+      totalTimeWorkingOutHours: number;
+      totalTimeWorkingOutMinutes: number;
+      totalTimeWorkingOutSeconds: number;};
+  };
+  journeysData: JourneyData[]; 
+  totalCaloriesBurned: number;
+  totalDistanceCombined: number;
+  totalTimeWorkingOutHours: number;
+  totalTimeWorkingOutMinutes: number;
+  totalTimeWorkingOutSeconds: number;
+}
+
 export interface AuthAPIResponse {
   id?: number;
   name?: String;

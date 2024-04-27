@@ -6,12 +6,7 @@ import { Button } from "@mantine/core";
 import { Switch } from "@mantine/core";
 import { MdLogout } from "react-icons/md";
 import { useEffect, useState } from "react";
-import { BiSolidError } from "react-icons/bi";
-import { UnstyledButton } from "@mantine/core";
-import { FaArrowRightLong } from "react-icons/fa6";
-import { GetUserPrivacyAPIResponse } from "@/types";
-import { notifications } from "@mantine/notifications";
-import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import { CurrentMembership, GetUserPrivacyAPIResponse } from "@/types";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
 
 export default function Settings() {
@@ -24,6 +19,57 @@ export default function Settings() {
   const handleDarkModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setDarkMode(event.currentTarget.checked);
   };
+
+  const [currentMembership, setCurrentMembership] = useState<CurrentMembership>();
+  const getCurrentMembership = async() => {
+    try{
+      const token = Cookie.get("token");
+      const response = await fetch(`${API_URL}/get_current_membership`, {
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const membershipResponse= await response.json();
+      if(response.status == 200)
+        {
+          setCurrentMembership(membershipResponse)
+        }
+      else if (response.status == 404)
+        showErrorMessage(
+          "Error",
+          "User not found"
+        );
+    }
+    catch (error) {
+      showErrorMessage(
+        "Server Error",
+        "There was a problem contacting the server. Please try again later."
+      );
+    }
+  }
+
+  const [billingCycle, setBillingCycle] = useState<{next_billing_cycle_date: String}>();
+  const getNextBillingCycle = async() => {
+    try{
+      const token = Cookie.get("token");
+      const response = await fetch(`${API_URL}/get_billing_cycle_date`, {
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const billingResponse= await response.json();
+      if(response.status == 200)
+        {
+          setBillingCycle(billingResponse);
+        }
+    }
+    catch (error) {
+      showErrorMessage(
+        "Server Error",
+        "There was a problem contacting the server. Please try again later."
+      );
+    }
+  }
 
   const getPrivacySetting = async () => {
     try {
@@ -74,7 +120,7 @@ export default function Settings() {
     setAdminMode(event.currentTarget.checked);
   };
 
-  const submit = async () => {
+  const cancel = async () => {
     try {
       const token = Cookie.get("token");
       const response = await fetch(`${API_URL}/cancel_membership`, {
@@ -86,37 +132,36 @@ export default function Settings() {
       const cancelResponse = await response.json();
       // handle errors
       if (response.status == 404) {
-        console.log(cancelResponse.error);
-        notifications.show({
-          color: "red",
-          title: "Error",
-          icon: <BiSolidError />,
-          message: cancelResponse.error,
-        });
+        showErrorMessage(
+          "Error",
+          "Unable to cancel membership plan. Please try again later."
+        );
       } else if (response.status == 401) {
         console.log(cancelResponse.error);
       } else if (response.status == 200) {
-        notifications.show({
-          color: "green",
-          title: "Success",
-          icon: <IoMdCheckmarkCircleOutline />,
-          message: cancelResponse.message,
-        });
+        showSuccessMessage(
+          "Success",
+          "Auto Renew for your plan was sucessfully disabled"
+        );
+        getCurrentMembership();
       }
     } catch (error) {
       console.log(error);
-      notifications.show({
-        color: "red",
-        title: "Server Error",
-        icon: <BiSolidError />,
-        message: "There was a problem contacting the server. Please try again later.",
-      });
+      showErrorMessage(
+        "Server Error",
+        "There was a problem contacting the server. Please try again later."
+      );
     }
   };
 
   useEffect(() => {
     getPrivacySetting();
-  }, []);
+    getCurrentMembership();
+    if(currentMembership?.auto_renew)
+      getNextBillingCycle();
+  }, [currentMembership?.auto_renew]);
+
+
   return (
     <main>
       <div className="min-h-screen">
@@ -133,12 +178,39 @@ export default function Settings() {
         </header>
 
         <div className="flex flex-col flex-shrink gap-10 justify-center mt-20 mx-20">
+
           <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-xl p-8  w-full">
-            <p className="text-xl"> Cancel Membership Plan</p>
-            <UnstyledButton onClick={submit}>
-              <FaArrowRightLong size={38} color="green"/>
-            </UnstyledButton>
+            <div className="ml-2">
+              <p className="text-xl self-start mb-2 -ml-2"> Modify Membership Plan</p>
+              <p>Selected Package: {currentMembership?.membership_type} - {currentMembership?.membership_duration}</p>
+
+              {currentMembership?.auto_renew ? 
+                (
+                <div>
+                  <p> Auto Renew: On</p>
+                  <p> Plan Active from: {currentMembership?.start_date?.slice(0, 10).split('-').reverse().join('-')}</p>
+                  <p> Next Billing Cycle: {billingCycle?.next_billing_cycle_date?.slice(0, 10).split('-').reverse().join('-')}</p>
+                </div>
+                ) : 
+                (
+                  <div>
+                    <p> Auto Renew: Off</p>
+                    <p>Current Plan ends at: {currentMembership?.end_date?.slice(0, 10).split('-').reverse().join('-')}</p>
+                  </div>
+                )}
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button onClick={cancel} className="bg-primary hover:bg-green-900">
+                Cancel Plan
+              </Button>
+              <Link href={'/updatePlan'}>
+                <Button className="bg-primary hover:bg-green-900">
+                  Change Plan
+                </Button>
+              </Link>
+            </div>
           </div>
+
           <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-xl p-8  w-full">
             <p className="text-xl"> Dark Mode</p>
             <Switch
