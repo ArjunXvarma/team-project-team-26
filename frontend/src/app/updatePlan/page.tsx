@@ -141,7 +141,7 @@ export default function Home(){
                 <div key={index} className={`flex flex-col items-center rounded-xl p-6 w-72 h-80 drop-shadow-sharp ${selectedPlan === index ? 'w-80 h-96' : 'bg-white'}`}
                 style={{...(selectedPlan === index && gradient)}}>
                         <p className={`text-2xl font-semibold mt-2 ${selectedPlan === index ? "text-white":"text-green-800" }`}>{membershipData?.MembershipType[index]}</p>
-                        <div className='divide-y divide-gray-500 flex flex-col justify-between '>
+                        <div className={`divide-y ${selectedPlan === index ? "divide-white ":"t divide-gray-500 " } flex flex-col justify-between `}>
                             <div className={`flex mt-4 mb-3 justify-center font-bold ${selectedPlan === index ? "text-white":"text-green-800" }`}>
                                 <p className="text-2xl mt-6">£</p>
                                 <p className="text-4xl mt-4 ">{plan}</p>
@@ -172,7 +172,7 @@ export default function Home(){
                                 (membershipData?.MembershipType[selectedPlan] == current?.membership_type && selectedPlanType == current?.membership_duration && !current?.auto_renew) ? (
                                 <div className="flex flex-col justify-center items-center">
                                     <p className="text-lg">This is the same plan as before, are you sure want to continue?</p>
-                                    <Button className="text-white px-4 py-2 drop-shadow-sharp mt-4 rounded-full bg-green-700" variant="filled" size="md"> Continue &nbsp; <FaArrowRight/></Button>
+                                    <Button className="text-white px-4 py-2 drop-shadow-sharp mt-4 rounded-full bg-green-700" onClick={update} variant="filled" size="md"> Continue &nbsp; <FaArrowRight/></Button>
                                 </div>
                             ):
                             (

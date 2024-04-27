@@ -1,11 +1,11 @@
 "use client"
-import { Button } from "@mantine/core";
-import { Image } from "@mantine/core";
 import Link from "next/link";
+import Cookies from "js-cookie";
+import { useState } from 'react';
+import { Image } from "@mantine/core";
+import { Button } from "@mantine/core";
 import { IoMdHome } from "react-icons/io";
 import { IoFootsteps } from "react-icons/io5";
-import { useState } from 'react';
-import Cookies from "js-cookie";
 
 export default function Thankyou() {
     const [username, setUsername] = useState(Cookies.get("username"));

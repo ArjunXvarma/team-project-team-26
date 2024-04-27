@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Cookies from "js-cookie";
+import { Friend} from "@/types";
 import { Modal } from "@mantine/core";
 import { API_URL } from "@/constants";
 import { Button } from "@mantine/core";
@@ -10,11 +11,14 @@ import { RxCross2 } from "react-icons/rx";
 import { FaRegUser } from "react-icons/fa";
 import { Accordion } from "@mantine/core";
 import { MdLogout } from "react-icons/md";
+import { LuThumbsUp } from "react-icons/lu";
 import { useState, useEffect } from "react";
 import { IoIosSearch } from "react-icons/io";
+import { LuThumbsDown } from "react-icons/lu";
 import { BiSolidError } from "react-icons/bi";
 import { useDisclosure } from "@mantine/hooks";
 import { HiArrowLongRight } from "react-icons/hi2";
+import { AiOutlineUser } from "react-icons/ai";
 import { notifications } from "@mantine/notifications";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { Input, CloseButton, Autocomplete } from "@mantine/core";
@@ -26,11 +30,6 @@ export default function Friends() {
   const [options, setOptions] = useState<{ name: String }[]>([]);
   const [friendList, setFriendList] = useState<{ name: String; email: String }[]>([]);
   const [friendRequests, setFriendRequests] = useState<{ name: String; email: String }[]>([]);
-
-  interface Friend {
-    name: string;
-    email: string;
-  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -245,9 +244,9 @@ export default function Friends() {
         <div className="flex flex-col mx-28 pt-10 ">
           <div>
             <Autocomplete
-              label="Friend name"
               placeholder="Search for a friend"
-              leftSection={<IoIosSearch size={26} />}
+              leftSection={<IoIosSearch size={26} color="green"/>}
+              className="drop-shadow-md"
               data={options.map((option) => ({
                 label: option.name,
                 value: option.name.toString(),
@@ -276,24 +275,25 @@ export default function Friends() {
                       {friendRequests.map((request, index) => (
                         <div
                           key={index}
-                          className="flex items-center  gap-2 bg-tertiary p-4 rounded-md"
+                          className="flex items-center gap-2 bg-white rounded-3xl p-4 drop-shadow-sharp"
                         >
                           <div className="bg-primary rounded-full p-2">
-                            <FaRegUser color={"white"} size={24} />
+                            <AiOutlineUser color={"white"} size={26} />
                           </div>
-                          <p className="text-2xl">{request.name}</p>
-                          <Button
-                            onClick={() => accept(request.email.toString())}
-                            variant="transparent"
-                          >
-                            {" "}
-                            <FaCheck color={"green"} size={26} />
-                          </Button>
-                          <CloseButton
-                            onClick={() => reject(request.email.toString())}
-                            variant="transparent"
-                            icon={<RxCross2 color={"red"} size={28} />}
-                          />
+                          <p className="text-2xl ml-2">{request.name}</p>
+                          <div className="flex flex-col justify-center items-center">
+                            <Button
+                              onClick={() => accept(request.email.toString())}
+                              variant="transparent"
+                            >
+                              <LuThumbsUp color={"green"} size={26}/>
+                            </Button>
+                            <CloseButton
+                              onClick={() => reject(request.email.toString())}
+                              variant="transparent"
+                              icon={<LuThumbsDown color={"red"} size={26} />}
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -317,7 +317,7 @@ export default function Friends() {
                   ></Input>
                   <div className="flex justify-center mt-4">
                     <Button
-                      className="bg-primary"
+                      className="bg-primary hover:bg-green-900 rounded-full"
                       onClick={() => {
                         addFriend(email);
                         setEmail("");
@@ -328,7 +328,7 @@ export default function Friends() {
                   </div>
                 </Modal>
 
-                <Button className="bg-primary rounded-full" onClick={open}>
+                <Button className="bg-primary rounded-full hover:bg-green-900" onClick={open}>
                   Add Friend
                 </Button>
               </div>
@@ -338,10 +338,10 @@ export default function Friends() {
                 friendList.map((friend, index) => (
                   <div
                     key={index}
-                    className="flex justify-between items-center gap-3 p-4 rounded-2xl bg-white drop-shadow-sharp"
+                    className="flex justify-between items-center gap-3 p-4 rounded-3xl bg-white drop-shadow-sharp"
                   >
                     <div className="bg-primary rounded-full p-2" >
-                      <FaRegUser color={"white"} size={24} />
+                      <AiOutlineUser color={"white"} size={26} />
                     </div>
                     <p className="text-2xl">{friend.name}</p>
                     <div className="flex-grow"> </div>

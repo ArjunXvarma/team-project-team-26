@@ -135,7 +135,7 @@ export default function Payment() {
 
                 <div className='flex justify-center items-center gap-8 m-10'>
                     {PaymentMethod && PaymentMethod.PaymentMethod.map(type => (
-                        <Button className={`bg-green-800 hover:bg-green-600 ${selectedPaymentMethod === type ? 'bg-green-600' : ''}`} key={type} onClick={() => handlePaymentMethodChange(type)}>
+                        <Button className={`drop-shadow-sharp hover:bg-green-600 ${selectedPaymentMethod === type ? 'bg-green-600' : 'bg-green-800'}`} key={type} onClick={() => handlePaymentMethodChange(type)}>
                             {paymentIcons.find(icon => icon.value === type)?.icon}
                             &nbsp;
                             {type}
@@ -148,7 +148,7 @@ export default function Payment() {
                     <CreditCardForm/> :
                         ( selectedPaymentMethod !== null ? 
                                 <div>
-                                    <Button loading={loading} loaderProps={{ type: 'dots' }} onClick={submit} className="bg-green-600 hover:bg-green-700" >Continue</Button>
+                                    <Button loading={loading} loaderProps={{ type: 'dots' }} onClick={submit} className="bg-green-700 hover:bg-green-900 rounded-full" >Continue</Button>
                                 </div>
                             :
                             null
@@ -197,7 +197,7 @@ function CreditCardForm() {
                     required
                     type="Name"
                     size="md"
-                    className="text-white w-full "
+                    className="text-green-700 drop-shadow-md  w-full "
                     placeholder="Name on card"
                     {...form.getInputProps("name")}
                 />
@@ -207,7 +207,7 @@ function CreditCardForm() {
                     required
                     type="Card Number"
                     size="md"
-                    className="text-white w-full "
+                    className="text-green-700 drop-shadow-md rounded-full w-full "
                     placeholder="Card number"
                     {...form.getInputProps("cardNo")}
 
@@ -219,7 +219,7 @@ function CreditCardForm() {
                         required
                         type="text"
                         size="md"
-                        className="text-white w-fit "
+                        className="text-green-700 drop-shadow-md  w-fit "
                         placeholder="MM/YY"
                         {...form.getInputProps("date")}
                     />
@@ -228,7 +228,7 @@ function CreditCardForm() {
                         required
                         type="CVV"
                         size="md"
-                        className="text-white w-fit "
+                        className="text-green-700 drop-shadow-md  w-fit "
                         placeholder="CVV"
                         {...form.getInputProps("cvv")}
                     />

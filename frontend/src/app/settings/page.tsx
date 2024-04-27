@@ -161,6 +161,9 @@ export default function Settings() {
       getNextBillingCycle();
   }, [currentMembership?.auto_renew]);
 
+      const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+    };
 
   return (
     <main>
@@ -179,39 +182,39 @@ export default function Settings() {
 
         <div className="flex flex-col flex-shrink gap-10 justify-center mt-20 mx-20">
 
-          <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-xl p-8  w-full">
+          <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-3xl p-8  w-full">
             <div className="ml-2">
               <p className="text-xl self-start mb-2 -ml-2"> Modify Membership Plan</p>
-              <p>Selected Package: {currentMembership?.membership_type} - {currentMembership?.membership_duration}</p>
 
-              {currentMembership?.auto_renew ? 
-                (
-                <div>
-                  <p> Auto Renew: On</p>
-                  <p> Plan Active from: {currentMembership?.start_date?.slice(0, 10).split('-').reverse().join('-')}</p>
-                  <p> Next Billing Cycle: {billingCycle?.next_billing_cycle_date?.slice(0, 10).split('-').reverse().join('-')}</p>
-                </div>
-                ) : 
-                (
+                <p>Selected Package: {currentMembership?.membership_type} - {currentMembership?.membership_duration}</p>
+                {currentMembership?.auto_renew ? 
+                  (
                   <div>
-                    <p> Auto Renew: Off</p>
-                    <p>Current Plan ends at: {currentMembership?.end_date?.slice(0, 10).split('-').reverse().join('-')}</p>
+                    <p> Auto Renew: On</p>
+                    <p> Plan Active from: {currentMembership?.start_date?.slice(0, 10).split('-').reverse().join('-')}</p>
+                    <p> Next Billing Cycle: {billingCycle?.next_billing_cycle_date?.slice(0, 10).split('-').reverse().join('-')}</p>
                   </div>
-                )}
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button onClick={cancel} className="bg-primary hover:bg-green-900">
-                Cancel Plan
-              </Button>
-              <Link href={'/updatePlan'}>
-                <Button className="bg-primary hover:bg-green-900">
-                  Change Plan
+                  ) : 
+                  (
+                    <div>
+                      <p> Auto Renew: Off</p>
+                      <p>Current Plan ends at: {currentMembership?.end_date?.slice(0, 10).split('-').reverse().join('-')}</p>
+                    </div>
+                  )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <Button onClick={cancel} className="rounded-full" style={gradient}>
+                  Cancel Plan
                 </Button>
-              </Link>
+                <Link href={'/updatePlan'}>
+                  <Button className="rounded-full" style={gradient}>
+                    Change Plan
+                  </Button>
+                </Link>
             </div>
           </div>
 
-          <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-xl p-8  w-full">
+          <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-3xl p-8  w-full">
             <p className="text-xl"> Dark Mode</p>
             <Switch
               color={darkMode ? "green" : "gray"}
@@ -222,16 +225,16 @@ export default function Settings() {
               onChange={handleDarkModeChange}
             />
           </div>
-          <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-xl p-8  w-full">
+          <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-3xl p-8  w-full">
             <p className="text-xl">
               Privacy Setting: <span className="font-bold text-primary">{privacyMode}</span>
             </p>
-            <Button onClick={changePrivacyMode} className="bg-primary hover:bg-green-900">
+            <Button onClick={changePrivacyMode} className="rounded-full" style={gradient}>
               Make {privacyMode == "Public" ? "Private" : "Public"}
             </Button>
           </div>
           {isAdmin && (
-            <div className="flex justify-between items-center bg-tertiary rounded-lg p-8  w-full">
+            <div className="flex justify-between items-center bg-tertiary rounded-3xl p-8  w-full">
               <p className="text-xl">Switch to admin mode</p>
               <Button component="a" href="/admin" className="bg-primary">
                 Admin Mode

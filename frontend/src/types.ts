@@ -14,6 +14,11 @@ export interface MembershipData {
   MembershipPriceAnnually: string[];
 }
 
+export interface Friend {
+  name: string;
+  email: string;
+}
+
 export interface JourneyData {
   averageSpeed: number;
   date: number;
