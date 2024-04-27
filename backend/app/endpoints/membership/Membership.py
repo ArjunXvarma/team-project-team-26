@@ -224,17 +224,28 @@ class MembershipRoutes:
         if not constants.is_valid_duration(duration):
             return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
 
-        # Create pending update
-        pending_update = models.PendingMembershipUpdate(
-            user_id=user.id,
-            membership_type=membership_type,
-            duration=duration,
-            auto_renew=data.get("auto_renew", False) 
-        )
-        current_membership.auto_renew = True
-        db.session.add(pending_update)
+        # Check for existing pending update
+        existing_pending_update = models.PendingMembershipUpdate.query.filter_by(user_id=user.id).first()
+
+        # If there's an existing pending update, overwrite it
+        if existing_pending_update:
+            existing_pending_update.membership_type = membership_type
+            existing_pending_update.duration = duration
+            existing_pending_update.auto_renew = data.get("auto_renew", False)
+        else:
+            # Create new pending update
+            pending_update = models.PendingMembershipUpdate(
+                user_id=user.id,
+                membership_type=membership_type,
+                duration=duration,
+                auto_renew=data.get("auto_renew", False)
+            )
+            db.session.add(pending_update)
+
+        # Commit changes to the database
         db.session.commit()
-        return jsonify({"return_code": 1, "message": "Membership update scheduled successfully and auto renew is turned on"}), 200
+
+        return jsonify({"return_code": 1, "message": "Membership update scheduled successfully"}), 200
 
     @app.route("/get_current_membership", methods=["GET"])
     @jwt_required()
