@@ -124,8 +124,8 @@ class TestMembershipRoutes:
             user_id=id,
             membership_type=imports.constants.MembershipType.PREMIUM.value,
             duration=imports.constants.MembershipDuration.MONTHLY.value,
-            start_date=imports.datetime.utcnow() - imports.timedelta(days=30),
-            end_date=imports.datetime.utcnow() + imports.timedelta(days=30),
+            start_date=imports.datetime.now() - imports.timedelta(days=30),
+            end_date=imports.datetime.now() + imports.timedelta(days=30),
             mode_of_payment=imports.constants.PaymentMethod.APPLE_PAY.value,
             is_active=True,
             auto_renew=True,
@@ -158,8 +158,8 @@ class TestMembershipRoutes:
             user_id=id,
             membership_type=imports.constants.MembershipType.STANDARD.value,
             duration=imports.constants.MembershipDuration.MONTHLY.value,
-            start_date=imports.datetime.utcnow() - imports.timedelta(days=30),
-            end_date=imports.datetime.utcnow(), # Current date
+            start_date=imports.datetime.now() - imports.timedelta(days=30),
+            end_date=imports.datetime.now(), # Current date
             mode_of_payment=imports.constants.PaymentMethod.APPLE_PAY.value,
             is_active=True,
             auto_renew=True,
@@ -191,3 +191,274 @@ class TestMembershipRoutes:
         assert response.status_code == 404
         assert response.json['return_code'] == 0
         assert "User does not have an active membership" in response.json['error']
+
+
+    # Tests for updating the membership
+    def test_update_membership_success(self, client, clean_db):
+        """Test upgrading a membership successfully (scheduled update)."""
+        # Create user and log in
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Purchase basic monthly membership
+        response = client.post("/buy_membership", json={
+            "membership_type": imports.constants.MembershipType.BASIC.value,
+            "duration": imports.constants.MembershipDuration.MONTHLY.value,
+            "mode_of_payment": imports.constants.PaymentMethod.APPLE_PAY.value  # Replace with your payment method constant
+        }, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+        # Update to premium annual
+        update_response = client.post("/update_membership", json={
+            "membership_type": imports.constants.MembershipType.PREMIUM.value,
+            "duration": imports.constants.MembershipDuration.ANNUALLY.value
+        }, headers={"Authorization": f"Bearer {token}"})
+        
+        assert update_response.status_code == 200
+        assert update_response.json['return_code'] == 1
+        assert update_response.json['message'] == "Membership update scheduled successfully and auto renew is turned on"
+
+        # Verify pending update
+        pending_update = imports.models.PendingMembershipUpdate.query.filter_by(user_id=user.id).first()
+        assert pending_update is not None
+        assert pending_update.membership_type == imports.constants.MembershipType.PREMIUM.value
+        assert pending_update.duration == imports.constants.MembershipDuration.ANNUALLY.value
+
+    def test_update_membership_missing_data(self, client, clean_db):
+        """Test update with missing data (membership type, duration)."""
+        # Create user and log in
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Purchase basic monthly membership
+        response = client.post("/buy_membership", json={
+            "membership_type": imports.constants.MembershipType.BASIC.value,
+            "duration": imports.constants.MembershipDuration.MONTHLY.value,
+            "mode_of_payment": imports.constants.PaymentMethod.APPLE_PAY.value  # Replace with your payment method constant 
+        }, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+        # Test with missing membership type
+        response1 = client.post("/update_membership", json={
+            "duration": imports.constants.MembershipDuration.ANNUALLY.value
+        }, headers={"Authorization": f"Bearer {token}"})
+        assert response1.status_code == 400
+        assert response1.json['error'] == "Missing Required Fields"
+
+        # Test with missing duration
+        response2 = client.post("/update_membership", json={
+            "membership_type": imports.constants.MembershipType.PREMIUM.value
+        }, headers={"Authorization": f"Bearer {token}"})
+        assert response2.status_code == 400
+        assert response2.json['error'] == "Missing Required Fields" 
+
+        # Test with missing both
+        response3 = client.post("/update_membership", json={}, headers={"Authorization": f"Bearer {token}"}) 
+        assert response3.status_code == 400
+        assert response3.json['error'] == "No JSON Data found"
+
+    def test_update_membership_invalid_type(self, client, clean_db): 
+        """Test update with invalid membership type.""" 
+        # Create user and log in
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Purchase basic monthly membership 
+        response = client.post("/buy_membership", json={ 
+            "membership_type": imports.constants.MembershipType.BASIC.value, 
+            "duration": imports.constants.MembershipDuration.MONTHLY.value,
+            "mode_of_payment": imports.constants.PaymentMethod.APPLE_PAY.value  # Replace with your payment method constant 
+        }, headers={"Authorization": f"Bearer {token}"}) 
+        assert response.status_code == 200
+
+        update_response = client.post("/update_membership", json={
+            "membership_type": "INVALID_TYPE",   
+            "duration": imports.constants.MembershipDuration.ANNUALLY.value
+        }, headers={"Authorization": f"Bearer {token}"})
+
+        assert update_response.status_code == 400
+        assert update_response.json['error'] == "Invalid membership type"
+
+    # Tests for next billing cycle
+    def test_next_billing_cycle_date_with_active_membership(self, client, clean_db):
+        """Test retrieving next billing cycle date with an active membership."""
+        # Create a user and an active membership
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Create an active membership
+        active_membership = imports.models.Membership(
+            user_id=user.id,
+            membership_type=imports.constants.MembershipType.PREMIUM.value,
+            duration=imports.constants.MembershipDuration.ANNUALLY.value,
+            start_date=imports.datetime.now() - imports.timedelta(days=30),
+            end_date=imports.datetime.now() + imports.timedelta(days=335),  # Example future end date
+            mode_of_payment=imports.constants.PaymentMethod.CREDIT_CARD.value,
+            is_active=True,
+            auto_renew=True
+        )
+        clean_db.session.add(active_membership)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Request next billing cycle date
+        response = client.get("/get_billing_cycle_date", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert "next_billing_cycle_date" in response.json
+        assert response.json['next_billing_cycle_date'] == (active_membership.end_date).isoformat()
+
+    def test_next_billing_cycle_date_without_active_membership(self, client, clean_db):
+        """Test retrieving next billing cycle date without an active membership."""
+        # Create a user without an active membership
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Request next billing cycle date
+        response = client.get("/get_billing_cycle_date", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert "next_billing_cycle_date" in response.json
+        assert response.json['next_billing_cycle_date'] is None
+        
+    # Tests for get active membership
+    def test_get_active_membership(self, client, clean_db):
+        """Test retrieving details regarding the user active membership."""
+        # Create a user and an active membership
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Create an active membership
+        start_date = imports.datetime.now() - imports.timedelta(days=30)
+        end_date = imports.datetime.now() + imports.timedelta(days=335)
+        active_membership = imports.models.Membership(
+            user_id=user.id,
+            membership_type=imports.constants.MembershipType.PREMIUM.value,
+            duration=imports.constants.MembershipDuration.ANNUALLY.value,
+            start_date=start_date,
+            end_date=end_date,  # Example future end date
+            mode_of_payment=imports.constants.PaymentMethod.CREDIT_CARD.value,
+            is_active=True,
+            auto_renew=True
+        )
+        clean_db.session.add(active_membership)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Request next billing cycle date
+        response = client.get("/get_current_membership", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert response.json['auto_renew'] == True
+        assert response.json['end_date'] == end_date.isoformat() 
+        assert response.json['membership_duration'] == imports.constants.MembershipDuration.ANNUALLY.value
+        assert response.json['membership_type'] == imports.constants.MembershipType.PREMIUM.value
+        assert response.json['mode_of_payment'] == imports.constants.PaymentMethod.CREDIT_CARD.value
+        assert response.json['start_date'] == start_date.isoformat() 
+        
+
+    def test_get_active_membership_without_membership(self, client, clean_db):
+        """Test retrieving details regarding the user active membership."""
+        # Create a user and an active membership
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Request next billing cycle date
+        response = client.get("/get_current_membership", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 404
+        assert response.json['message']  == "User does not have an active membership."
+
+        
