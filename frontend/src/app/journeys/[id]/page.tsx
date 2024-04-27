@@ -56,6 +56,7 @@ export default function Page({ params }: { params: { id: string } }) {
     getJourney();
   }, []);
 
+
   return (
     <main>
       {getJourneyLoading && (

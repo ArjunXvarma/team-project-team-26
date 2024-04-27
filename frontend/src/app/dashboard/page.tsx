@@ -1,84 +1,233 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import Cookies from "js-cookie";
-import { useState } from "react";
-import { SlDrop } from "react-icons/sl";
-import { FaRegHeart } from "react-icons/fa";
-import { AiOutlineFire } from "react-icons/ai";
-import { GiHamburgerMenu } from "react-icons/gi";
-import { ActionIcon, Button } from "@mantine/core";
+import { API_URL } from "@/constants";
+import { BsFire } from "react-icons/bs";
+import { Progress } from '@mantine/core';
+import { MdLogout } from "react-icons/md";
+import { FaRunning } from "react-icons/fa";
+import { GiCycling } from "react-icons/gi";
+import { LineChart } from '@mantine/charts';
+import { useState, useEffect } from "react";
+import { DonutChart } from '@mantine/charts';
+import { GiRunningShoe } from "react-icons/gi";
+import { showErrorMessage, showSuccessMessage } from "@/utils";
+
+
 
 export default function Home() {
-  const [data, _] = useState([
-    { day: "Mon", distance: 10 },
-    { day: "Tue", distance: 15 },
-    { day: "Wed", distance: 20 },
-    { day: "Thur", distance: 18 },
-    { day: "Fri", distance: 25 },
-    { day: "Sat", distance: 30 },
-    { day: "Sun", distance: 28 },
-  ]);
 
+  interface StatsData {
+    byModes: {
+      cycle: {
+        totalCaloriesBurned: number;
+        totalDistance: number;
+        totalTimeWorkingOutHours: number;
+        totalTimeWorkingOutMinutes: number;
+        totalTimeWorkingOutSeconds: number;
+      };
+      running: {
+        totalCaloriesBurned: number;
+        totalDistance: number;
+        totalTimeWorkingOutHours: number;
+        totalTimeWorkingOutMinutes: number;
+        totalTimeWorkingOutSeconds: number;};
+      walking:{
+        totalCaloriesBurned: number;
+        totalDistance: number;
+        totalTimeWorkingOutHours: number;
+        totalTimeWorkingOutMinutes: number;
+        totalTimeWorkingOutSeconds: number;};
+    };
+    journeysData: JourneyData[]; 
+    totalCaloriesBurned: number;
+    totalDistanceCombined: number;
+    totalTimeWorkingOutHours: number;
+    totalTimeWorkingOutMinutes: number;
+    totalTimeWorkingOutSeconds: number;
+  }
+  
+  interface JourneyData {
+    averageSpeed: number;
+    date: number;
+    caloriesBurned: number;
+    hours_taken: number;
+    journeyId: number;
+    minutes_taken: number;
+    mode: string;
+    seconds_taken: number;
+    totalDistance: number;
+  }
+
+  const [data, setData] = useState<StatsData | null>(null);
+  const [journey, setJourney] = useState<JourneyData[] | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await statsData();
+    };
+
+    fetchData();
+  }, []);
+
+  const statsData = async () => {
+    try {
+      const token = Cookies.get("token");
+      const response = await fetch(`${API_URL}/getStats`, {
+        method: "GET",
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const dataResponse = await response.json();
+
+      if (dataResponse.status == 200) {
+        setData(dataResponse.data);
+        setJourney(dataResponse.journeysData);
+      }
+      else {
+        showErrorMessage("Error:", dataResponse.error );
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+ 
   const [username, __] = useState(Cookies.get("username"));
+  const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+  };
+
+  const mappedJourneyData = data?.journeysData.map((journeyItem) => ({
+    date: new Date(journeyItem.date).toLocaleDateString('en-US', {  
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }),
+    totalDistance: Math.floor(Number(journeyItem.totalDistance) as number),
+  }));
+
+
+  const weightLoss = [
+    { name: 'USA', value: 400, color: 'indigo.6' },
+    { name: 'India', value: 600, color: 'yellow.6' },
+  ];
+
+  const cyclingTarget = 40;
+  const runningTarget = 30;
+  const walkingTarget = 10;
+
 
   return (
       <main>
-        <div className="w-full h-full">
-          <div className="flex w-full h-20 justify-around items-center pt-6 px-5">
+        <div className="min-h-screen bg-background">
+          <div className="flex w-full h-20 items-center px-5">
             <p className="text-center text-lg font-serif flex-grow">
               “Every journey begins with a single step”
             </p>
-          </div>
-
-          <div className="px-20 mb-20">
-            <p className="font-serif text-2xl mt-10 ">Hi {username},</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 mt-10">
-              <div className="w-auto border-2 border-primary bg-tertiary h-80 rounded-lg justify-start p-2 px-4">
-                <p className="font-sans font-semibold text-2xl">Weather Today</p>
-                <div className="flex justify-around p-10">
-                  <Image src="/sun.png" alt="Sun Image" width={180} height={180} />
-                  <div className="self-center">
-                    <p className="text-4xl">Sunny</p>
-                    <p className="text-4xl"> 22 C</p>
-                  </div>
-                </div>
+            <Link href={"/logout"} prefetch={false} className="ml-auto flex items-center">
+              <p className="text-xl font-semibold text-green-700 hover:text-green-900 mr-2">Logout</p>
+              <MdLogout size={24} color="green" />
+            </Link>
+          </div> 
+              
+          <div className="px-4 md:px-14 mb-20">
+            <p className="font-serif text-xl mt-6 ">Hi {username},</p>
+            
+            <div className="mt-8 flex flex-col md:flex-row gap-10 justify-around w-full">
+              <div className="text-white text-sm py-6 pr-6 w-full rounded-3xl" style={gradient}>
+                { mappedJourneyData?.length !=0 ?
+                  (<LineChart
+                    h={300}
+                    data={mappedJourneyData ?? []}
+                    dataKey="date"
+                    dotProps={{ r:6, strokeWidth: 1, fill: '#5FE996' }}
+                    activeDotProps={{ r: 8, strokeWidth:4, stroke: '#5FE996' }}
+                    // withTooltip={false}
+                    series={[
+                      { name: 'totalDistance', color: 'white' }
+                    ]}
+                    className="min-w-80"
+                    curveType="bump"
+                    tickLine="none"
+                    gridAxis="y"
+                    strokeWidth={5}
+                  />):
+                  (<div className="text-white font-bold text-xl flex justify-center items-center h-full">No journeys taken yet</div>)
+                }
               </div>
-              <div className="w-auto border-2 border-primary bg-tertiary h-80 rounded-lg justify-start p-2 px-4">
-                <p className="font-sans font-semibold text-2xl"> Distance covered</p>
-                <div className="flex items-end justify-around mx-8 mt-10">
-                  {data.map((item, index) => (
-                    <div key={index} className="flex flex-col flex-grow items-center">
-                      <p>{item.distance} km</p>
-                      <div
-                        className="bg-primary w-12 md:w-10 lg:w-12"
-                        style={{ height: `${item.distance * 5}px` }}
-                      ></div>
-                      <p className="mt-2">{item.day}</p>
+                  
+              <div className="flex flex-col gap-6 justify-around md:w-1/2">
+                  <div className="bg-white flex gap-2 rounded-3xl p-6 min-w-80 drop-shadow-sharp">
+                    <div className="flex justify-center items-center p-2 rounded-xl " style={gradient}>
+                      <BsFire size={30} color={'white'} />
                     </div>
-                  ))}
-                </div>
+
+                    <div className="flex flex-col ml-4 ">
+                      <span className="text-green-800 font-bold">Calories</span>
+                      <small className="text-xs -mt-1 text-gray-700">Total burnt</small>
+                      <span className="font-bold text-green-700 mt-4">{Math.floor(data?.totalCaloriesBurned ?? 0)} kcal</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-3xl p-6 flex flex-col items-center min-w-80 drop-shadow-sharp">
+                    <span className="text-green-800 font-bold">Weight Loss Goal</span>
+                    <small className="text-gray-700">20kg</small>
+                    <DonutChart className="w-full" data={weightLoss} size={117} thickness={30} startAngle={170} endAngle={10} /> 
+                  </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="w-auto border-2 border-primary bg-tertiary h-60 flex flex-col justify-between rounded-lg  p-2 px-4 ">
-                <FaRegHeart size={26} />
-                <p className="font-sans self-center text-4xl">75 bpm</p>
-                <p className="font-sans font-semibold text-lg">Pulse</p>
+            <div className="mt-10 flex flex-col md:flex-row flex-wrap justify-around items-center">
+              
+              <div className="flex flex-col justify-center items-center drop-shadow-sharp mb-4">
+                <div className="flex justify-center items-center p-2 rounded-xl w-16 -mb-6 z-10" style={gradient}>
+                    <GiCycling size={40} color={'white'} />
+                  </div>
+                <div className="bg-white rounded-3xl flex flex-col items-center p-6 pt-8 gap-2">
+                  <span className="text-green-800 font-bold">Cycling</span>
+                  <div className="flex justify-between w-full">
+                    <small className="">Progress:</small>
+                    <small className="">{Math.floor(((data?.byModes?.cycle?.totalDistance ?? 0)/(cyclingTarget*1000))*100)}%</small>
+                  </div>
+                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.cycle?.totalDistance  ?? 0)/(cyclingTarget*1000))*100)} radius="lg" className="w-60"/>
+                  <small className="text-gray-600 self-start">Target: {cyclingTarget}Km</small>
+                </div>
               </div>
-              <div className="w-auto border-2 border-primary bg-tertiary h-60 flex flex-col justify-between rounded-lg p-2 px-4 ">
-                <AiOutlineFire size={30} />
-                <p className="font-sans self-center text-4xl">580 cal</p>
-                <p className="font-sans font-semibold text-lg">Calories</p>
+
+              <div className="flex flex-col justify-center items-center drop-shadow-sharp mb-4">
+                <div className="flex justify-center items-center p-2 rounded-xl w-16 -mb-6 z-10" style={gradient}>
+                  <FaRunning size={40} color={'white'} />
+                </div>
+                <div className="bg-white rounded-3xl flex flex-col items-center p-6 pt-8 gap-2 ">
+                  <span className="text-green-800 font-bold">Running</span>
+                  <div className="flex justify-between w-full">
+                    <small className="">Progress:</small>
+                    <small className="">{Math.floor(((data?.byModes?.running?.totalDistance  ?? 0)/(runningTarget*1000))*100)}%</small>
+                  </div>
+                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.running?.totalDistance ?? 0)/(runningTarget*1000))*100)} radius="lg" className="w-60 "/>
+                  <small className="text-gray-600 self-start">Target: {runningTarget}Km</small>
+                </div>
               </div>
-              <div className="w-auto border-2 border-primary bg-tertiary h-60 flex flex-col justify-between rounded-lg p-2 px-4 ">
-                <SlDrop size={27} />
-                <p className="font-sans self-center text-4xl">88%</p>
-                <p className="font-sans font-semibold  text-lg">Hydration</p>
+              
+              <div className="flex flex-col justify-center items-center drop-shadow-sharp mb-4">
+                <div className="flex justify-center items-center p-2 rounded-xl w-16 -mb-6 z-10" style={gradient}>
+                  <GiRunningShoe size={40} color={'white'} />
+                </div>
+                <div className="bg-white rounded-3xl flex flex-col items-center p-6 pt-8 gap-2 ">
+                  <span className="text-green-800 font-bold">Walking</span>
+                  <div className="flex justify-between w-full">
+                    <small className="">Progress:</small>
+                    <small className="">{Math.floor(((data?.byModes?.walking?.totalDistance ?? 0)/(walkingTarget*1000))*100)}%</small>
+                  </div>
+                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.walking?.totalDistance ?? 0)/(walkingTarget*1000))*100)} radius="lg" className="w-60"/>
+                  <small className="text-gray-600 self-start">Target: {walkingTarget}Km</small>
+                </div>
               </div>
+
             </div>
+                  
           </div>
         </div>
       </main>
