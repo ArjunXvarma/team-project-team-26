@@ -205,9 +205,9 @@ export default function Admin() {
   };
 
   return (
-    <main className="w-screen h-screen">
-      <div className="w-full h-full">
-        <div className="h-full m-8 drop-shadow-xl rounded-md bg-gray-100 py-4 px-4">
+    <main>
+       <div className="min-h-screen bg-background">
+        <div className="h-full m-8 drop-shadow-xl rounded-md bg-white py-4 px-4">
           <div className="flex flex-wrap gap-2 md:gap-4 mb-6 md:mb-10">
             <Select
               placeholder="Filter"

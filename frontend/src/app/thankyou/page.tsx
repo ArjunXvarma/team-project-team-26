@@ -17,7 +17,7 @@ export default function Thankyou() {
                     <p className=" text-4xl font-semibold">Congratulations {username}!</p>
                     <p className=" text-4xl font-semibold mt-4">You are now a member</p>
                     <p className=" text-3xl font-semibold mt-8">View your dashboard</p>
-                    <Link href={'/home'}>
+                    <Link href={'/dashboard'}>
                         <Button className="mt-5  bg-green-700" size="md"><IoMdHome size={36}/></Button>
                     </Link>
                     <IoFootsteps size={150} className="absolute top-2 right-0 transform translate-x-1/2 -translate-y-1/2 -rotate-45"/>

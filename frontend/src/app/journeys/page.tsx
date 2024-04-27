@@ -7,11 +7,13 @@ import GPXparser from "gpxparser";
 import { API_URL } from "@/constants";
 import { GrAdd } from "react-icons/gr";
 import { useForm } from "@mantine/form";
+import { MdLogout } from "react-icons/md";
 import { useDisclosure } from "@mantine/hooks";
 import { GiPathDistance } from "react-icons/gi";
 import { AiOutlineCompass } from "react-icons/ai";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { ChangeEvent, useEffect, useState } from "react";
+import { LiaLongArrowAltRightSolid } from "react-icons/lia";
 import { Button, Loader, Modal, Select, TextInput } from "@mantine/core";
 import { CreateJourneyAPIResponse, GetJourneyAPIResponse, Journey } from "@/types";
 import { formatDate, isValidTime, showErrorMessage, showSuccessMessage } from "@/utils";
@@ -215,18 +217,32 @@ export default function Journeys() {
   useEffect(() => {
     getJourneys();
   }, []);
+  
+  const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+  };
 
   return (
     <main>
-      <div className="flex justify-between items-center mt-5 px-3">
-        <h1 className="font-black text-2xl text-primary"></h1>
-        <p className="text-center text-lg font-serif flex-grow">
-          “Every journey begins with a single step”
-        </p>
-        <Button className="bg-primary" leftSection={<GrAdd />} onClick={open}>
+      <div className="min-h-screen bg-background">
+          <div className="flex w-full h-20 items-center px-5">
+            <p className="text-center text-lg font-serif flex-grow">
+              “Every journey begins with a single step”
+            </p>
+            <Link href={"/logout"} prefetch={false} className="ml-auto flex items-center">
+              <p className="text-xl font-semibold text-green-700 hover:text-green-900 mr-2">Logout</p>
+              <MdLogout size={24} color="green" />
+            </Link>
+          </div> 
+              
+      <div className="mt-6 flex items-center justify-between mx-10">
+        <p className="text-xl">Add a new journey:</p>
+        <Button className="bg-primary hover:bg-green-900" leftSection={<GrAdd />} onClick={open}>
           Add
         </Button>
       </div>
+      <hr className=" mt-2 mx-10 h-0.5 bg-gray-400 rounded-xl"/>
+
       {journeys && journeys.length === 0 && (
         <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md border-slate-100 bg-slate-50 text-slate-400">
           <GiPathDistance size={64} />
@@ -241,19 +257,27 @@ export default function Journeys() {
         </div>
       )}
 
-      {journeys &&
-        journeys.map((journey, i) => (
-          <div
-            key={i}
-            className="mt-10 mx-10 px-5 py-3 border-2 rounded-md border-slate-100 bg-[#E8EFEC]"
-          >
-            <Link href={`/journeys/${journey.id}`}>
-              <h2 className="font-semibold mt-5">{journey.name}</h2>
-              <h3 className="mt-3">Date: {journey.dateCreated}</h3>
-              <h3 className="mt-2">Distance: {journey.totalDistance.toFixed(2)}</h3>
-            </Link>
-          </div>
-        ))}
+      <div className="mb-10">
+        {journeys &&
+          journeys.map((journey, i) => (
+            <div
+              key={i}
+
+              className="mt-10 gap-5 mx-10 p-5 rounded-3xl bg-white drop-shadow-sharp"
+            >
+              <Link href={`/journeys/${journey.id}`}>
+                <div className="flex justify-between items-center">
+                  <div className="flex-col">
+                    <h2 className="text-lg font-semibold text-green-800">{journey.name}</h2>
+                    <h3 className="mt-3"><span className="font-semibold">Date:</span>  {journey.dateCreated}</h3>
+                    <h3> <span className="font-semibold">Distance:</span> {journey.totalDistance.toFixed(2)}m</h3>
+                  </div>
+                  <LiaLongArrowAltRightSolid size={50} color="green"/>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
 
       <Modal opened={opened} onClose={close} title="Upload Journey" size="lg">
         <div className="flex flex-col gap-3">
@@ -284,7 +308,7 @@ export default function Journeys() {
             minDate={dayjs(new Date(1920, 0, 1)).toDate()}
           />
           <label htmlFor="fileInput" className="mt-5">
-            Upload GPX (.gpx) File
+            <p>Upload GPX (.gpx) File</p>
             {fileUploadStatus ? (
               <p
                 className={`text-xs class text-${
@@ -294,9 +318,9 @@ export default function Journeys() {
                 {fileUploadStatus.msg}
               </p>
             ) : null}
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-2 flex items-center gap-3">
               {gpxLoading && <Loader size="sm" color="green" />}
-              <div className="bg-green-600 text-white font-medium flex gap-2 w-fit items-center p-2 rounded">
+              <div className="bg-green-600 hover:bg-green-700 hover:cursor-pointer text-white font-medium flex gap-2 w-fit items-center p-2 rounded">
                 <AiOutlineCompass size={24} />
                 <p className="">Upload File</p>
                 <input hidden type="file" id="fileInput" onChange={handleFile} accept=".gpx" />
@@ -307,11 +331,12 @@ export default function Journeys() {
         <Button
           onClick={createJourney}
           loading={createJourneyLoading}
-          className="bg-primary text-white mt-5 w-full"
+          className="bg-primary hover:bg-hover text-white mt-5 w-full"
         >
           Save Journey
         </Button>
       </Modal>
+      </div>
     </main>
   );
 }

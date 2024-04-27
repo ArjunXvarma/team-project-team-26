@@ -9,6 +9,7 @@ import { FaCheck } from "react-icons/fa6";
 import { RxCross2 } from "react-icons/rx";
 import { FaRegUser } from "react-icons/fa";
 import { Accordion } from "@mantine/core";
+import { MdLogout } from "react-icons/md";
 import { useState, useEffect } from "react";
 import { IoIosSearch } from "react-icons/io";
 import { BiSolidError } from "react-icons/bi";
@@ -121,7 +122,7 @@ export default function Friends() {
         });
         setTimeout(function () {
           window.location.reload();
-        }, 1500);
+        }, 1000);
       } else {
         console.log(acceptResponse.error);
         notifications.show({
@@ -221,17 +222,24 @@ export default function Friends() {
     }
     setOptions(op);
   };
-
+  const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+  };
+  
   return (
     <main>
-      <div className="w-full h-full">
+      <div className="min-h-screen bg-background">
         <header className="flex w-full h-20 justify-around items-center pt-6">
-          <div className="flex flex-col w-full flex-grow">
-            <p className="text-center text-3xl font-semibold font-domine"></p>
-            <p className="text-center text-lg font-serif">
+
+          <div className="flex w-full h-20 items-center px-5">
+            <p className="text-center text-lg font-serif flex-grow">
               “Every journey begins with a single step”
             </p>
-          </div>
+            <Link href={"/logout"} prefetch={false} className="ml-auto flex items-center">
+              <p className="text-xl font-semibold text-green-700 hover:text-green-900 mr-2">Logout</p>
+              <MdLogout size={24} color="green" />
+            </Link>
+          </div> 
         </header>
 
         <div className="flex flex-col mx-28 pt-10 ">
@@ -330,14 +338,14 @@ export default function Friends() {
                 friendList.map((friend, index) => (
                   <div
                     key={index}
-                    className="flex justify-between items-center gap-3 bg-tertiary p-4 rounded-md"
+                    className="flex justify-between items-center gap-3 p-4 rounded-2xl bg-white drop-shadow-sharp"
                   >
-                    <div className="bg-primary rounded-full p-2">
+                    <div className="bg-primary rounded-full p-2" >
                       <FaRegUser color={"white"} size={24} />
                     </div>
                     <p className="text-2xl">{friend.name}</p>
                     <div className="flex-grow"> </div>
-                    <Link href={`/friends/${friend.email}`}>
+                    <Link href={`/friends/${friend.email}/${friend.name}`}>
                       <HiArrowLongRight size={48} color="gray" />
                     </Link>
                   </div>
