@@ -1,6 +1,10 @@
 # Ignore macOS system files
 **/.DS_Store
 
+# Ignore all __pycache__ directories
+**/__pycache__/
+
+
 ### Frontend
 # dependencies
 /frontend/node_modules
@@ -45,20 +49,3 @@ backend/app.db
 **/virtual_env
 **/venv
 /.venv
-
-/backend/app/__pycache__
-/backend/__pycache__
-/.pytest_cache
-/backend/tests/*
-!backend/tests/test_project.py
-!backend/tests/__init__.py
-!backend/tests/conftest.py
-backend/statstest.py
-ignore.py
-backend/README.md
-backend/app/Admin/__pycache__
-
-/swe
-
-backend/testUsers.py
-backend/testFriends.py
