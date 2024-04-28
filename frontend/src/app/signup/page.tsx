@@ -130,9 +130,13 @@ export default function Login() {
     <main>
       <div className="flex md:flex-row flex:col w-full h-full">
         <div className="w-full h-screen md:flex items-center justify-center hidden">
+            <div className="-ml-28 bg-white flex self-start rounded-full h-8 p-5 m-8 drop-shadow-sharp">
+              <p className="flex text-green-900 justify-center self-center font-serif text-xl font-semibold">FitFusion</p>
+            </div>
           <Image
             height={400}
             width={600}
+            className="-ml-40"
             priority={false}
             src="/runner.png"
             alt="Runner Image"

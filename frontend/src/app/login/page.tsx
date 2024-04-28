@@ -100,6 +100,9 @@ export default function Login() {
     <main>
       <div className="flex md:flex-row flex:col w-full h-full">
         <div className="w-full h-screen md:flex items-center justify-center hidden">
+          <div className="-ml-40 bg-white flex self-start rounded-full h-8 p-5 m-8 drop-shadow-sharp">
+            <p className="flex text-green-900 justify-center self-center font-serif text-xl font-semibold">FitFusion</p>
+          </div>
           <Image src="/RunMan.png" alt="Runner Image" width={400} height={300} />
         </div>
         <div className="w-full flex items-center justify-center m-6 rounded-3xl" style={gradient}>
