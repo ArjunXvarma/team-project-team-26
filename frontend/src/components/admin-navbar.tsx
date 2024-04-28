@@ -12,10 +12,14 @@ interface NavbarProps {
 }
 
 export default function AdminNavbar({ children }: NavbarProps) {
+  const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+  };
   return (
-    <div className="flex w-screen h-screen">
-      <div className="bg-primary w-96 flex flex-col items-center">
-        <h1 className="text-white font-black text-3xl mt-28">My App</h1>
+    <div className="flex bg-background">
+      <div className="m-2 rounded-3xl w-64 flex flex-col items-center fixed top-0 bottom-0 left-0 overflow-y-auto" style={gradient}>
+        <h1 className="text-white font-black text-3xl mt-28">FitFusion</h1>
+        <hr/>
         <div className="mt-36 flex flex-col gap-5">
           <Link href={"/admin"}>
             <div className="text-white flex gap-3 font-medium w-48 p-5 rounded-xl hover:bg-green-800">
@@ -43,7 +47,7 @@ export default function AdminNavbar({ children }: NavbarProps) {
           </div>
         </Link>
       </div>
-      <div className="w-full"> {children}</div>
+      <div className="flex-grow ml-72">{children}</div>
     </div>
   );
 }

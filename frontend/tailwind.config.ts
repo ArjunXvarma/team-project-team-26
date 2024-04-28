@@ -8,7 +8,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: { primary: "#1B6D4B", secondary: "#33C074", tertiary:"#E8F4EF", lightGreen:"#94E6A6"},
+      colors: { primary: "#1B6D4B", secondary: "#33C074", tertiary:"#E8F4EF", lightGreen:"#94E6A6", hover:"#04352A", background:"#F1F1F1"},
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
@@ -16,6 +16,7 @@ const config: Config = {
       fontFamily: {
         'domine': ['Domine', 'serif'],
       },
+      dropShadow: {sharp: '0px 3px 3px rgba(0, 0, 0, 0.4)'},
     },
   },
   plugins: [],

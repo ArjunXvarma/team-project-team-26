@@ -7,6 +7,9 @@ export function middleware(req: NextRequest) {
   const logoutRoute = /^\/logout$/;
   const loginSingupRoutes = /^\/(login|signup)$/;
 
+  // Need to put check for active membership on landing page, when user is logged in but does not have a memebership
+  // They should not be able to access dashboard, settings, friends, journeys etc
+  
   if (protectedRoutes.test(req.nextUrl.pathname) && !req.cookies.has("token")) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
