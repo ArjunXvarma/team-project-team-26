@@ -330,7 +330,7 @@ export default function Friends() {
                   </div>
                 </Modal>
 
-                <Button className="bg-primary rounded-full hover:bg-green-900" onClick={open}>
+                <Button className=" rounded-full" style={gradient} onClick={open}>
                   Add Friend
                 </Button>
               </div>

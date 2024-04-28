@@ -121,6 +121,11 @@ export default function Login() {
     setLoading(false);
   };
 
+  const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+  };
+
+
   return (
     <main>
       <div className="flex md:flex-row flex:col w-full h-full">
@@ -133,9 +138,9 @@ export default function Login() {
             alt="Runner Image"
           />
         </div>
-        <div className="w-full h-screen flex items-center justify-center bg-primary">
+        <div className="w-full flex items-center justify-center m-6 rounded-3xl" style={gradient}>
           <div className="w-96 flex flex-col items-center gap-10">
-            <h1 className="text-4xl font-black text-white">Sign Up</h1>
+            <h1 className="text-4xl font-black font-serif text-white">Sign Up</h1>
             <form
               className="w-full flex flex-col gap-3 items-center"
               onSubmit={(e) => {
@@ -193,7 +198,7 @@ export default function Login() {
                 <Button
                   onClick={submit}
                   loading={loading}
-                  className="w-full"
+                  className="w-full bg-green-700 h-10 text-lg rounded-2xl"
                   style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
                 >
                   Create Account
@@ -202,7 +207,7 @@ export default function Login() {
               </div>
             </form>
             <Link href={"/login"} className="flex w-full justify-center">
-              <Button className="w-48" color="white" variant="outline" onClick={() => {}}>
+              <Button className="w-48 -mt-6 text-lg h-10 rounded-2xl" color="white" variant="outline" onClick={() => {}}>
                 Login
               </Button>
             </Link>

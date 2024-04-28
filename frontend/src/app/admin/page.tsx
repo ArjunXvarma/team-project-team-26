@@ -316,7 +316,7 @@ export default function Admin() {
                   </div>
                 </form>
               </Modal>
-              <Button className="bg-primary rounded-full items-center" onClick={open}>
+              <Button className="bg-primary rounded-full items-center drop-shadow-sharp" onClick={open}>
                 Add Admin User <FiPlus className="ml-2" size={20} />
               </Button>
             </div>
