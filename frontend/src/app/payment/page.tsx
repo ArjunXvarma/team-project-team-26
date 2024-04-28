@@ -1,21 +1,21 @@
 "use client"
-import React, { useState, useEffect } from 'react';
-import { useSearchParams} from 'next/navigation';
-import { useForm } from "@mantine/form";
-import { TextInput, Button } from "@mantine/core";
 import Link from "next/link";
-import { FaGoogle } from "react-icons/fa6";
-import { FaRegCreditCard } from "react-icons/fa6";
+import Cookie from "js-cookie";
+import { API_URL } from "@/constants";
+import { useForm } from "@mantine/form";
 import { FaPaypal } from "react-icons/fa";
 import { FaApple } from "react-icons/fa6";
+import { FaGoogle } from "react-icons/fa6";
 import { FaAlipay } from "react-icons/fa6";
-import { number, expirationDate, cvv } from 'card-validator';
-import { API_URL } from "@/constants";
+import { useRouter } from "next/navigation";
 import { BiSolidError } from "react-icons/bi";
-import Cookie from "js-cookie";
+import { useSearchParams} from 'next/navigation';
+import { FaRegCreditCard } from "react-icons/fa6";
+import { TextInput, Button } from "@mantine/core";
+import React, { useState, useEffect } from 'react';
 import { notifications } from "@mantine/notifications";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
-import { useRouter } from "next/navigation";
+import { number, expirationDate, cvv } from 'card-validator';
 
 export default function Payment() {
 
@@ -118,24 +118,24 @@ export default function Payment() {
     };
 
         return ( 
-        <main className="w-screen h-screen bg-primary">
-            <div className="w-full h-full">
+            <main> 
+                <div className="w-full min-h-screen bg-background">
 
                 <header className="justify-around items-center pt-10 flex-grow">
-                    <p className="text-center text-4xl font-semibold pb-6 font-serif text-white "> Payment Details</p>
+                    <p className="text-center text-4xl font-semibold pb-6 font-serif"> Payment Details</p>
                 </header>
 
                 <div className=" flex justify-center mt-4">
-                    <div className="w-fit flex bg-white  rounded-md p-4 ">
+                    <div className="w-fit flex bg-white drop-shadow-sharp rounded-md p-4 ">
                         <p className="text-lg">Selected Plan: &nbsp; </p>
-                        <p className="font-semibold text-lg">{name} - {price}</p>
-                        <p className="font-semibold text-lg">{duration}</p>
+                        <p className="font-semibold text-lg text-green-800">{name} - {price}</p>
+                        <p className="font-semibold text-lg text-green-800">{duration}</p>
                     </div>  
                 </div>
 
-                <div className='flex justify-center items-center text-white gap-8 m-10'>
+                <div className='flex justify-center items-center gap-8 m-10'>
                     {PaymentMethod && PaymentMethod.PaymentMethod.map(type => (
-                        <Button className={`hover:bg-green-600 ${selectedPaymentMethod === type ? 'bg-green-600' : ''}`} key={type} onClick={() => handlePaymentMethodChange(type)}>
+                        <Button className={`drop-shadow-sharp hover:bg-green-600 ${selectedPaymentMethod === type ? 'bg-green-600' : 'bg-green-800'}`} key={type} onClick={() => handlePaymentMethodChange(type)}>
                             {paymentIcons.find(icon => icon.value === type)?.icon}
                             &nbsp;
                             {type}
@@ -148,7 +148,7 @@ export default function Payment() {
                     <CreditCardForm/> :
                         ( selectedPaymentMethod !== null ? 
                                 <div>
-                                    <Button loading={loading} loaderProps={{ type: 'dots' }} onClick={submit} className="bg-green-600 hover:bg-green-700" >Continue</Button>
+                                    <Button loading={loading} loaderProps={{ type: 'dots' }} onClick={submit} className="bg-green-700 hover:bg-green-900 rounded-full" >Continue</Button>
                                 </div>
                             :
                             null
@@ -197,7 +197,7 @@ function CreditCardForm() {
                     required
                     type="Name"
                     size="md"
-                    className="text-white w-full "
+                    className="text-green-700 drop-shadow-md  w-full "
                     placeholder="Name on card"
                     {...form.getInputProps("name")}
                 />
@@ -207,7 +207,7 @@ function CreditCardForm() {
                     required
                     type="Card Number"
                     size="md"
-                    className="text-white w-full "
+                    className="text-green-700 drop-shadow-md rounded-full w-full "
                     placeholder="Card number"
                     {...form.getInputProps("cardNo")}
 
@@ -219,7 +219,7 @@ function CreditCardForm() {
                         required
                         type="text"
                         size="md"
-                        className="text-white w-fit "
+                        className="text-green-700 drop-shadow-md  w-fit "
                         placeholder="MM/YY"
                         {...form.getInputProps("date")}
                     />
@@ -228,7 +228,7 @@ function CreditCardForm() {
                         required
                         type="CVV"
                         size="md"
-                        className="text-white w-fit "
+                        className="text-green-700 drop-shadow-md  w-fit "
                         placeholder="CVV"
                         {...form.getInputProps("cvv")}
                     />
