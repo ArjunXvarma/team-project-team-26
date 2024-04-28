@@ -177,7 +177,7 @@ export default function Home(){
                             ):
                             (
                                 <div>
-                                    <Button className="text-white px-4 py-2  drop-shadow-sharp rounded-full bg-green-700" onClick={update} variant="filled" size="md"> Continue &nbsp; <FaArrowRight/></Button>
+                                    <Button className="text-white px-4 py-2  drop-shadow-sharp rounded-full bg-green-700" onClick={update} color="green" variant="filled" size="md"> Continue &nbsp; <FaArrowRight/></Button>
                                 </div>
                             )}
                         </div>

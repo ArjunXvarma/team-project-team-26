@@ -122,7 +122,6 @@ export default function Friends() {
         setTimeout(function () {
           window.location.reload();
         }, 1000);
-        }, 1000);
       } else {
         console.log(acceptResponse.error);
         notifications.show({
@@ -226,20 +225,13 @@ export default function Friends() {
     background: 'linear-gradient(#3B8B5D, #04372C)'
   };
   
-  const gradient = {
-    background: 'linear-gradient(#3B8B5D, #04372C)'
-  };
-  
   return (
     <main>
-      <div className="min-h-screen bg-background">
+
       <div className="min-h-screen bg-background">
         <header className="flex w-full h-20 justify-around items-center pt-6">
 
-          <div className="flex w-full h-20 items-center px-5">
-            <p className="text-center text-lg font-serif flex-grow">
-
-          <div className="flex w-full h-20 items-center px-5">
+         <div className="flex w-full h-20 items-center px-5">
             <p className="text-center text-lg font-serif flex-grow">
               “Every journey begins with a single step”
             </p>
@@ -248,11 +240,7 @@ export default function Friends() {
               <MdLogout size={24} color="green" />
             </Link>
           </div> 
-            <Link href={"/logout"} prefetch={false} className="ml-auto flex items-center">
-              <p className="text-xl font-semibold text-green-700 hover:text-green-900 mr-2">Logout</p>
-              <MdLogout size={24} color="green" />
-            </Link>
-          </div> 
+
         </header>
 
         <div className="flex flex-col mx-28 pt-10 ">
@@ -359,7 +347,6 @@ export default function Friends() {
                     </div>
                     <p className="text-2xl">{friend.name}</p>
                     <div className="flex-grow"> </div>
-                    <Link href={`/friends/${friend.email}/${friend.name}`}>
                     <Link href={`/friends/${friend.email}/${friend.name}`}>
                       <HiArrowLongRight size={48} color="gray" />
                     </Link>

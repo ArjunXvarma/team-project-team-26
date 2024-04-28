@@ -70,7 +70,7 @@ class TestGetStats:
         assert response.json["data"]["journeysData"][0]["caloriesBurned"] == 418.5
         assert response.json["data"]["journeysData"][0]["hours_taken"] == 0
         assert response.json["data"]["journeysData"][0]["journeyId"] == 1
-        assert response.json["data"]["journeysData"][0]["mode"] == "Running"
+        assert response.json["data"]["journeysData"][0]["mode"] == "Run"
         assert response.json["data"]["journeysData"][0]["totalDistance"] == 5
 
     def test_stats_totals_for_user(self, client, clean_db):
@@ -159,7 +159,7 @@ class TestGetStats:
         assert response.json["data"]["journeysData"][0]["caloriesBurned"] == 418.5
         assert response.json["data"]["journeysData"][0]["hours_taken"] == 0
         assert response.json["data"]["journeysData"][0]["journeyId"] == 4
-        assert response.json["data"]["journeysData"][0]["mode"] == "Running"
+        assert response.json["data"]["journeysData"][0]["mode"] == "Run"
         assert response.json["data"]["journeysData"][0]["totalDistance"] == 5
 
     def test_stats_friend_totals_for_user(self, client, clean_db):

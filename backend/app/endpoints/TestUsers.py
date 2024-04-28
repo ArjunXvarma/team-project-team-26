@@ -31,7 +31,7 @@ class users:
         # Create a Journey to test with
         journey_data = {
             "name": "Morning Run",
-            "type": "Running",
+            "type": "Run",
             "totalDistance": 5.0,
             "elevation": {
                 "avg": 120,
@@ -49,7 +49,7 @@ class users:
 
         journey_data_2 = {
             "name": "Evening Walk",
-            "type": "Walking",
+            "type": "Walk",
             "totalDistance": 3.5,
             "elevation": {
                 "avg": 90,
@@ -67,7 +67,7 @@ class users:
 
         journey_data_3 = {
             "name": "Afternoon Cycling",
-            "type": "Cycling",
+            "type": "Cycle",
             "totalDistance": 8.0,
             "elevation": {
                 "avg": 110,

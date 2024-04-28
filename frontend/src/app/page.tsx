@@ -43,16 +43,6 @@ export default function Landing(){
             fetchMembershipStatus(token);
         }
     }, [isLoggedIn]);
-    
-
-  
-
-
-    const videos = ['/water.mp4', '/race.mp4', '/running.mp4'];
- 
-
-
-  
 
 
     const videos = ['/water.mp4', '/race.mp4', '/running.mp4'];

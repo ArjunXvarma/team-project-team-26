@@ -2,8 +2,6 @@
 import Link from "next/link";
 import Cookie from "js-cookie";
 import { API_URL } from "@/constants";
-import Cookie from "js-cookie";
-import { API_URL } from "@/constants";
 import { Button } from "@mantine/core";
 import { Switch } from "@mantine/core";
 import { MdLogout } from "react-icons/md";
@@ -63,6 +61,30 @@ export default function Settings() {
       if(response.status == 200)
         {
           setBillingCycle(billingResponse);
+        }
+    }
+    catch (error) {
+      showErrorMessage(
+        "Server Error",
+        "There was a problem contacting the server. Please try again later."
+      );
+    }
+  }
+
+  const [pendingMembership, setpendingMembership] = useState<{pending_membership_type: String | null, pending_membership_duration: String | null}>();
+  const getPendingMembership = async() => {
+    try{
+      const token = Cookie.get("token");
+      const response = await fetch(`${API_URL}/get_pending_membership`, {
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const pendingResponse= await response.json();
+      if(response.status == 200)
+        {
+          setpendingMembership(pendingResponse);
+          console.log(pendingMembership);
         }
     }
     catch (error) {
@@ -161,6 +183,7 @@ export default function Settings() {
     getCurrentMembership();
     if(currentMembership?.auto_renew)
       getNextBillingCycle();
+    getPendingMembership();
   }, [currentMembership?.auto_renew]);
 
       const gradient = {
@@ -170,17 +193,7 @@ export default function Settings() {
   return (
     <main>
       <div className="min-h-screen">
-      <div className="min-h-screen">
         <header className="flex w-full h-20 justify-around items-center pt-6">
-          <div className="flex w-full h-20 items-center px-5">
-              <p className="text-center text-lg font-serif flex-grow">
-                “Every journey begins with a single step”
-              </p>
-              <Link href={"/logout"} prefetch={false} className="ml-auto flex items-center">
-                <p className="text-xl font-semibold text-green-700 hover:text-green-900 mr-2">Logout</p>
-                <MdLogout size={24} color="green" />
-              </Link>
-            </div> 
           <div className="flex w-full h-20 items-center px-5">
               <p className="text-center text-lg font-serif flex-grow">
                 “Every journey begins with a single step”
@@ -198,13 +211,16 @@ export default function Settings() {
             <div className="ml-2">
               <p className="text-xl self-start mb-2 -ml-2"> Modify Membership Plan</p>
 
-                <p>Selected Package: {currentMembership?.membership_type} - {currentMembership?.membership_duration}</p>
+                <p>Current Membership: {currentMembership?.membership_type} - {currentMembership?.membership_duration}</p>
                 {currentMembership?.auto_renew ? 
                   (
                   <div>
                     <p> Auto Renew: On</p>
                     <p> Plan Active from: {currentMembership?.start_date?.slice(0, 10).split('-').reverse().join('-')}</p>
                     <p> Next Billing Cycle: {billingCycle?.next_billing_cycle_date?.slice(0, 10).split('-').reverse().join('-')}</p>
+                    {pendingMembership && (
+                      <p>Next Plan: {pendingMembership.pending_membership_type} - {pendingMembership.pending_membership_duration}</p>
+                    )}
                   </div>
                   ) : 
                   (
@@ -230,7 +246,6 @@ export default function Settings() {
             <p className="text-xl"> Dark Mode</p>
             <Switch
               color={darkMode ? "green" : "gray"}
-              color={darkMode ? "green" : "gray"}
               size="lg"
               onLabel="ON"
               offLabel="OFF"
@@ -240,7 +255,6 @@ export default function Settings() {
           </div>
           <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-3xl p-8  w-full">
             <p className="text-xl">
-              Privacy Setting: <span className="font-bold text-primary">{privacyMode}</span>
               Privacy Setting: <span className="font-bold text-primary">{privacyMode}</span>
             </p>
             <Button onClick={changePrivacyMode} className="rounded-full" style={gradient}>

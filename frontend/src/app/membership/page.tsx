@@ -114,7 +114,7 @@ export default function Home(){
                                     selectedPlanPrice: "£"+selectedMembershipPlans?.[selectedPlan]+"/",
                                     selectedPlanDuration: selectedPlanType+""
                                 }}}>
-                                <Button className="text-white px-4 py-2 rounded bg-green-600" variant="filled" size="md"> Continue &nbsp; <FaArrowRight/></Button>
+                                <Button className="text-white px-4 py-2 rounded-full bg-green-700" color='green' variant="filled" size="md"> Continue &nbsp; <FaArrowRight/></Button>
                             </Link>
                         </div>
                     )}
