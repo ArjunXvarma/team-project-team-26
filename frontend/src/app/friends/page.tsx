@@ -228,6 +228,7 @@ export default function Friends() {
   return (
     <main>
 
+
       <div className="min-h-screen bg-background">
         <header className="flex w-full h-20 justify-around items-center pt-6">
 
@@ -246,6 +247,7 @@ export default function Friends() {
         <div className="flex flex-col mx-28 pt-10 ">
           <div>
             <Autocomplete
+              label="Friend name"
               placeholder="Search for a friend"
               leftSection={<IoIosSearch size={26} color="green"/>}
               className="drop-shadow-md"
@@ -281,6 +283,7 @@ export default function Friends() {
                         >
                           <div className="bg-primary rounded-full p-2">
                             <AiOutlineUser color={"white"} size={26} />
+                            <AiOutlineUser color={"white"} size={26} />
                           </div>
                           <p className="text-2xl ml-2">{request.name}</p>
                           <div className="flex flex-col justify-center items-center">
@@ -296,6 +299,19 @@ export default function Friends() {
                               icon={<LuThumbsDown color={"red"} size={26} />}
                             />
                           </div>
+                          <p className="text-2xl">{request.name}</p>
+                          <Button
+                            onClick={() => accept(request.email.toString())}
+                            variant="transparent"
+                          >
+                            {" "}
+                            <FaCheck color={"green"} size={26} />
+                          </Button>
+                          <CloseButton
+                            onClick={() => reject(request.email.toString())}
+                            variant="transparent"
+                            icon={<RxCross2 color={"red"} size={28} />}
+                          />
                         </div>
                       ))}
                     </div>
@@ -340,10 +356,10 @@ export default function Friends() {
                 friendList.map((friend, index) => (
                   <div
                     key={index}
-                    className="flex justify-between items-center gap-3 p-4 rounded-3xl bg-white drop-shadow-sharp"
+                    className="flex justify-between items-center gap-3 p-4 rounded-2xl bg-white drop-shadow-sharp"
                   >
                     <div className="bg-primary rounded-full p-2" >
-                      <AiOutlineUser color={"white"} size={26} />
+                      <FaRegUser color={"white"} size={24} />
                     </div>
                     <p className="text-2xl">{friend.name}</p>
                     <div className="flex-grow"> </div>
