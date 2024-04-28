@@ -87,6 +87,8 @@ export default function Home() {
       <main>
         <div className="min-h-screen bg-background">
           <div className="flex w-full h-20 items-center px-5">
+        <div className="min-h-screen bg-background">
+          <div className="flex w-full h-20 items-center px-5">
             <p className="text-center text-lg font-serif flex-grow">
               “Every journey begins with a single step”
             </p>
@@ -119,6 +121,17 @@ export default function Home() {
                   (<div className="text-white font-bold text-xl flex justify-center items-center h-full">No journeys taken yet</div>)
                 }
               </div>
+                  
+              <div className="flex flex-col gap-6 justify-around md:w-1/2">
+                  <div className="bg-white flex gap-2 rounded-3xl p-6 min-w-80 drop-shadow-sharp">
+                    <div className="flex justify-center items-center p-2 rounded-xl " style={gradient}>
+                      <BsFire size={30} color={'white'} />
+                    </div>
+
+                    <div className="flex flex-col ml-4 ">
+                      <span className="text-green-800 font-bold">Calories</span>
+                      <small className="text-xs -mt-1 text-gray-700">Total burnt</small>
+                      <span className="font-bold text-green-700 mt-4">{Math.floor(data?.totalCaloriesBurned ?? 0)} kcal</span>
                   
               <div className="flex flex-col gap-6 justify-around md:w-1/2">
                   <div className="bg-white flex gap-2 rounded-3xl p-6 min-w-80 drop-shadow-sharp">
@@ -170,6 +183,20 @@ export default function Home() {
                   <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.running?.totalDistance ?? 0)/(runningTarget*1000))*100)} radius="lg" className="w-60 "/>
                   <small className="text-gray-600 self-start">Target: {runningTarget}Km</small>
                 </div>
+
+              <div className="flex flex-col justify-center items-center drop-shadow-sharp mb-4">
+                <div className="flex justify-center items-center p-2 rounded-xl w-16 -mb-6 z-10" style={gradient}>
+                  <FaRunning size={40} color={'white'} />
+                </div>
+                <div className="bg-white rounded-3xl flex flex-col items-center p-6 pt-8 gap-2 ">
+                  <span className="text-green-800 font-bold">Running</span>
+                  <div className="flex justify-between w-full">
+                    <small className="">Progress:</small>
+                    <small className="">{Math.floor(((data?.byModes?.running?.totalDistance  ?? 0)/(runningTarget*1000))*100)}%</small>
+                  </div>
+                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.running?.totalDistance ?? 0)/(runningTarget*1000))*100)} radius="lg" className="w-60 "/>
+                  <small className="text-gray-600 self-start">Target: {runningTarget}Km</small>
+                </div>
               </div>
               
               <div className="flex flex-col justify-center items-center drop-shadow-sharp mb-4">
@@ -185,7 +212,22 @@ export default function Home() {
                   <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.walking?.totalDistance ?? 0)/(walkingTarget*1000))*100)} radius="lg" className="w-60"/>
                   <small className="text-gray-600 self-start">Target: {walkingTarget}Km</small>
                 </div>
+              
+              <div className="flex flex-col justify-center items-center drop-shadow-sharp mb-4">
+                <div className="flex justify-center items-center p-2 rounded-xl w-16 -mb-6 z-10" style={gradient}>
+                  <GiRunningShoe size={40} color={'white'} />
+                </div>
+                <div className="bg-white rounded-3xl flex flex-col items-center p-6 pt-8 gap-2 ">
+                  <span className="text-green-800 font-bold">Walking</span>
+                  <div className="flex justify-between w-full">
+                    <small className="">Progress:</small>
+                    <small className="">{Math.floor(((data?.byModes?.walking?.totalDistance ?? 0)/(walkingTarget*1000))*100)}%</small>
+                  </div>
+                  <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.walking?.totalDistance ?? 0)/(walkingTarget*1000))*100)} radius="lg" className="w-60"/>
+                  <small className="text-gray-600 self-start">Target: {walkingTarget}Km</small>
+                </div>
               </div>
+
 
             </div>
                 

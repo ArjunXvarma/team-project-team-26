@@ -51,6 +51,13 @@ export default function Landing(){
     const videos = ['/water.mp4', '/race.mp4', '/running.mp4'];
  
 
+
+  
+
+
+    const videos = ['/water.mp4', '/race.mp4', '/running.mp4'];
+ 
+
     return (
         <main> 
           <div className="w-full h-full">

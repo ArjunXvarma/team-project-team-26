@@ -217,7 +217,7 @@ class TestMembershipRoutes:
         response = client.post("/buy_membership", json={
             "membership_type": imports.constants.MembershipType.BASIC.value,
             "duration": imports.constants.MembershipDuration.MONTHLY.value,
-            "mode_of_payment": imports.constants.PaymentMethod.APPLE_PAY.value  # Replace with your payment method constant
+            "mode_of_payment": imports.constants.PaymentMethod.APPLE_PAY.value
         }, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
 
@@ -461,4 +461,75 @@ class TestMembershipRoutes:
         assert response.status_code == 404
         assert response.json['message']  == "User does not have an active membership."
 
+    #Tests for checking pending membership
+    def test_get_pending_membership_with_pending_update(self, client, clean_db):
+        """Test retrieving pending membership type with a pending update."""
+        # Create user and log in
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Purchase basic monthly membership
+        response = client.post("/buy_membership", json={
+            "membership_type": imports.constants.MembershipType.BASIC.value,
+            "duration": imports.constants.MembershipDuration.MONTHLY.value,
+            "mode_of_payment": imports.constants.PaymentMethod.APPLE_PAY.value
+        }, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+        # Update to premium annual
+        update_response = client.post("/update_membership", json={
+            "membership_type": imports.constants.MembershipType.PREMIUM.value,
+            "duration": imports.constants.MembershipDuration.ANNUALLY.value
+        }, headers={"Authorization": f"Bearer {token}"})
         
+        # Request pending membership type
+        response = client.get("/get_pending_membership", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert response.json['pending_membership_type'] == imports.constants.MembershipType.PREMIUM.value
+
+    def test_get_pending_membership_without_pending_update(self, client, clean_db):
+        """Test retrieving pending membership type without a pending update."""
+        # Create user and log in
+        user = imports.models.User(
+            first_name="John",
+            last_name="Doe",
+            email="john.doe@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        login_response = client.post("/login", json={
+            "email": "john.doe@example.com",
+            "password": "password"
+        })
+        token = login_response.json['session_token']
+
+        # Purchase basic monthly membership
+        response = client.post("/buy_membership", json={
+            "membership_type": imports.constants.MembershipType.BASIC.value,
+            "duration": imports.constants.MembershipDuration.MONTHLY.value,
+            "mode_of_payment": imports.constants.PaymentMethod.APPLE_PAY.value
+        }, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+
+        # Request pending membership type
+        response = client.get("/get_pending_membership", headers={"Authorization": f"Bearer {token}"})
+
+        assert response.status_code == 200
+        assert response.json['pending_membership_type'] == None

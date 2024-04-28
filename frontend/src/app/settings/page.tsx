@@ -2,6 +2,8 @@
 import Link from "next/link";
 import Cookie from "js-cookie";
 import { API_URL } from "@/constants";
+import Cookie from "js-cookie";
+import { API_URL } from "@/constants";
 import { Button } from "@mantine/core";
 import { Switch } from "@mantine/core";
 import { MdLogout } from "react-icons/md";
@@ -168,7 +170,17 @@ export default function Settings() {
   return (
     <main>
       <div className="min-h-screen">
+      <div className="min-h-screen">
         <header className="flex w-full h-20 justify-around items-center pt-6">
+          <div className="flex w-full h-20 items-center px-5">
+              <p className="text-center text-lg font-serif flex-grow">
+                “Every journey begins with a single step”
+              </p>
+              <Link href={"/logout"} prefetch={false} className="ml-auto flex items-center">
+                <p className="text-xl font-semibold text-green-700 hover:text-green-900 mr-2">Logout</p>
+                <MdLogout size={24} color="green" />
+              </Link>
+            </div> 
           <div className="flex w-full h-20 items-center px-5">
               <p className="text-center text-lg font-serif flex-grow">
                 “Every journey begins with a single step”
@@ -218,6 +230,7 @@ export default function Settings() {
             <p className="text-xl"> Dark Mode</p>
             <Switch
               color={darkMode ? "green" : "gray"}
+              color={darkMode ? "green" : "gray"}
               size="lg"
               onLabel="ON"
               offLabel="OFF"
@@ -227,6 +240,7 @@ export default function Settings() {
           </div>
           <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-3xl p-8  w-full">
             <p className="text-xl">
+              Privacy Setting: <span className="font-bold text-primary">{privacyMode}</span>
               Privacy Setting: <span className="font-bold text-primary">{privacyMode}</span>
             </p>
             <Button onClick={changePrivacyMode} className="rounded-full" style={gradient}>
