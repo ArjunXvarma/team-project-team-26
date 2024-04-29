@@ -246,18 +246,41 @@ class AdminRoutes:
         current_user = models.User.query.filter_by(email=current_user_email).first()
 
         if not current_user:
-            return jsonify({'status': 404, 'message': 'User not found'}), 404
+            return jsonify({'status': 404, 'message': 'Current user not found'}), 404
 
         if not any(role.name == 'admin' for role in current_user.roles):
-            return jsonify({'status': 401, 'message': 'Error: Unauthorized access'}), 401
+            return jsonify({'status': 401, 'message': 'Unauthorized access'}), 401
 
         user_to_delete = models.User.query.get(userId)
         if not user_to_delete:
             return jsonify({'status': 404, 'message': 'User not found'}), 404
 
-        db.session.delete(user_to_delete)
-        db.session.commit()
-        return jsonify({'status': 200, 'message': 'User successfully deleted'}), 200
+        try:
+            related_journeys = models.Journey.query.filter_by(userId=userId).all()
+            for journey in related_journeys:
+                db.session.delete(journey)
+
+            related_friendships = models.Friendship.query.filter(
+                (models.Friendship.requester_id == userId) | 
+                (models.Friendship.addressee_id == userId)
+            ).all()
+            for friendship in related_friendships:
+                db.session.delete(friendship)
+
+            if user_to_delete.membership:
+                db.session.delete(user_to_delete.membership)
+            
+            if user_to_delete.pending_updates:
+                db.session.delete(user_to_delete.pending_updates)
+
+            db.session.delete(user_to_delete)
+            db.session.commit()
+
+            return jsonify({'status': 200, 'message': 'User successfully deleted'}), 200
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'status': 500, 'message': f'Failed to delete user due to: {str(e)}'}), 500
 
     @app.route('/admin/get_revenues', methods=['GET'])
     @jwt_required()
