@@ -96,10 +96,13 @@ export default function Admin() {
     }
 
     try {
+      const token = Cookies.get("token");
       const response = await fetch(`${API_URL}/admin/create_admin_user`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+         },
         body: JSON.stringify({
           first_name: form.values.fname,
           last_name: form.values.lname,
@@ -135,11 +138,10 @@ export default function Admin() {
   const allMembers = async () => {
     try {
       const token = Cookies.get("token");
-      console.log(token);
       const response = await fetch(`${API_URL}/admin/get_all_users`, {
         method: "GET",
         credentials: "include",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { "Authorization": `Bearer ${token}` },
       });
 
       const memberListResponse = await response.json();
@@ -173,7 +175,7 @@ export default function Admin() {
         const response = await fetch(`${API_URL}/admin/delete_user/${id}`, {
           method: "DELETE",
           credentials: "include",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {" Authorization": `Bearer ${token}` },
         });
         console.log(response);
         const deleteUser = await response.json();
