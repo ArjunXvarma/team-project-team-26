@@ -269,6 +269,9 @@ class AdminRoutes:
 
             if user_to_delete.membership:
                 db.session.delete(user_to_delete.membership)
+            
+            if user_to_delete.pending_updates:
+                db.session.delete(user_to_delete.pending_updates)
 
             db.session.delete(user_to_delete)
             db.session.commit()
