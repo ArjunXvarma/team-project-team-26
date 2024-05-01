@@ -8,15 +8,23 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: { primary: "#1B6D4B", secondary: "#33C074", tertiary:"#E8F4EF", lightGreen:"#94E6A6", hover:"#04352A", background:"#F1F1F1"},
+      colors: {
+        primary: "#1B6D4B",
+        secondary: "#33C074",
+        tertiary: "#E8F4EF",
+        lightGreen: "#94E6A6",
+        hover: "#04352A",
+        background: "#F1F1F1",
+        dk_background: "#131B23",
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       fontFamily: {
-        'domine': ['Domine', 'serif'],
+        domine: ["Domine", "serif"],
       },
-      dropShadow: {sharp: '0px 3px 3px rgba(0, 0, 0, 0.4)'},
+      dropShadow: { sharp: "0px 3px 3px rgba(0, 0, 0, 0.4)" },
     },
   },
   plugins: [],
