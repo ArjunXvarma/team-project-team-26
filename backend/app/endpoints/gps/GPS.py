@@ -50,6 +50,13 @@ class GPSRoutes:
                     if extra_keys:
                         error_message.append(f"Extra keys: {', '.join(extra_keys)}")
                     return False, '; '.join(error_message)
+
+                # Check that all values are numerical
+                for key in required_keys:
+                    value = point[key]
+                    if not isinstance(value, (int, float)):
+                        return False, f"Invalid value for {key}: {value}. Must be a numerical value."
+
             return True, ""
         return False, "No data provided"
 
@@ -147,7 +154,6 @@ class GPSRoutes:
 
         data = request.get_json()
 
-        # Validate points before processing further
         points = data.get('points')
         if points is None:
             return jsonify({'status': 400, 'message': 'Missing field: points'}), 400
@@ -159,6 +165,8 @@ class GPSRoutes:
         try:
             name = data['name']
             journey_type = data['type']
+            if journey_type not in ['Run', 'Walk', 'Cycle']:
+                return jsonify({'status': 400, 'message': 'Invalid journey type. Must be Run, Walk, or Cycle'}), 400
             totalDistance = data['totalDistance']
             elevation = data['elevation']
             avgEle = elevation['avg']
@@ -192,6 +200,7 @@ class GPSRoutes:
 
         db.session.add(journey)
         db.session.commit()
+
 
         return jsonify({'status': 201, 'message': 'Journey created successfully'}), 201
 

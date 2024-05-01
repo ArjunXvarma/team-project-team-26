@@ -44,6 +44,15 @@ class TestGPSRoutes:
         ]
         assert imports.GPSRoutes.validate_points(points_different_order)[0] == True
 
+    def validate_points_non_numerical_values(self):
+        points_non_numerical = [
+            {'lat': 10, 'lon': 20, 'ele': 5},  
+            {'lat': 'invalid', 'lon': 25, 'ele': 10},  
+            {'lat': 15, 'lon': 'invalid', 'ele': 10},  
+            {'lat': 15, 'lon': 25, 'ele': 'invalid'}  
+        ]
+        assert imports.GPSRoutes.validate_points(points_non_numerical)[0] == False
+
 
     def test_get_journeys_without_jwt(self, client):
         """Test getting user journeys without a JWT."""
@@ -59,7 +68,6 @@ class TestGPSRoutes:
         # Test if journey is returned successfuly
         response = client.get("/get_journeys_of_user", headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
-
 
 
     def test_get_journeys_with_no_journeys(self, client, clean_db):
@@ -98,7 +106,7 @@ class TestGPSRoutes:
         # Journey to be added
         journey_data = {
             "name": "Morning Run",
-            "type": "Running",
+            "type": "Run",
             "totalDistance": 5.0,
             "elevation": {
                 "avg": 120,
@@ -127,7 +135,7 @@ class TestGPSRoutes:
         # Make a request with JWT, invalid Points array format
         journey_data = {
             "name": "Morning Run",
-            "type": "Running",
+            "type": "Run",
             "totalDistance": 5.0,
             "elevation": {
                 "avg": 120,
@@ -147,6 +155,32 @@ class TestGPSRoutes:
         response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 400
 
+    
+    def test_create_journey_with_invalid_type(self, client, clean_db):
+        """Test creating a journey with an invalid type using JWT."""
+
+        token = imports.users.user1(self, client, clean_db)[0]
+        journey_data = {
+            "name": "Morning Adventure",
+            "type": "InvalidType",  
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 400
+        assert 'Invalid journey type' in response.json['message']
 
     def test_create_journey_invalid_date_time(self, client, clean_db):
         """Test creating a journey with JWT and invalid data."""
