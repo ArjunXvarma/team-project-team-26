@@ -1,0 +1,7 @@
+.navbar-gradient--dark-mode {
+  background: linear-gradient(180deg, #1b2733 30.17%, #044e40 89.81%, #131b23 100%);
+}
+
+.navbar-gradient--light-mode {
+  background: linear-gradient(180deg, #2f7149 0%, #044e40 89.81%, #043429 100%);
+}
