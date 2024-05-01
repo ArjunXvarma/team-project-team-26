@@ -1,6 +1,4 @@
 "use client";
-
-import "./dashboard-styles.css";
 import Cookies from "js-cookie";
 import { StatsData } from "@/types";
 import { API_URL } from "@/constants";
@@ -44,10 +42,6 @@ export default function Home() {
     } catch (error) {
       console.log(error);
     }
-  };
-
-  const gradient = {
-    background: "linear-gradient(#3B8B5D, #04372C)",
   };
 
   const mappedJourneyData = data?.journeysData.map((journeyItem) => {
