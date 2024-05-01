@@ -1,5 +1,6 @@
 "use client";
 import "@mantine/dates/styles.css";
+import "./journey-styles.css";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Cookie from "js-cookie";
@@ -7,11 +8,11 @@ import GPXparser from "gpxparser";
 import { API_URL } from "@/constants";
 import { GrAdd } from "react-icons/gr";
 import { useForm } from "@mantine/form";
-import { MdLogout } from "react-icons/md";
 import { useDisclosure } from "@mantine/hooks";
 import { GiPathDistance } from "react-icons/gi";
 import { AiOutlineCompass } from "react-icons/ai";
 import { DateInput, TimeInput } from "@mantine/dates";
+import { useTheme } from "@/components/theme-provider";
 import { ChangeEvent, useEffect, useState } from "react";
 import { LiaLongArrowAltRightSolid } from "react-icons/lia";
 import { Button, Loader, Modal, Select, TextInput } from "@mantine/core";
@@ -19,6 +20,7 @@ import { CreateJourneyAPIResponse, GetJourneyAPIResponse, Journey } from "@/type
 import { formatDate, isValidTime, showErrorMessage, showSuccessMessage } from "@/utils";
 
 export default function Journeys() {
+  const { theme } = useTheme();
   const validTypes = ["Run", "Walk", "Cycle"];
   const [gpxLoading, setGPXLoading] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
@@ -217,125 +219,154 @@ export default function Journeys() {
   useEffect(() => {
     getJourneys();
   }, []);
-  
-  const gradient = {
-    background: 'linear-gradient(#3B8B5D, #04372C)'
-  };
 
   return (
     <main>
-      <div className="min-h-screen bg-background">
-          <div className="flex w-full h-20 items-center px-5">
-            <p className="text-center text-lg font-serif flex-grow">
-              “Every journey begins with a single step”
-            </p>
-            <Link href={"/logout"} prefetch={false} className="ml-auto flex items-center">
-              <p className="text-xl font-semibold text-green-700 hover:text-green-900 mr-2">Logout</p>
-              <MdLogout size={24} color="green" />
-            </Link>
-          </div> 
-              
-      <div className="mt-6 flex items-center justify-between mx-10">
-        <p className="text-xl">Add a new journey:</p>
-        <Button className=" hover:bg-green-900 rounded-full drop-shadow-sm" style={gradient} leftSection={<GrAdd />} onClick={open}>
-          Add
-        </Button>
-      </div>
-      <hr className=" mt-2 mx-10 h-0.5 bg-gray-400 rounded-xl"/>
-
-      {journeys && journeys.length === 0 && (
-        <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md bg-white drop-shadow-sharp text-green-700">
-          <GiPathDistance size={64} />
-          <h2 className="text-xs md:text-lg">You haven't taken a journey yet</h2>
+      <div
+        className={`min-h-[100vh] ${theme === "dark" ? "bg-dk_background" : "bg-background"}`}
+      >
+        <div
+          onClick={open}
+          className={`absolute bottom-10 right-10 z-10 w-12 h-12 rounded-3xl flex items-center justify-center text-white cursor-pointer ${
+            theme == "dark" ? "gradient--dark-mode " : "gradient--light-mode "
+          }`}
+        >
+          <GrAdd size={24} />
         </div>
-      )}
-
-      {getJourneyLoading && (
-        <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md bg-white drop-shadow-sharp text-green-700">
-          <Loader size={32} color="gray" />
-          <h2 className="text-xs md:text-lg">Loading your journeys</h2>
-        </div>
-      )}
-
-      <div className="mb-10">
-        {journeys &&
-          journeys.map((journey, i) => (
-            <div
-              key={i}
-
-              className="mt-10 gap-5 mx-10 p-5 rounded-3xl bg-white drop-shadow-sharp"
-            >
-              <Link href={`/journeys/${journey.id}`}>
-                <div className="flex justify-between items-center">
-                  <div className="flex-col">
-                    <h2 className="text-lg font-semibold text-green-800">{journey.name}</h2>
-                    <h3 className="mt-3"><span className="font-semibold">Date:</span>  {journey.dateCreated}</h3>
-                    <h3> <span className="font-semibold">Distance:</span> {journey.totalDistance.toFixed(2)}m</h3>
-                  </div>
-                  <LiaLongArrowAltRightSolid size={50} color="green"/>
-                </div>
-              </Link>
-            </div>
-          ))}
-        </div>
-
-      <Modal opened={opened} onClose={close} title="Upload Journey" size="lg">
-        <div className="flex flex-col gap-3">
-          <TextInput label="Name" {...form.getInputProps("name")} />
-          <Select label="Type" data={validTypes} {...form.getInputProps("type")} />
-          <div className="flex justify-between gap-5">
-            <TimeInput
-              label="Start Time"
-              className="w-full"
-              {...form.getInputProps("startTime")}
-            />
-            <TimeInput
-              label="End Time"
-              className="w-full"
-              {...form.getInputProps("endTime")}
-            />
+        {journeys && journeys.length === 0 && (
+          <div
+            className={`flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md ${
+              theme === "dark"
+                ? "border-green-200 bg-[#1B2733] text-green-400"
+                : "border-slate-100 bg-slate-50 text-slate-400"
+            }`}
+          >
+            <GiPathDistance size={64} />
+            <h2 className="text-xs md:text-lg">You haven't taken a journey yet</h2>
           </div>
-          <DateInput
-            required
-            clearable
-            label="Event Date"
-            valueFormat="DD MMMM YYYY"
-            className="w-full cursor-pointer"
-            {...form.getInputProps("eventDate")}
-            maxDate={dayjs(new Date()).toDate()}
-            style={{ caretColor: "transparent" }}
-            onKeyDown={(e) => e.preventDefault()}
-            minDate={dayjs(new Date(1920, 0, 1)).toDate()}
-          />
-          <label htmlFor="fileInput" className="mt-5">
-            <p>Upload GPX (.gpx) File</p>
-            {fileUploadStatus ? (
-              <p
-                className={`text-xs class text-${
-                  fileUploadStatus.type == "error" ? "[#FA5252]" : "primary"
+        )}
+
+        {getJourneyLoading && (
+          <div
+            className={`flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md ${
+              theme === "dark"
+                ? "border-[#5FE996] bg-[#1B2733] text-green-400"
+                : "border-slate-100 bg-slate-50 text-slate-400"
+            }`}
+          >
+            <Loader size={32} color="gray" />
+            <h2 className="text-xs md:text-lg">Loading your journeys</h2>
+          </div>
+        )}
+
+        <div className="mb-10">
+          {journeys &&
+            journeys.map((journey, i) => (
+              <div
+                key={i}
+                className={`mt-10 gap-5 mx-10 p-5 rounded-3xl drop-shadow-sharp ${
+                  theme === "dark" ? "bg-[#1B2733]" : "bg-white"
                 }`}
               >
-                {fileUploadStatus.msg}
-              </p>
-            ) : null}
-            <div className="mt-2 flex items-center gap-3">
-              {gpxLoading && <Loader size="sm" color="green" />}
-              <div className="bg-green-600 hover:bg-green-700 hover:cursor-pointer text-white font-medium flex gap-2 w-fit items-center p-2 rounded">
-                <AiOutlineCompass size={24} />
-                <p className="">Upload File</p>
-                <input hidden type="file" id="fileInput" onChange={handleFile} accept=".gpx" />
+                <Link href={`/journeys/${journey.id}`}>
+                  <div className="flex justify-between items-center">
+                    <div className="flex-col">
+                      <h2
+                        className={`text-lg font-semibold  ${
+                          theme == "dark" ? "text-[#5FE996]" : "text-green-800"
+                        }`}
+                      >
+                        {journey.name}
+                      </h2>
+                      <h3 className={`mt-3 ${theme == "dark" ? "text-white" : "text-black"}`}>
+                        <span className="font-semibold">Date:</span> {journey.dateCreated}
+                      </h3>
+                      <h3 className={`mt-3 ${theme == "dark" ? "text-white" : "text-black"}`}>
+                        <span className="font-semibold">Distance:</span>{" "}
+                        {journey.totalDistance.toFixed(2)}m
+                      </h3>
+                    </div>
+                    <LiaLongArrowAltRightSolid size={50} color="green" />
+                  </div>
+                </Link>
               </div>
-            </div>
-          </label>
+            ))}
         </div>
-        <Button
-          onClick={createJourney}
-          loading={createJourneyLoading}
-          className="bg-primary hover:bg-hover text-white mt-5 w-full"
+
+        <Modal
+          size="lg"
+          opened={opened}
+          onClose={close}
+          title="Upload Journey"
+          className={`${theme == "dark" ? "modal" : ""}`}
         >
-          Save Journey
-        </Button>
-      </Modal>
+          <div className="flex flex-col gap-3">
+            <TextInput
+              label="Name"
+              color="#aaa"
+              {...form.getInputProps("name")}
+              className={`w-full ${theme == "dark" ? "input--dark-mode" : ""}`}
+            />
+            <Select label="Type" data={validTypes} {...form.getInputProps("type")} />
+            <div className="flex justify-between gap-5">
+              <TimeInput
+                label="Start Time"
+                className="w-full"
+                {...form.getInputProps("startTime")}
+              />
+              <TimeInput
+                label="End Time"
+                className="w-full"
+                {...form.getInputProps("endTime")}
+              />
+            </div>
+            <DateInput
+              required
+              clearable
+              label="Event Date"
+              valueFormat="DD MMMM YYYY"
+              {...form.getInputProps("eventDate")}
+              maxDate={dayjs(new Date()).toDate()}
+              style={{ caretColor: "transparent" }}
+              onKeyDown={(e) => e.preventDefault()}
+              minDate={dayjs(new Date(1920, 0, 1)).toDate()}
+              className={`w-full cursor-pointer ${theme == "dark" ? "input--dark-mode" : ""}`}
+            />
+            <label htmlFor="fileInput" className="mt-5">
+              <p>Upload GPX (.gpx) File</p>
+              {fileUploadStatus ? (
+                <p
+                  className={`text-xs class text-${
+                    fileUploadStatus.type == "error" ? "[#FA5252]" : "primary"
+                  }`}
+                >
+                  {fileUploadStatus.msg}
+                </p>
+              ) : null}
+              <div className="mt-2 flex items-center gap-3">
+                {gpxLoading && <Loader size="sm" color="green" />}
+                <div className="bg-green-600 hover:bg-green-700 hover:cursor-pointer text-white font-medium flex gap-2 w-fit items-center p-2 rounded">
+                  <AiOutlineCompass size={24} />
+                  <p className="">Upload File</p>
+                  <input
+                    hidden
+                    type="file"
+                    id="fileInput"
+                    onChange={handleFile}
+                    accept=".gpx"
+                  />
+                </div>
+              </div>
+            </label>
+          </div>
+          <Button
+            onClick={createJourney}
+            loading={createJourneyLoading}
+            className="bg-primary hover:bg-hover text-white mt-5 w-full"
+          >
+            Save Journey
+          </Button>
+        </Modal>
       </div>
     </main>
   );
