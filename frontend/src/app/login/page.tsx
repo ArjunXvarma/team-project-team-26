@@ -1,4 +1,5 @@
 "use client";
+import "./loginStyles.css";
 import Link from "next/link";
 import Image from "next/image";
 import Cookie from "js-cookie";
@@ -6,12 +7,15 @@ import { useState } from "react";
 import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
 import { useRouter } from "next/navigation";
-import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
-import { showErrorMessage, showSuccessMessage } from "@/utils";
 import { CheckAdminAPIResponse } from "@/types";
+import { CiLock, CiUser } from "react-icons/ci";
+import { useTheme } from "@/components/theme-provider";
+import { showErrorMessage, showSuccessMessage } from "@/utils";
+import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 
 export default function Login() {
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
 
   const form = useForm({
@@ -91,31 +95,63 @@ export default function Login() {
 
   return (
     <main>
-      <div className="flex md:flex-row flex:col w-full h-full">
-        <div className="w-full h-screen md:flex items-center justify-center hidden">
-          <Image src="/runner.png" alt="Runner Image" width={600} height={400} />
+      <div
+        className={`flex md:flex-row flex:col w-full h-full items-center md:gap-10 bg-[${
+          theme == "dark" ? "#131B23" : "#F1F1F1"
+        }]`}
+      >
+        <div className="w-5/6 h-screen md:flex items-center justify-center hidden">
+          <div
+            className={`appname-container flex items-center justify-center ${
+              theme == "dark" ? "gradient--dark-mode" : ""
+            }`}
+          >
+            <h1
+              className={`text-xl font-semibold text-${
+                theme == "dark" ? "white" : "[#043c31]"
+              } text-center leading-10 font-serif`}
+            >
+              Fit Fusion
+            </h1>
+          </div>
+          <div>
+            <Image src="/runner-1.png" alt="Runner Image" width={550} height={380} />
+          </div>
         </div>
-        <div className="w-full h-screen flex items-center justify-center bg-primary">
-          <div className="w-96 flex flex-col items-center gap-10">
-            <h1 className="text-4xl font-black text-white">Login</h1>
-            <form className="w-full flex flex-col gap-3 items-center">
+        <div
+          className={`h-screen md:h-[calc(100vh-40px)] w-full md:w-3/5 flex items-center justify-center md:rounded-3xl md:mr-5 ${
+            theme == "dark" ? "gradient--dark-mode" : "gradient--light-mode"
+          }`}
+        >
+          <div className="w-96 flex flex-col items-center gap-10 px-10">
+            <h1 className="font-serif text-4xl font-semibold leading-10 text-center text-white">
+              Login
+            </h1>
+            <form className="w-full flex flex-col gap-10 items-center">
               <TextInput
+                size="lg"
                 type="email"
                 placeholder="Email"
-                className="w-full text-white"
                 {...form.getInputProps("email")}
+                leftSection={<CiUser size={32} />}
+                className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
               <PasswordInput
-                className="w-full"
+                size="lg"
+                id="login-pwd"
                 placeholder="Password"
+                leftSection={<CiLock size={32} />}
                 {...form.getInputProps("password")}
+                className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
                 <Button
+                  color="green"
                   onClick={submit}
                   loading={loading}
-                  className="bg-secondary w-full"
-                  style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
+                  className={`login-button ${
+                    theme == "dark" ? "login-button--dark-mode" : ""
+                  }`}
                 >
                   Login
                 </Button>
