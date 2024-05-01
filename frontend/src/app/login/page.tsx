@@ -1,5 +1,5 @@
 "use client";
-import "./loginStyles.css";
+import "./login-styles.css";
 import Link from "next/link";
 import Image from "next/image";
 import Cookie from "js-cookie";
@@ -102,7 +102,7 @@ export default function Login() {
       >
         <div className="w-5/6 h-screen md:flex items-center justify-center hidden">
           <div
-            className={`appname-container flex items-center justify-center ${
+            className={`absolute top-7 left-11 h-14 w-36 rounded-3xl shadow-xl bg-white flex items-center justify-center ${
               theme == "dark" ? "gradient--dark-mode" : ""
             }`}
           >
@@ -123,7 +123,7 @@ export default function Login() {
             theme == "dark" ? "gradient--dark-mode" : "gradient--light-mode"
           }`}
         >
-          <div className="w-96 flex flex-col items-center gap-10 px-10">
+          <div className="w-96 flex flex-col items-center gap-10 mx-5">
             <h1 className="font-serif text-4xl font-semibold leading-10 text-center text-white">
               Login
             </h1>

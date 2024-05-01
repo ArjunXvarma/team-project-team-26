@@ -1,5 +1,6 @@
 "use client";
 import "@mantine/dates/styles.css";
+import "./signup-styles.css";
 import dayjs from "dayjs";
 import Link from "next/link";
 import Image from "next/image";
@@ -9,11 +10,17 @@ import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/components/theme-provider";
 import { AuthAPIResponse, CheckAdminAPIResponse } from "@/types";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 import { formatDate, showErrorMessage, showSuccessMessage } from "@/utils";
+import { CiLock, CiUser } from "react-icons/ci";
+import { LuSend } from "react-icons/lu";
+import { IoCalendarOutline } from "react-icons/io5";
+import { MdAlternateEmail } from "react-icons/md";
 
-export default function Login() {
+export default function Signup() {
+  const { theme } = useTheme();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -123,21 +130,40 @@ export default function Login() {
 
   return (
     <main>
-      <div className="flex md:flex-row flex:col w-full h-full">
-        <div className="w-full h-screen md:flex items-center justify-center hidden">
-          <Image
-            height={400}
-            width={600}
-            priority={false}
-            src="/runner.png"
-            alt="Runner Image"
-          />
+      <div
+        className={`flex md:flex-row flex:col w-full h-full items-center md:gap-10 bg-[${
+          theme == "dark" ? "#131B23" : "#F1F1F1"
+        }]`}
+      >
+        <div className="w-5/6 h-screen md:flex items-center justify-center hidden">
+          <div
+            className={`absolute top-7 left-11 h-14 w-36 rounded-3xl shadow-xl bg-white flex items-center justify-center ${
+              theme == "dark" ? "gradient--dark-mode" : ""
+            }`}
+          >
+            <h1
+              className={`text-xl font-semibold text-${
+                theme == "dark" ? "white" : "[#043c31]"
+              } text-center leading-10 font-serif`}
+            >
+              Fit Fusion
+            </h1>
+          </div>
+          <div>
+            <Image src="/runner.png" alt="Runner Image" width={550} height={380} />
+          </div>
         </div>
-        <div className="w-full h-screen flex items-center justify-center bg-primary">
-          <div className="w-96 flex flex-col items-center gap-10">
-            <h1 className="text-4xl font-black text-white">Sign Up</h1>
+        <div
+          className={`h-screen md:h-[calc(100vh-40px)] w-full md:w-3/5 flex items-center justify-center md:rounded-3xl md:mr-5 ${
+            theme == "dark" ? "gradient--dark-mode" : "gradient--light-mode"
+          }`}
+        >
+          <div className="w-96 flex flex-col items-center gap-10 mx-5">
+            <h1 className="font-serif text-4xl font-semibold leading-10 text-center text-white">
+              Sign Up
+            </h1>
             <form
-              className="w-full flex flex-col gap-3 items-center"
+              className="w-full flex flex-col gap-5 items-center"
               onSubmit={(e) => {
                 e.preventDefault();
               }}
@@ -145,56 +171,71 @@ export default function Login() {
               <div className="w-full flex gap-3">
                 <TextInput
                   required
-                  className="w-full"
+                  size="md"
                   placeholder="First Name"
                   {...form.getInputProps("fname")}
+                  leftSection={<CiUser size={24} />}
+                  className={`w-full signup ${theme == "dark" ? "input--dark-mode" : ""}`}
                 />
                 <TextInput
                   required
-                  className="w-full"
+                  size="md"
                   placeholder="Last Name"
                   {...form.getInputProps("lname")}
+                  className={`w-full signup ${theme == "dark" ? "input--dark-mode" : ""}`}
                 />
               </div>
               <TextInput
                 required
+                size="md"
                 type="email"
-                className="w-full"
                 placeholder="Email"
                 {...form.getInputProps("email")}
+                leftSection={<MdAlternateEmail size={24} />}
+                className={`w-full signup ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
               <DateInput
                 required
                 clearable
+                size="md"
                 valueFormat="DD MMMM YYYY"
                 placeholder="Date of birth"
-                style={{ caretColor: "transparent" }}
-                className="w-full cursor-pointer"
-                onKeyDown={(e) => e.preventDefault()}
                 {...form.getInputProps("dob")}
                 maxDate={dayjs(new Date()).toDate()}
+                style={{ caretColor: "transparent" }}
+                onKeyDown={(e) => e.preventDefault()}
+                leftSection={<IoCalendarOutline size={24} />}
                 minDate={dayjs(new Date(1920, 0, 1)).toDate()}
+                className={`w-full signup cursor-pointer ${
+                  theme == "dark" ? "input--dark-mode" : ""
+                }`}
               />
               <PasswordInput
                 required
-                className="w-full"
+                size="md"
                 placeholder="Password"
+                leftSection={<CiLock size={32} />}
                 {...form.getInputProps("password")}
+                className={`w-full signup ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
 
               <PasswordInput
                 required
+                size="md"
                 placeholder="Confirm Password"
-                className="w-full"
+                leftSection={<CiLock size={32} />}
                 {...form.getInputProps("cpassword")}
+                className={`w-full signup ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
 
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
                 <Button
+                  color="green"
                   onClick={submit}
                   loading={loading}
-                  className="w-full"
-                  style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
+                  className={`signup-button ${
+                    theme == "dark" ? "singup-button--dark-mode" : ""
+                  }`}
                 >
                   Create Account
                 </Button>
