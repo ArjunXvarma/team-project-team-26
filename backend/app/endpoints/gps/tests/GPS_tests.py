@@ -341,3 +341,47 @@ class TestGPSRoutes:
         response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 400
 
+    
+    def test_convert_journey_without_jwt(self, client):
+        """Test converting journey data without JWT."""
+        
+        # Attempt to convert a journey without authentication
+        response = client.get("/convert_journey_to_gpx/1")
+        
+        assert response.status_code == 401
+
+    def test_convert_journey_with_jwt(self, client, clean_db):
+        """Test converting journey data with JWT."""
+        
+        token = imports.users.user1(self, client, clean_db)[0]
+        
+        # Assuming journey_id = 1 exists and belongs to the authenticated user
+        response = client.get("/convert_journey_to_gpx/1", headers={"Authorization": f"Bearer {token}"})
+        
+        # Check for successful response
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/gpx+xml"
+
+    def test_convert_journey_not_exist(self, client, clean_db):
+        """Test converting a journey that does not exist."""
+        
+        token = imports.users.user1(self, client, clean_db)[0]
+        
+        # Attempt to convert a non-existent journey (e.g., journey_id = 9999)
+        response = client.get("/convert_journey_to_gpx/9999", headers={"Authorization": f"Bearer {token}"})
+        
+        # Check for a not found response
+        assert response.status_code == 404
+
+    def test_convert_journey_not_belong_to_user(self, client, clean_db):
+        """Test converting a journey that does not belong to the current user."""
+        
+        token, id, *_ = imports.users.user1(self, client, clean_db)
+        token2, id2 = imports.users.user3(self, client, clean_db)
+        
+        response = client.get("/convert_journey_to_gpx/4", headers={"Authorization": f"Bearer {token}"})
+        
+        print("This is the reponse status code for test convert journey not belong to user", response.status_code)
+        assert response.status_code == 403
+
+
