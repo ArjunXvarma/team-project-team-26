@@ -21,6 +21,8 @@ class User(db.Model):
     roles = db.relationship('Role', secondary=user_roles, backref=db.backref('users', lazy='dynamic'))
     journeys = db.relationship('Journey', backref='user', lazy=True)
     membership = db.relationship('Membership', backref='user', uselist=False)
+    pending_updates = db.relationship('PendingMembershipUpdate', backref='user', lazy=True, uselist=False)
+
     
 class Membership(db.Model):
     __tablename__ = 'membership'
