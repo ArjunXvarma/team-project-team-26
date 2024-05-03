@@ -1,10 +1,10 @@
-export interface CurrentMembership{
-  membership_type: String,
-  membership_duration: String,
-  mode_of_payment: String,
-  start_date: String,
-  end_date: String,
-  auto_renew: boolean,
+export interface CurrentMembership {
+  membership_type: String;
+  membership_duration: String;
+  mode_of_payment: String;
+  start_date: String;
+  end_date: String;
+  auto_renew: boolean;
 }
 
 export interface MembershipData {
@@ -45,15 +45,17 @@ export interface StatsData {
       totalDistance: number;
       totalTimeWorkingOutHours: number;
       totalTimeWorkingOutMinutes: number;
-      totalTimeWorkingOutSeconds: number;};
-    walking:{
+      totalTimeWorkingOutSeconds: number;
+    };
+    walking: {
       totalCaloriesBurned: number;
       totalDistance: number;
       totalTimeWorkingOutHours: number;
       totalTimeWorkingOutMinutes: number;
-      totalTimeWorkingOutSeconds: number;};
+      totalTimeWorkingOutSeconds: number;
+    };
   };
-  journeysData: JourneyData[]; 
+  journeysData: JourneyData[];
   totalCaloriesBurned: number;
   totalDistanceCombined: number;
   totalTimeWorkingOutHours: number;
@@ -136,4 +138,11 @@ export interface Revenue {
       total_revenue: number;
     };
   };
+}
+
+export interface MembershipData {
+  MembershipDuration: string[];
+  MembershipType: string[];
+  MembershipPriceMonthly: string[];
+  MembershipPriceAnnually: string[];
 }
