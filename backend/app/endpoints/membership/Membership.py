@@ -1,4 +1,3 @@
-import logging
 from app import (app, db, models, get_jwt_identity, jwt_required)
 from flask import request, jsonify, Response
 from typing import Tuple
