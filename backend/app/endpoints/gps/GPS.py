@@ -351,7 +351,7 @@ class GPSRoutes:
             return jsonify({'status': 404, 'message': 'Journey not found'}), 404
         
         if journey.userId != current_user.id:
-            return jsonify({'status': 403, 'message': 'Forbidden: You do not have permission to update this journey'}), 403
+            return jsonify({'status': 403, 'message': 'Forbidden: You do not have permission to access this journey'}), 403
 
         gpx = ET.Element('gpx', version='1.1', creator=current_user.first_name)
 
