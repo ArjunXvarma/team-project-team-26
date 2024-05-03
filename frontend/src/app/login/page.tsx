@@ -1,5 +1,6 @@
 "use client";
 import "./login-styles.css";
+import "./login-styles.css";
 import Link from "next/link";
 import Image from "next/image";
 import Cookie from "js-cookie";
@@ -11,10 +12,15 @@ import { CheckAdminAPIResponse } from "@/types";
 import { CiLock, CiUser } from "react-icons/ci";
 import { useTheme } from "@/components/theme-provider";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
+import { CheckAdminAPIResponse } from "@/types";
+import { CiLock, CiUser } from "react-icons/ci";
+import { useTheme } from "@/components/theme-provider";
+import { showErrorMessage, showSuccessMessage } from "@/utils";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 
 export default function Login() {
   const router = useRouter();
+  const { theme } = useTheme();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
 
@@ -147,9 +153,12 @@ export default function Login() {
             <form className="w-full flex flex-col gap-10 items-center">
               <TextInput
                 size="lg"
+                size="lg"
                 type="email"
                 placeholder="Email"
                 {...form.getInputProps("email")}
+                leftSection={<CiUser size={32} />}
+                className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
                 leftSection={<CiUser size={32} />}
                 className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
@@ -159,11 +168,14 @@ export default function Login() {
                 id="login-pwd"
                 placeholder="Password"
                 leftSection={<CiLock size={32} />}
+                leftSection={<CiLock size={32} />}
                 {...form.getInputProps("password")}
+                className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
                 className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
                 <Button
+                  color="green"
                   color="green"
                   onClick={submit}
                   loading={loading}
