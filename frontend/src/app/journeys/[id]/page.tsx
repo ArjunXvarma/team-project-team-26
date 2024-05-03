@@ -9,7 +9,6 @@ import { showErrorMessage } from "@/utils";
 import { RiRunFill } from "react-icons/ri";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaRegClock } from "react-icons/fa6";
 import { FaMountainSun } from "react-icons/fa6";
 import { PiBicycleLight } from "react-icons/pi";
 import { BsPersonWalking } from "react-icons/bs";

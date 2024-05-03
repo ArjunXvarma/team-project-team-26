@@ -69,13 +69,10 @@ export default function Home() {
   });
 
 
-  // const weightLoss = [
-  //   { name: 'USA', value: 400, color: 'indigo.6' },
-  //   { name: 'India', value: 600, color: 'yellow.6' },
-  // ];
+
   const weightLoss = [
-    { name: 'Lost Weight', value: 400, color: "teal.6" },
-    { name: 'Maintained Weight', value: 600, color: 'blue' },
+    { name: 'Lost', value: 400, color: '#1B5D44' },
+    {  name: 'Maintanied', value: 600, color: '#E6E6E6' },
   ];
 
   const cyclingTarget = 40;
@@ -137,7 +134,7 @@ export default function Home() {
                   <div className="bg-white rounded-3xl p-6 flex flex-col items-center min-w-80 drop-shadow-sharp">
                     <span className="text-green-800 font-bold">Weight Loss Goal</span>
                     <small className="text-gray-700">20kg</small>
-                    <DonutChart className="h-20 w-20" data={weightLoss} startAngle={170} endAngle={10} /> 
+                    <DonutChart className="mt-4 -mb-20 h-40 w-80" size={160} thickness={42} data={weightLoss} startAngle={165} endAngle={15}  withTooltip tooltipDataSource="segment" mx="auto"/>
                   </div>
               </div>
             </div>

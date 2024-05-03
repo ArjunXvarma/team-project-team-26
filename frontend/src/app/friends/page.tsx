@@ -283,7 +283,6 @@ export default function Friends() {
                         >
                           <div className="bg-primary rounded-full p-2">
                             <AiOutlineUser color={"white"} size={26} />
-                            <AiOutlineUser color={"white"} size={26} />
                           </div>
                           <p className="text-2xl ml-2">{request.name}</p>
                           <div className="flex flex-col justify-center items-center">
@@ -299,19 +298,6 @@ export default function Friends() {
                               icon={<LuThumbsDown color={"red"} size={26} />}
                             />
                           </div>
-                          <p className="text-2xl">{request.name}</p>
-                          <Button
-                            onClick={() => accept(request.email.toString())}
-                            variant="transparent"
-                          >
-                            {" "}
-                            <FaCheck color={"green"} size={26} />
-                          </Button>
-                          <CloseButton
-                            onClick={() => reject(request.email.toString())}
-                            variant="transparent"
-                            icon={<RxCross2 color={"red"} size={28} />}
-                          />
                         </div>
                       ))}
                     </div>
