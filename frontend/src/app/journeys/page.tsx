@@ -237,21 +237,21 @@ export default function Journeys() {
               
       <div className="mt-6 flex items-center justify-between mx-10">
         <p className="text-xl">Add a new journey:</p>
-        <Button className="bg-primary hover:bg-green-900" leftSection={<GrAdd />} onClick={open}>
+        <Button className=" hover:bg-green-900 rounded-full drop-shadow-sm" style={gradient} leftSection={<GrAdd />} onClick={open}>
           Add
         </Button>
       </div>
       <hr className=" mt-2 mx-10 h-0.5 bg-gray-400 rounded-xl"/>
 
       {journeys && journeys.length === 0 && (
-        <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md border-slate-100 bg-slate-50 text-slate-400">
+        <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md bg-white drop-shadow-sharp text-green-700">
           <GiPathDistance size={64} />
           <h2 className="text-xs md:text-lg">You haven't taken a journey yet</h2>
         </div>
       )}
 
       {getJourneyLoading && (
-        <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md border-slate-100 bg-slate-50 text-slate-400">
+        <div className="flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md bg-white drop-shadow-sharp text-green-700">
           <Loader size={32} color="gray" />
           <h2 className="text-xs md:text-lg">Loading your journeys</h2>
         </div>

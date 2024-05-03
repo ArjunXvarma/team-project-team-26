@@ -100,7 +100,9 @@ export default function Admin() {
       const response = await fetch(`${API_URL}/admin/create_admin_user`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        headers: { "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+         },
         body: JSON.stringify({
           first_name: form.values.fname,
           last_name: form.values.lname,
@@ -136,7 +138,6 @@ export default function Admin() {
   const allMembers = async () => {
     try {
       const token = Cookies.get("token");
-      console.log(token);
       const response = await fetch(`${API_URL}/admin/get_all_users`, {
         method: "GET",
         credentials: "include",
@@ -174,7 +175,7 @@ export default function Admin() {
         const response = await fetch(`${API_URL}/admin/delete_user/${id}`, {
           method: "DELETE",
           credentials: "include",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {" Authorization": `Bearer ${token}` },
         });
         console.log(response);
         const deleteUser = await response.json();
@@ -317,7 +318,7 @@ export default function Admin() {
                   </div>
                 </form>
               </Modal>
-              <Button className="bg-primary rounded-full items-center" onClick={open}>
+              <Button className="bg-primary rounded-full items-center drop-shadow-sharp" onClick={open}>
                 Add Admin User <FiPlus className="ml-2" size={20} />
               </Button>
             </div>

@@ -76,6 +76,9 @@ export default function Login() {
         Cookie.set("token", loginResponse.session_token!);
         Cookie.set("username", loginResponse.name!);
         Cookie.set("isAdmin", checkAdminResponse.isAdmin.toString());
+        if(checkAdminResponse.isAdmin)
+          router.push("/admin");
+        else
         router.push("/");
       }
     } catch (error) {
@@ -89,15 +92,22 @@ export default function Login() {
     setLoading(false);
   };
 
+  const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+  };
+
   return (
     <main>
       <div className="flex md:flex-row flex:col w-full h-full">
         <div className="w-full h-screen md:flex items-center justify-center hidden">
-          <Image src="/runner.png" alt="Runner Image" width={600} height={400} />
+          <div className="-ml-40 bg-white flex self-start rounded-full h-8 p-5 m-8 drop-shadow-sharp">
+            <p className="flex text-green-900 justify-center self-center font-serif text-xl font-semibold">FitFusion</p>
+          </div>
+          <Image src="/RunMan.png" alt="Runner Image" width={400} height={300} />
         </div>
-        <div className="w-full h-screen flex items-center justify-center bg-primary">
+        <div className="w-full flex items-center justify-center m-6 rounded-3xl" style={gradient}>
           <div className="w-96 flex flex-col items-center gap-10">
-            <h1 className="text-4xl font-black text-white">Login</h1>
+            <h1 className="text-4xl font-black font-serif text-white">Login</h1>
             <form className="w-full flex flex-col gap-3 items-center">
               <TextInput
                 type="email"
@@ -106,7 +116,7 @@ export default function Login() {
                 {...form.getInputProps("email")}
               />
               <PasswordInput
-                className="w-full"
+                className="w-full mt-4"
                 placeholder="Password"
                 {...form.getInputProps("password")}
               />
@@ -114,7 +124,7 @@ export default function Login() {
                 <Button
                   onClick={submit}
                   loading={loading}
-                  className="bg-secondary w-full"
+                  className="bg-green-700 h-10 text-lg rounded-2xl w-full"
                   style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
                 >
                   Login
@@ -123,7 +133,7 @@ export default function Login() {
               </div>
             </form>
             <Link href={"/signup"} className="flex w-full justify-center">
-              <Button className="w-48" color="white" variant="outline" onClick={() => {}}>
+              <Button className="w-48 h-10 text-lg rounded-2xl -mt-6" color="white" variant="outline" onClick={() => {}}>
                 Create Account
               </Button>
             </Link>

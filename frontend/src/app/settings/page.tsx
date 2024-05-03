@@ -6,8 +6,8 @@ import { Button } from "@mantine/core";
 import { Switch } from "@mantine/core";
 import { MdLogout } from "react-icons/md";
 import { useEffect, useState } from "react";
-import { CurrentMembership, GetUserPrivacyAPIResponse } from "@/types";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
+import { CurrentMembership, GetUserPrivacyAPIResponse } from "@/types";
 
 export default function Settings() {
   const [darkMode, setDarkMode] = useState(false);
@@ -262,9 +262,9 @@ export default function Settings() {
             </Button>
           </div>
           {isAdmin && (
-            <div className="flex justify-between items-center bg-tertiary rounded-3xl p-8  w-full">
+            <div className="flex justify-between items-center bg-white drop-shadow-sharp rounded-3xl p-8  w-full">
               <p className="text-xl">Switch to admin mode</p>
-              <Button component="a" href="/admin" className="bg-primary">
+              <Button component="a" href="/admin" className="rounded-full" style={gradient}>
                 Admin Mode
               </Button>
             </div>
