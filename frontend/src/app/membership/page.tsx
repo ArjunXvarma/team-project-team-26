@@ -100,7 +100,7 @@ export default function Home() {
               selectedMembershipPlans?.map((plan, index) => (
                 <div
                   key={index}
-                  className={`w-full flex flex-col items-center justify-between rounded-[24px] p-6 drop-shadow-sharp
+                  className={`flex flex-col items-center justify-between rounded-[24px] p-6 drop-shadow-sharp
                   ${theme == "dark" ? "bg-[#1B2733]" : "bg-white"}
                   ${theme == "dark" && selectedPlan == index ? "gradient--dark-mode" : ""}
                   ${theme == "light" && selectedPlan == index ? "gradient--light-mode" : ""}

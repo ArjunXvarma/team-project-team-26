@@ -12,15 +12,10 @@ import { CheckAdminAPIResponse } from "@/types";
 import { CiLock, CiUser } from "react-icons/ci";
 import { useTheme } from "@/components/theme-provider";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
-import { CheckAdminAPIResponse } from "@/types";
-import { CiLock, CiUser } from "react-icons/ci";
-import { useTheme } from "@/components/theme-provider";
-import { showErrorMessage, showSuccessMessage } from "@/utils";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 
 export default function Login() {
   const router = useRouter();
-  const { theme } = useTheme();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
 
@@ -86,10 +81,8 @@ export default function Login() {
         Cookie.set("token", loginResponse.session_token!);
         Cookie.set("username", loginResponse.name!);
         Cookie.set("isAdmin", checkAdminResponse.isAdmin.toString());
-        if(checkAdminResponse.isAdmin)
-          router.push("/admin");
-        else
-        router.push("/");
+        if (checkAdminResponse.isAdmin) router.push("/admin");
+        else router.push("/");
       }
     } catch (error) {
       console.log(error);
@@ -103,17 +96,11 @@ export default function Login() {
   };
 
   const gradient = {
-    background: 'linear-gradient(#3B8B5D, #04372C)'
+    background: "linear-gradient(#3B8B5D, #04372C)",
   };
 
   return (
     <main>
-      <div className="flex md:flex-row flex:col w-full h-full">
-        <div className="w-full h-screen md:flex items-center justify-center hidden">
-          <div className="-ml-40 bg-white flex self-start rounded-full h-8 p-5 m-8 drop-shadow-sharp">
-            <p className="flex text-green-900 justify-center self-center font-serif text-xl font-semibold">FitFusion</p>
-          </div>
-          <Image src="/RunMan.png" alt="Runner Image" width={400} height={300} />
       <div
         className={`flex md:flex-row flex:col w-full h-full items-center md:gap-10 bg-[${
           theme == "dark" ? "#131B23" : "#F1F1F1"
@@ -137,10 +124,6 @@ export default function Login() {
             <Image src="/runner-1.png" alt="Runner Image" width={550} height={380} />
           </div>
         </div>
-        <div className="w-full flex items-center justify-center m-6 rounded-3xl" style={gradient}>
-          <div className="w-96 flex flex-col items-center gap-10">
-            <h1 className="text-4xl font-black font-serif text-white">Login</h1>
-            <form className="w-full flex flex-col gap-3 items-center">
         <div
           className={`h-screen md:h-[calc(100vh-40px)] w-full md:w-3/5 flex items-center justify-center md:rounded-3xl md:mr-5 ${
             theme == "dark" ? "gradient--dark-mode" : "gradient--light-mode"
@@ -191,7 +174,11 @@ export default function Login() {
               </div>
             </form>
             <Link href={"/signup"} className="flex w-full justify-center">
-              <Button className="w-48 h-10 text-lg rounded-2xl -mt-6" color="white" variant="outline" onClick={() => {}}>
+              <Button
+                color="white"
+                variant="outline"
+                className="w-48 h-10 text-lg rounded-2xl -mt-6"
+              >
                 Create Account
               </Button>
             </Link>
