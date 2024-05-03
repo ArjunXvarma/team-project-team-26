@@ -46,12 +46,6 @@ export default function Navbar({ children }: NavbarProps) {
             </div>
           </Link>
         </div>
-        {/* <Link href={"/logout"} prefetch={false} className=" mt-16">
-          <div className="text-red-500 flex justify-center gap-3 font-medium w-48 p-5 rounded-lg hover:bg-hover">
-            <MdLogout size={32} />
-            <p className="text-xl">Logout</p>
-          </div>
-        </Link> */}
       </div>
       <div className="flex-grow ml-72">{children}</div>
     </div>

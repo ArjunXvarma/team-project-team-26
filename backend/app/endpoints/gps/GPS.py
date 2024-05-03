@@ -259,9 +259,19 @@ class GPSRoutes:
 
         """
 
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not current_user:
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+
         journey = models.Journey.query.get(journeyId)
+
         if not journey:
             return jsonify({'status': 404, 'message': 'Journey not found'}), 404
+
+        if journey.userId != current_user.id:
+            return jsonify({'status': 403, 'message': 'Forbidden: You do not have permission to update this journey'}), 403
 
         data = request.get_json()
 

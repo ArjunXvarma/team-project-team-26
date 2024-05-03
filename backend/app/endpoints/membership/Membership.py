@@ -235,15 +235,17 @@ class MembershipRoutes:
         if existing_pending_update:
             existing_pending_update.membership_type = membership_type
             existing_pending_update.duration = duration
-            existing_pending_update.auto_renew = data.get("auto_renew", False)
+            existing_pending_update.auto_renew = data.get("auto_renew", True)
+            current_membership.auto_renew = True
         else:
             # Create new pending update
             pending_update = models.PendingMembershipUpdate(
                 user_id=user.id,
                 membership_type=membership_type,
                 duration=duration,
-                auto_renew=data.get("auto_renew", False)
+                auto_renew=data.get("auto_renew", True)
             )
+            current_membership.auto_renew = True
             db.session.add(pending_update)
 
         # Commit changes to the database
@@ -372,7 +374,8 @@ class MembershipRoutes:
 
         if pending_update:
             pending_membership_type = pending_update.membership_type
-            return jsonify({"pending_membership_type": pending_membership_type}), 200
+            pending_membership_duration = pending_update.duration
+            return jsonify({"pending_membership_type": pending_membership_type, "pending_membership_duration": pending_membership_duration}), 200
         else:
             return jsonify({"pending_membership_type": None}), 200
 

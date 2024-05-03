@@ -290,7 +290,6 @@ class TestGPSRoutes:
         assert response.status_code == 404
 
 
-
     def test_update_journey_invalid_date_time(self, client, clean_db):
         """Test updating a journey using invalid date and time formatted data."""
 

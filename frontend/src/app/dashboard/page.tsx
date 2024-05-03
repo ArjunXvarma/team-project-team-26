@@ -11,53 +11,12 @@ import { LineChart } from '@mantine/charts';
 import { useState, useEffect } from "react";
 import { DonutChart } from '@mantine/charts';
 import { GiRunningShoe } from "react-icons/gi";
+import { JourneyData, StatsData } from "@/types";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
 
 
 
 export default function Home() {
-
-  interface StatsData {
-    byModes: {
-      cycle: {
-        totalCaloriesBurned: number;
-        totalDistance: number;
-        totalTimeWorkingOutHours: number;
-        totalTimeWorkingOutMinutes: number;
-        totalTimeWorkingOutSeconds: number;
-      };
-      running: {
-        totalCaloriesBurned: number;
-        totalDistance: number;
-        totalTimeWorkingOutHours: number;
-        totalTimeWorkingOutMinutes: number;
-        totalTimeWorkingOutSeconds: number;};
-      walking:{
-        totalCaloriesBurned: number;
-        totalDistance: number;
-        totalTimeWorkingOutHours: number;
-        totalTimeWorkingOutMinutes: number;
-        totalTimeWorkingOutSeconds: number;};
-    };
-    journeysData: JourneyData[]; 
-    totalCaloriesBurned: number;
-    totalDistanceCombined: number;
-    totalTimeWorkingOutHours: number;
-    totalTimeWorkingOutMinutes: number;
-    totalTimeWorkingOutSeconds: number;
-  }
-  
-  interface JourneyData {
-    averageSpeed: number;
-    date: number;
-    caloriesBurned: number;
-    hours_taken: number;
-    journeyId: number;
-    minutes_taken: number;
-    mode: string;
-    seconds_taken: number;
-    totalDistance: number;
-  }
 
   const [data, setData] = useState<StatsData | null>(null);
   const [journey, setJourney] = useState<JourneyData[] | null>(null);
@@ -66,7 +25,6 @@ export default function Home() {
     const fetchData = async () => {
       await statsData();
     };
-
     fetchData();
   }, []);
 
@@ -93,25 +51,28 @@ export default function Home() {
     }
   };
 
- 
   const [username, __] = useState(Cookies.get("username"));
   const gradient = {
     background: 'linear-gradient(#3B8B5D, #04372C)'
   };
 
-  const mappedJourneyData = data?.journeysData.map((journeyItem) => ({
-    date: new Date(journeyItem.date).toLocaleDateString('en-US', {  
+  const mappedJourneyData = data?.journeysData.map((journeyItem) => {
+    const formattedDate = new Date(journeyItem.date).toLocaleDateString('en-US', {  
       day: '2-digit',
       month: 'short',
       year: 'numeric',
-    }),
-    totalDistance: Math.floor(Number(journeyItem.totalDistance) as number),
-  }));
+    });
+    return {
+      date: formattedDate,
+      totalDistance: Math.floor(Number(journeyItem.totalDistance) as number),
+    };
+  });
+
 
 
   const weightLoss = [
-    { name: 'USA', value: 400, color: 'indigo.6' },
-    { name: 'India', value: 600, color: 'yellow.6' },
+    { name: 'Lost', value: 400, color: '#1B5D44' },
+    {  name: 'Maintanied', value: 600, color: '#E6E6E6' },
   ];
 
   const cyclingTarget = 40;
@@ -122,6 +83,7 @@ export default function Home() {
   return (
       <main>
         <div className="min-h-screen bg-background">
+
           <div className="flex w-full h-20 items-center px-5">
             <p className="text-center text-lg font-serif flex-grow">
               “Every journey begins with a single step”
@@ -133,8 +95,8 @@ export default function Home() {
           </div> 
               
           <div className="px-4 md:px-14 mb-20">
-            <p className="font-serif text-xl mt-6 ">Hi {username},</p>
-            
+            <p className="font-serif text-xl mt-6 ">Hi {username},</p> 
+
             <div className="mt-8 flex flex-col md:flex-row gap-10 justify-around w-full">
               <div className="text-white text-sm py-6 pr-6 w-full rounded-3xl" style={gradient}>
                 { mappedJourneyData?.length !=0 ?
@@ -144,7 +106,6 @@ export default function Home() {
                     dataKey="date"
                     dotProps={{ r:6, strokeWidth: 1, fill: '#5FE996' }}
                     activeDotProps={{ r: 8, strokeWidth:4, stroke: '#5FE996' }}
-                    // withTooltip={false}
                     series={[
                       { name: 'totalDistance', color: 'white' }
                     ]}
@@ -157,7 +118,7 @@ export default function Home() {
                   (<div className="text-white font-bold text-xl flex justify-center items-center h-full">No journeys taken yet</div>)
                 }
               </div>
-                  
+
               <div className="flex flex-col gap-6 justify-around md:w-1/2">
                   <div className="bg-white flex gap-2 rounded-3xl p-6 min-w-80 drop-shadow-sharp">
                     <div className="flex justify-center items-center p-2 rounded-xl " style={gradient}>
@@ -170,17 +131,17 @@ export default function Home() {
                       <span className="font-bold text-green-700 mt-4">{Math.floor(data?.totalCaloriesBurned ?? 0)} kcal</span>
                     </div>
                   </div>
-
                   <div className="bg-white rounded-3xl p-6 flex flex-col items-center min-w-80 drop-shadow-sharp">
                     <span className="text-green-800 font-bold">Weight Loss Goal</span>
                     <small className="text-gray-700">20kg</small>
-                    <DonutChart className="w-full" data={weightLoss} size={117} thickness={30} startAngle={170} endAngle={10} /> 
+                    <DonutChart className="mt-4 -mb-20 h-40 w-80" size={160} thickness={42} data={weightLoss} startAngle={165} endAngle={15}  withTooltip tooltipDataSource="segment" mx="auto"/>
                   </div>
               </div>
             </div>
+          </div>
 
-            <div className="mt-10 flex flex-col md:flex-row flex-wrap justify-around items-center">
-              
+            <div className="-mt-10 mb-10 flex flex-col md:flex-row flex-wrap justify-around items-center">
+
               <div className="flex flex-col justify-center items-center drop-shadow-sharp mb-4">
                 <div className="flex justify-center items-center p-2 rounded-xl w-16 -mb-6 z-10" style={gradient}>
                     <GiCycling size={40} color={'white'} />
@@ -224,11 +185,11 @@ export default function Home() {
                   <Progress color="rgba(39, 117, 83, 1)" value={Math.floor(((data?.byModes?.walking?.totalDistance ?? 0)/(walkingTarget*1000))*100)} radius="lg" className="w-60"/>
                   <small className="text-gray-600 self-start">Target: {walkingTarget}Km</small>
                 </div>
-              </div>
+        
 
-            </div>
-                  
+            </div>      
           </div>
+
         </div>
       </main>
   );

@@ -3,11 +3,13 @@ import Cookie from "js-cookie";
 import "leaflet/dist/leaflet.css";
 import { API_URL } from "@/constants";
 import { Loader } from "@mantine/core";
+import { MdFlag } from "react-icons/md";
+import { FaClock } from "react-icons/fa";
 import { showErrorMessage } from "@/utils";
-import { useEffect, useState } from "react";
 import { RiRunFill } from "react-icons/ri";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaRegClock } from "react-icons/fa6";
+import { FaMountainSun } from "react-icons/fa6";
 import { PiBicycleLight } from "react-icons/pi";
 import { BsPersonWalking } from "react-icons/bs";
 import { Polyline } from "react-leaflet/Polyline";
@@ -56,6 +58,11 @@ export default function Page({ params }: { params: { id: string } }) {
     getJourney();
   }, []);
 
+    
+  const gradient = {
+    background: 'linear-gradient(#3B8B5D, #04372C)'
+  };
+
 
   return (
     <main>
@@ -66,7 +73,7 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       )}
 
-      {journey && (
+      {journey && 
         <div className="flex flex-col md:flex-row w-full h-screen">
           <MapContainer
             center={[
@@ -102,29 +109,65 @@ export default function Page({ params }: { params: { id: string } }) {
               ]}
             />
           </MapContainer>
-          <div className="md:w-96 h-screen flex flex-col justify-center items-center bg-primary text-white">
-            <h1 className="text-3xl font-thin">{journey.name}</h1>
-            <div className="mt-5">
-              {journey.type === "Walk" && <BsPersonWalking size={64} />}
-              {journey.type === "Run" && <RiRunFill size={64} />}
-              {journey.type === "Cycle" && <PiBicycleLight size={64} />}
-            </div>
-            <div className="mt-5 flex items-center gap-3">
-              <FaRegClock size={18} />
-              <p className="text-lg font-semibold">{journey.startTime}</p>|
-              <p className="text-lg font-semibold">{journey.endTime}</p>
-            </div>
-            <p className="text-2xl mt-8 font-black">{journey.totalDistance.toFixed(2)} m</p>
-            <p className="text-md">Distance Covered</p>
 
-            <p className="text-2xl mt-8 font-black">{journey.elevation.avg.toFixed(2)} m</p>
-            <p className="text-md">Average Elevation </p>
+          <div className="md:w-96 rounded-3xl flex flex-col p-8 m-4" style={gradient}>
 
-            <p className="text-2xl mt-8 font-black">{journey.elevation.max.toFixed(2)} m</p>
-            <p className="text-md">Highest Peak </p>
+            <div className="text-white">
+
+              <div className="bg-white rounded-3xl py-2 px-2">
+                <div className="flex m-4">
+                  <div className="p-4 rounded-xl" style={gradient}>
+                    {journey.type === "Walk" && <BsPersonWalking size={50} />}
+                    {journey.type === "Run" && <RiRunFill size={50} />}
+                    {journey.type === "Cycle" && <PiBicycleLight size={50} />}
+                  </div>
+
+                  <div className="flex flex-col ml-4">
+                    <h1 className="text-md text-green-800 font-bold">{journey.name}</h1>
+                    <small className="text-gray-700 -mt-1">Distance Covered</small>
+                    <h1 className="text-md text-green-800 font-bold">{journey.totalDistance.toFixed(2)} m</h1>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl py-2 px-2 mt-5">
+                  <div className="flex m-4">
+                    <div className="p-4 rounded-xl" style={gradient}>
+                      <FaClock size={40}/>
+                    </div>
+
+                    <div className="flex flex-col ml-4">
+                      <h1 className="text-md text-green-800 font-bold">Time Taken</h1>
+                      <small className="text-gray-700 -mt-1">Time Taken to cover distance</small>
+
+                      <div className="flex gap-2 text-green-800">
+                        <p className="text-lg font-semibold">{journey.startTime}</p>|
+                        <p className="text-lg font-semibold">{journey.endTime}</p>
+                      </div>
+                    </div>
+
+                  </div>
+              </div>
+
+              <div className="bg-white rounded-3xl py-2 px-2  mt-5">
+                <div className="flex flex-col m-4">
+                  <div className="flex gap-2">
+                    <FaMountainSun color="#0C4F40" size={26}/>
+                    <p className="text-gray-600">Average Elevation</p>
+                  </div>
+                  <p className="text-xl text-green-800 font-semibold ml-14">{journey.elevation.avg.toFixed(2)} m</p>
+                  <div className="flex gap-2">
+                    <MdFlag color="#0C4F40" size={30}/>
+                    <p className="text-gray-600">Highest Peak</p>
+                  </div>
+                  <p className="text-xl text-green-800 font-semibold ml-14">{journey.elevation.max.toFixed(2)} m</p>
+                </div>
+              </div>
+            </div>
+          
           </div>
         </div>
-      )}
+      }
     </main>
   );
 }
