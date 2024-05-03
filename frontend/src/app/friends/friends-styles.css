@@ -1,0 +1,26 @@
+.mantine-Autocomplete-input {
+  height: 59px;
+  border-radius: 20px;
+}
+
+.dark-autocomplete .mantine-Autocomplete-input {
+  border: 0;
+  height: 59px;
+  border-radius: 20px;
+  background: #1b2733;
+}
+
+.mantine-Accordion-label {
+  color: black;
+  font-size: 20px;
+  font-weight: 500;
+  font-family: sans-serif;
+}
+
+.mantine-Accordion-root::hover {
+  background-color: rgb(19 27 35);
+}
+
+.da .mantine-Accordion-label {
+  color: white;
+}
