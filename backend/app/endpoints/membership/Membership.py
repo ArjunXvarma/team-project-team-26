@@ -410,11 +410,53 @@ class MembershipRoutes:
             return jsonify({"has_active_membership": True}), 200
         else:
             return jsonify({"has_active_membership": False}), 200
+ 
 
+    def auto_renew_memberships():
+        with app.app_context():
+            print(f"Auto-renew memberships job started at {datetime.now()}")
+            current_date = datetime.now()
+            memberships_to_renew = models.Membership.query.filter(models.Membership.end_date == current_date,  models.Membership.auto_renew == True).all()
+            for membership in memberships_to_renew:
+                # Check for pending updates
+                print(f"Processing membership: {membership.id}")
+                pending_update =  models.PendingMembershipUpdate.query.filter_by(user_id=membership.user_id).first()
+                if pending_update:
+                    membership.membership_type = pending_update.membership_type
+                    membership.duration = pending_update.duration
+                    membership.auto_renew = pending_update.auto_renew 
+                    # Calculate new end_date based on duration... 
+                    if pending_update.duration.lower() == 'monthly':
+                        membership.end_date += timedelta(days=30)
+                    elif pending_update.duration.lower() == 'annually':
+                        membership.end_date += timedelta(days=365)
+                    db.session.delete(pending_update) 
 
+                else: # No pending update - proceed with normal renewal 
+                    if membership.duration.lower() == 'monthly':
+                        membership.end_date += timedelta(days=30)
+                    elif membership.duration.lower() == 'annually':
+                        membership.end_date += timedelta(days=365)
+            db.session.commit()
+            print("Auto-renew memberships job completed")
+    
+    def deactivate_expired_memberships():
+        """
+        Function to deactivate memberships if today is the end date and auto renew is False.
+        """
+        with app.app_context():
+            print(f"Deactivate expired memberships job started at {datetime.now()}")
+            current_date = datetime.now()
+
+            memberships_to_deactivate =  models.Membership.query.filter( models.Membership.end_date == current_date,  models.Membership.auto_renew == False).all()
+            for membership in memberships_to_deactivate:
+                print(f"Deactivating membership: {membership.id}")
+                membership.is_active = False
+            db.session.commit()
+            print("Deactivate expired memberships job completed")
 
 # Running the auto renew and deactivation functions every day using scheduler.
 scheduler = BackgroundScheduler()
-scheduler.add_job(models.Membership.auto_renew_memberships, 'cron', hour=16, minute=0)
-scheduler.add_job(models.Membership.deactivate_expired_memberships, 'cron', hour=16, minute=0)
+scheduler.add_job(MembershipRoutes.auto_renew_memberships, 'cron', hour=00, minute=00)
+scheduler.add_job(MembershipRoutes.deactivate_expired_memberships, 'cron', hour=00, minute=00)
 scheduler.start()
