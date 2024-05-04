@@ -1,8 +1,9 @@
 from app import (app, db, models, get_jwt_identity, jwt_required)
-from flask import request, jsonify
+from flask import request, jsonify, make_response
 from typing import Tuple
 from datetime import datetime
 import json
+import xml.etree.ElementTree as ET
 
 class GPSRoutes:
     """
@@ -50,6 +51,13 @@ class GPSRoutes:
                     if extra_keys:
                         error_message.append(f"Extra keys: {', '.join(extra_keys)}")
                     return False, '; '.join(error_message)
+
+                # Check that all values are numerical
+                for key in required_keys:
+                    value = point[key]
+                    if not isinstance(value, (int, float)):
+                        return False, f"Invalid value for {key}: {value}. Must be a numerical value."
+
             return True, ""
         return False, "No data provided"
 
@@ -147,7 +155,6 @@ class GPSRoutes:
 
         data = request.get_json()
 
-        # Validate points before processing further
         points = data.get('points')
         if points is None:
             return jsonify({'status': 400, 'message': 'Missing field: points'}), 400
@@ -159,6 +166,8 @@ class GPSRoutes:
         try:
             name = data['name']
             journey_type = data['type']
+            if journey_type not in ['Run', 'Walk', 'Cycle']:
+                return jsonify({'status': 400, 'message': 'Invalid journey type. Must be Run, Walk, or Cycle'}), 400
             totalDistance = data['totalDistance']
             elevation = data['elevation']
             avgEle = elevation['avg']
@@ -192,6 +201,7 @@ class GPSRoutes:
 
         db.session.add(journey)
         db.session.commit()
+
 
         return jsonify({'status': 201, 'message': 'Journey created successfully'}), 201
 
@@ -312,3 +322,57 @@ class GPSRoutes:
         db.session.commit()
 
         return jsonify({'status': 200, 'message': 'Journey updated successfully'}), 200
+    
+    @app.route("/convert_journey_to_gpx/<int:journeyId>", methods=["GET"])
+    @jwt_required()
+    def convert_journey_to_gpx(journeyId) -> Tuple[dict, int]:
+        """
+        Converts a journey from the database to GPX format based on journey ID.
+
+        Parameters
+        ----------
+        journeyId : int
+            The ID of the journey to convert.
+
+        Returns
+        -------
+        Response
+            GPX data.
+        """
+
+        current_user_email = get_jwt_identity()
+        current_user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not current_user:
+            return jsonify({'status': 404, 'message': 'User not found'}), 404
+
+        journey = models.Journey.query.get(journeyId)
+        if not journey:
+            return jsonify({'status': 404, 'message': 'Journey not found'}), 404
+        
+        if journey.userId != current_user.id:
+            return jsonify({'status': 403, 'message': 'Forbidden: You do not have permission to access this journey'}), 403
+
+        gpx = ET.Element('gpx', version='1.1', creator=current_user.first_name)
+
+        metadata = ET.SubElement(gpx, 'metadata')
+        ET.SubElement(metadata, 'name').text = journey.name
+        ET.SubElement(metadata, 'time').text = journey.dateCreated.isoformat()
+
+        trk = ET.SubElement(gpx, 'trk')
+        ET.SubElement(trk, 'name').text = journey.name
+        ET.SubElement(trk, 'type').text = journey.type
+
+        trkseg = ET.SubElement(trk, 'trkseg')
+
+        points = json.loads(journey.points)
+        for point in points:
+            trkpt = ET.SubElement(trkseg, 'trkpt', lat=str(point['lat']), lon=str(point['lon']))
+            ET.SubElement(trkpt, 'ele').text = str(point['ele'])
+
+        gpx_data = ET.tostring(gpx, encoding='utf-8', method='xml').decode('utf-8')
+
+        response = make_response(gpx_data)
+        response.headers["Content-Type"] = "application/gpx+xml"
+
+        return response, 200

@@ -51,3 +51,7 @@ backend/testFriends.py
 **/virtual_env
 **/venv
 /.venv
+
+# Docker files
+Dockerfile.backend
+Dockerfile.frontend
