@@ -129,16 +129,15 @@ export default function Signup() {
   };
 
   const gradient = {
-    background: 'linear-gradient(#3B8B5D, #04372C)'
+    background: "linear-gradient(#3B8B5D, #04372C)",
   };
-
 
   return (
     <main>
       <div
-        className={`flex md:flex-row flex:col w-full h-full items-center md:gap-10 bg-[${
-          theme == "dark" ? "#131B23" : "#F1F1F1"
-        }]`}
+        className={`flex md:flex-row flex:col w-full h-full items-center md:gap-10 ${
+          theme == "dark" ? "bg-[#131B23]" : "bg-[#F1F1F1]"
+        }`}
       >
         <div className="w-5/6 h-screen md:flex items-center justify-center hidden">
           <div
@@ -248,7 +247,12 @@ export default function Signup() {
               </div>
             </form>
             <Link href={"/login"} className="flex w-full justify-center">
-              <Button className="w-48 -mt-6 text-lg h-10 rounded-2xl" color="white" variant="outline" onClick={() => {}}>
+              <Button
+                className="w-48 -mt-6 text-lg h-10 rounded-2xl"
+                color="white"
+                variant="outline"
+                onClick={() => {}}
+              >
                 Login
               </Button>
             </Link>
