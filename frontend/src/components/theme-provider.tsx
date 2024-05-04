@@ -22,7 +22,7 @@ export const ThemeProvider = ({ children }: ThemeProps) => {
     setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
   };
 
-  useHotkeys([["mod+J", () => toggleTheme()]]);
+  useHotkeys([["mod+L", () => toggleTheme()]]);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>
