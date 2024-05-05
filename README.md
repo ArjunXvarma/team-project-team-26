@@ -18,14 +18,15 @@
    chmod +x start_app_unix.sh
     ```
 4. Execute the script by running:
-   ```./start_app_unix.sh
+   ```bash
+   ./start_app_unix.sh
     ```
 5. The script will:
 - Start the backend server.
 - Set up the database.
 - Start the frontend server.
 
-[!IMPORTANT] 
+> [!IMPORTANT]
 > Access the frontend of the application by opening a web browser and navigating to http://localhost:3000.
 
 
@@ -40,14 +41,15 @@
 2. Navigate to the root directory of the project.
 3. Make sure the script `start_app_win.bat` has execute permissions. 
 4. Execute the script by running:
-   ```start_app_win.bat
+   ```bash
+   start_app_win.bat
     ```
 5. The script will:
 - Start the backend server.
 - Set up the database.
 - Start the frontend server.
 
-[!IMPORTANT] 
+> [!IMPORTANT]
 > Access the frontend of the application by opening a web browser and navigating to http://localhost:3000.
 
 
