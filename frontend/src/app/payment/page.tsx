@@ -238,7 +238,7 @@ function CreditCardForm() {
             {form.isValid() && (
                 <div className="flex justify-center mt-6">
                      <Link href={"/thankyou"}>
-                        <Button color="#2EAE69">Continue</Button>
+                        <Button color="#2EAE69" className="hover:text-green-700">Continue</Button>
                     </Link>
                 </div>
             )}
