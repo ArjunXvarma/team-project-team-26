@@ -233,6 +233,7 @@ export default function Journeys() {
         >
           <GrAdd size={24} />
         </div>
+
         {journeys && journeys.length === 0 && (
           <div
             className={`flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md ${
@@ -257,6 +258,15 @@ export default function Journeys() {
             <Loader size={32} color="gray" />
             <h2 className="text-xs md:text-lg">Loading your journeys</h2>
           </div>
+        )}
+        {journeys && journeys.length > 0 ? (
+          <div className="w-full flex justify-end mr-10 ">
+            <Link href={"/journeys/view-all"}>
+              <Button className="gradient--dark-mode text-white">View All</Button>
+            </Link>
+          </div>
+        ) : (
+          <></>
         )}
 
         <div className="mb-10">
