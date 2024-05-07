@@ -12,7 +12,7 @@ export default function Home() {
     if (message === "session-expired") {
       showErrorMessage("Session Expired", "You have been logged out.");
     }
-    router.push("/");
+    router.push("/login");
   }, []);
 
   return <h1 className="font-black text-emerald-500 text-2xl ml-5 mt-5">Logout</h1>;

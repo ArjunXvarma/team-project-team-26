@@ -1,16 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
+.modal .mantine-Modal-header,
+.modal .mantine-Modal-content {
+  color: white;
+  background: #1b2733;
+}
 .gradient--dark-mode {
   background: linear-gradient(180deg, #2f7149 0%, #044e40 89.81%, #043429 100%);
 }
 
 .gradient--light-mode {
   background: linear-gradient(180deg, #2c6f48 0%, #04392e 100%);
-}
-
-.dark-map {
-  filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3)
-    brightness(0.7);
 }

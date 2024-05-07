@@ -1,16 +1,13 @@
 "use client";
+import "./friends-styles.css";
 import Link from "next/link";
 import Cookies from "js-cookie";
-import { Friend} from "@/types";
+import { Friend } from "@/types";
 import { Modal } from "@mantine/core";
 import { API_URL } from "@/constants";
 import { Button } from "@mantine/core";
-import { CiUser } from "react-icons/ci";
-import { FaCheck } from "react-icons/fa6";
-import { RxCross2 } from "react-icons/rx";
 import { FaRegUser } from "react-icons/fa";
 import { Accordion } from "@mantine/core";
-import { MdLogout } from "react-icons/md";
 import { LuThumbsUp } from "react-icons/lu";
 import { useState, useEffect } from "react";
 import { IoIosSearch } from "react-icons/io";
@@ -19,11 +16,13 @@ import { BiSolidError } from "react-icons/bi";
 import { useDisclosure } from "@mantine/hooks";
 import { HiArrowLongRight } from "react-icons/hi2";
 import { AiOutlineUser } from "react-icons/ai";
+import { useTheme } from "@/components/theme-provider";
 import { notifications } from "@mantine/notifications";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 import { Input, CloseButton, Autocomplete } from "@mantine/core";
 
 export default function Friends() {
+  const { theme } = useTheme();
   const [value, setValue] = useState("");
   const [email, setEmail] = useState("");
   const [opened, { open, close }] = useDisclosure(false);
@@ -221,36 +220,18 @@ export default function Friends() {
     }
     setOptions(op);
   };
-  const gradient = {
-    background: 'linear-gradient(#3B8B5D, #04372C)'
-  };
-  
+
   return (
     <main>
-
-
-      <div className="min-h-screen bg-background">
-        <header className="flex w-full h-20 justify-around items-center pt-6">
-
-         <div className="flex w-full h-20 items-center px-5">
-            <p className="text-center text-lg font-serif flex-grow">
-              “Every journey begins with a single step”
-            </p>
-            <Link href={"/logout"} prefetch={false} className="ml-auto flex items-center">
-              <p className="text-xl font-semibold text-green-700 hover:text-green-900 mr-2">Logout</p>
-              <MdLogout size={24} color="green" />
-            </Link>
-          </div> 
-
-        </header>
-
-        <div className="flex flex-col mx-28 pt-10 ">
+      <div
+        className={`min-h-screen ${theme == "dark" ? "bg-dk_background" : "bg-background"}`}
+      >
+        <div className="flex flex-col md:mx-28 mx-5 pt-10 ">
           <div>
             <Autocomplete
-              label="Friend name"
               placeholder="Search for a friend"
-              leftSection={<IoIosSearch size={26} color="green"/>}
-              className="drop-shadow-md"
+              leftSection={<IoIosSearch size={26} color="green" />}
+              className={`drop-shadow-md ${theme == "dark" ? "dark-autocomplete" : ""}`}
               data={options.map((option) => ({
                 label: option.name,
                 value: option.name.toString(),
@@ -261,7 +242,6 @@ export default function Friends() {
                 fetchOptions(newValue);
               }}
               rightSection={<CloseButton onClick={() => setValue("")} />}
-              // onSelect not working
               rightSectionPointerEvents="all"
               size="lg"
             />
@@ -271,7 +251,11 @@ export default function Friends() {
             <div className="mt-10">
               <Accordion>
                 <Accordion.Item value="Pending Requests">
-                  <Accordion.Control className="text-2xl font-semibold font-domine">
+                  <Accordion.Control
+                    className={`text-4xl font-semibold font-domine ${
+                      theme == "dark" ? "da" : ""
+                    }`}
+                  >
                     Pending Friend Requests
                   </Accordion.Control>
                   <Accordion.Panel>
@@ -279,24 +263,45 @@ export default function Friends() {
                       {friendRequests.map((request, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-2 bg-white rounded-3xl p-4 drop-shadow-sharp"
+                          className={`flex w-[300px] justify-between items-center gap-2 rounded-3xl px-4 py-2 drop-shadow-sharp ${
+                            theme == "dark"
+                              ? "bg-[#1B2733] border-2 border-[#5FE996]"
+                              : "bg-white"
+                          }`}
                         >
-                          <div className="bg-primary rounded-full p-2">
-                            <AiOutlineUser color={"white"} size={26} />
+                          <div
+                            className={`rounded-full p-1 ${
+                              theme == "dark" ? "gradient--dark-mode" : "gradient--light-mode"
+                            }`}
+                          >
+                            <AiOutlineUser color={"white"} size={30} />
                           </div>
-                          <p className="text-2xl ml-2">{request.name}</p>
+                          <p
+                            className={`text-2xl ml-2 ${
+                              theme == "dark" ? "text-white" : "text-black"
+                            }`}
+                          >
+                            {request.name}
+                          </p>
                           <div className="flex flex-col justify-center items-center">
                             <Button
+                              variant="transparent"
                               onClick={() => accept(request.email.toString())}
-                              variant="transparent"
                             >
-                              <LuThumbsUp color={"green"} size={26}/>
+                              <LuThumbsUp
+                                size={20}
+                                color={theme == "dark" ? "#5FE996" : "#24B064"}
+                              />
                             </Button>
-                            <CloseButton
-                              onClick={() => reject(request.email.toString())}
+                            <Button
                               variant="transparent"
-                              icon={<LuThumbsDown color={"red"} size={26} />}
-                            />
+                              onClick={() => reject(request.email.toString())}
+                            >
+                              <LuThumbsDown
+                                color={theme == "dark" ? "#FB4747" : "#E60404"}
+                                size={20}
+                              />
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -309,7 +314,13 @@ export default function Friends() {
 
           <div className="flex flex-col mt-10 h-max">
             <div className="flex justify-between">
-              <p className="text-2xl font-domine ">Friends</p>
+              <p
+                className={`text-2xl font-domine ${
+                  theme == "dark" ? "text-white" : "text-black"
+                }`}
+              >
+                Friends
+              </p>
               <div>
                 <Modal opened={opened} onClose={close} withCloseButton={false} centered>
                   <p className="text-lg mb-4">Enter friends email address:</p>
@@ -332,7 +343,11 @@ export default function Friends() {
                   </div>
                 </Modal>
 
-                <Button className=" rounded-full" style={gradient} onClick={open}>
+                <Button
+                  onClick={open}
+                  style={{ background: "linear-gradient(#3B8B5D, #04372C)" }}
+                  className={`rounded-full add-button ${theme == "dark" ? "dark-button" : ""}`}
+                >
                   Add Friend
                 </Button>
               </div>
@@ -342,15 +357,23 @@ export default function Friends() {
                 friendList.map((friend, index) => (
                   <div
                     key={index}
-                    className="flex justify-between items-center gap-3 p-4 rounded-2xl bg-white drop-shadow-sharp"
+                    className={`flex justify-between items-center gap-3 p-4 rounded-2xl drop-shadow-sharp ${
+                      theme == "dark" ? "bg-[#1B2733]" : "bg-white"
+                    }`}
                   >
-                    <div className="bg-primary rounded-full p-2" >
+                    <div className="bg-primary rounded-full p-2">
                       <FaRegUser color={"white"} size={24} />
                     </div>
-                    <p className="text-2xl">{friend.name}</p>
+                    <p
+                      className={`text-2xl ml-3 ${
+                        theme == "dark" ? "text-white" : "text-black"
+                      }`}
+                    >
+                      {friend.name}
+                    </p>
                     <div className="flex-grow"> </div>
                     <Link href={`/friends/${friend.email}/${friend.name}`}>
-                      <HiArrowLongRight size={48} color="gray" />
+                      <HiArrowLongRight size={48} color={theme == "dark" ? "white" : "gray"} />
                     </Link>
                   </div>
                 ))}
