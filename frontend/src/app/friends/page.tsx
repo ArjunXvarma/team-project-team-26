@@ -276,13 +276,13 @@ export default function Friends() {
                           >
                             <AiOutlineUser color={"white"} size={30} />
                           </div>
-                          <p
+                          <h1
                             className={`text-2xl ml-2 ${
                               theme == "dark" ? "text-white" : "text-black"
                             }`}
                           >
                             {request.name}
-                          </p>
+                          </h1>
                           <div className="flex flex-col justify-center items-center">
                             <Button
                               variant="transparent"
@@ -292,6 +292,7 @@ export default function Friends() {
                                 size={20}
                                 color={theme == "dark" ? "#5FE996" : "#24B064"}
                               />
+                              <span className="sr-only">Thumbs Up</span>
                             </Button>
                             <Button
                               variant="transparent"
@@ -301,6 +302,7 @@ export default function Friends() {
                                 color={theme == "dark" ? "#FB4747" : "#E60404"}
                                 size={20}
                               />
+                              <span className="sr-only">Thumbs Down</span>
                             </Button>
                           </div>
                         </div>
@@ -314,13 +316,13 @@ export default function Friends() {
 
           <div className="flex flex-col mt-10 h-max">
             <div className="flex justify-between">
-              <p
+              <h1
                 className={`text-2xl font-domine ${
                   theme == "dark" ? "text-white" : "text-black"
                 }`}
               >
                 Friends
-              </p>
+              </h1>
               <div>
                 <Modal opened={opened} onClose={close} withCloseButton={false} centered>
                   <p className="text-lg mb-4">Enter friends email address:</p>

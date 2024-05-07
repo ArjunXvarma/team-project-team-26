@@ -259,12 +259,12 @@ export default function Settings() {
                 ctrl + L
               </div>
               <Switch
-                size="lg"
+                size="xl"
                 onLabel="ON"
                 offLabel="OFF"
                 onChange={toggleTheme}
                 checked={theme == "dark"}
-                color={theme == "dark" ? "green" : "gray"}
+                color={theme == "dark" ? "green" : "green"}
               />
             </div>
           </div>
@@ -276,7 +276,7 @@ export default function Settings() {
           >
             <p className="text-xl">Logout</p>
             <Link prefetch={false} href={"/logout"}>
-              <Button color="red" className="rounded-full">
+              <Button color="#ad0303" className="rounded-full">
                 Sign Out
               </Button>
             </Link>
