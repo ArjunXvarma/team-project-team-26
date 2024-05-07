@@ -230,9 +230,7 @@ export default function Home() {
                 )}
               />
               <small
-                className={` self-start ${
-                  theme == "dark" ? "text-[#787878]" : "text-gray-600"
-                }`}
+                className={` self-start ${theme == "dark" ? "text-white" : "text-gray-600"}`}
               >
                 Target: {cyclingTarget} Km
               </small>
@@ -285,9 +283,7 @@ export default function Home() {
                 )}
               />
               <small
-                className={` self-start ${
-                  theme == "dark" ? "text-[#787878]" : "text-gray-600"
-                }`}
+                className={` self-start ${theme == "dark" ? "text-white" : "text-gray-600"}`}
               >
                 Target: {runningTarget} Km
               </small>
@@ -340,9 +336,7 @@ export default function Home() {
                 )}
               />
               <small
-                className={` self-start ${
-                  theme == "dark" ? "text-[#787878]" : "text-gray-600"
-                }`}
+                className={` self-start ${theme == "dark" ? "text-white" : "text-gray-600"}`}
               >
                 Target: {walkingTarget} Km
               </small>
