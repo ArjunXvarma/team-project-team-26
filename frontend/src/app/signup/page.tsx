@@ -10,14 +10,13 @@ import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { useRouter } from "next/navigation";
+import { CiLock, CiUser } from "react-icons/ci";
+import { MdAlternateEmail } from "react-icons/md";
+import { IoCalendarOutline } from "react-icons/io5";
 import { useTheme } from "@/components/theme-provider";
 import { AuthAPIResponse, CheckAdminAPIResponse } from "@/types";
 import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 import { formatDate, showErrorMessage, showSuccessMessage } from "@/utils";
-import { CiLock, CiUser } from "react-icons/ci";
-import { LuSend } from "react-icons/lu";
-import { IoCalendarOutline } from "react-icons/io5";
-import { MdAlternateEmail } from "react-icons/md";
 
 export default function Signup() {
   const { theme } = useTheme();
@@ -126,10 +125,6 @@ export default function Signup() {
     }
 
     setLoading(false);
-  };
-
-  const gradient = {
-    background: "linear-gradient(#3B8B5D, #04372C)",
   };
 
   return (
