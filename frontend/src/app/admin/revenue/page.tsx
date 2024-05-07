@@ -1,11 +1,14 @@
 "use client";
 import Cookie from "js-cookie";
-import moment from "moment";
+import "@mantine/charts/styles.css";
 import { API_URL } from "@/constants";
 import { LineChart } from "@mantine/charts";
 import { showErrorMessage } from "@/utils";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/components/theme-provider";
 import { FutureRevenuePredictionAPIResponse, Revenue } from "@/types";
+import { Loader } from "@mantine/core";
+import { MdOutlineErrorOutline } from "react-icons/md";
 
 interface FutureRevenue {
   revenue: number;
@@ -13,20 +16,14 @@ interface FutureRevenue {
 }
 
 export default function Statistics() {
+  const { theme } = useTheme();
   const [weeklyRevenue, setWeeklyRevenue] = useState<Revenue[]>();
   const [futureRevenue, setFutureRevenue] = useState<FutureRevenue[]>();
-
-  // @ts-ignore
-  Date.prototype.getWeekNumber = function () {
-    var d = new Date(Date.UTC(this.getFullYear(), this.getMonth(), this.getDate()));
-    var dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    // @ts-ignore
-    return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-  };
+  const [weeklyRevenueLoading, setWeeklyRevenueLoading] = useState(true);
+  const [futureRevenueLoading, setfutureRevenueLoading] = useState(true);
 
   const getRevenues = async () => {
+    setWeeklyRevenueLoading(true);
     try {
       let token = Cookie.get("token");
       let response = await fetch(`${API_URL}/admin/get_revenues?period=week`, {
@@ -38,31 +35,32 @@ export default function Statistics() {
     } catch (error) {
       showErrorMessage("Error", "Unable to get weekly revenues");
     }
+    setWeeklyRevenueLoading(false);
   };
 
   const getFutureRevenue = async () => {
+    setfutureRevenueLoading(true);
     try {
       let token = Cookie.get("token");
-      let response = await fetch(`${API_URL}/admin/get_future_revenue?period=week&limit=10`, {
+      let response = await fetch(`${API_URL}/admin/get_future_revenue?period=week&limit=52`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
 
       let fr: FutureRevenue[] = [];
       let responseData: FutureRevenuePredictionAPIResponse = await response.json();
 
-      const currentWeek = moment().get("w");
+      //   const currentWeek = moment().get("w");
       responseData.data.future_revenues.map((val, i) => {
         fr.push({
           revenue: val,
-          week: currentWeek + i + 1,
+          week: i + 1,
         });
       });
       setFutureRevenue(fr);
-
-      console.log(fr);
     } catch (error) {
       showErrorMessage("Error", "Unable to get weekly revenues");
     }
+    setfutureRevenueLoading(false);
   };
 
   useEffect(() => {
@@ -71,67 +69,140 @@ export default function Statistics() {
   }, []);
   return (
     <main>
-     <div className="min-h-screen bg-background">
-        <div className="h-full m-8 drop-shadow-xl rounded-md bg-white py-4 px-20">
-          <p className="flex justify-center text-green-800 font-bold text-xl mb-4">
+      <div
+        className={`min-h-screen ${theme == "dark" ? "bg-dk_background" : "bg-background"}`}
+      >
+        <div
+          className={`h-full m-3 md:m-8 drop-shadow-xl py-4 px-3 md:px-20 rounded-3xl ${
+            theme == "dark" ? "bg-[#1B2733]" : "bg-white"
+          }`}
+        >
+          <p
+            className={`flex justify-center font-black text-2xl mb-4 ${
+              theme == "dark" ? "text-[#5FE996]" : "text-green-800"
+            }`}
+          >
             Weekly Revenue
           </p>
           {weeklyRevenue && (
-            <table className="h-1/2 min-w-full flex-shrink bg-white rounded-md">
-              <thead className="text-sm font-semibold shad-text-gray-500 dark:shad-text-gray-400">
-                <tr className="border-b text-lg text-green-900 ">
-                  <th className="px-4 py-3 text-center">Weeks</th>
-                  <th className="px-4 py-3 text-center">Basic</th>
-                  <th className="px-4 py-3 text-center">Standard</th>
-                  <th className="px-4 py-3 text-center">Premium</th>
-                  <th className="px-4 py-3 text-center">Weekly Revenue</th>
-                </tr>
-              </thead>
-              <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
-                {weeklyRevenue.map((val, i) => (
+            <div className="w-full overflow-x-auto">
+              <table className="min-w-full flex-shrink rounded-md overflow-scroll">
+                <thead className="text-sm font-semibold shad-text-gray-500 dark:shad-text-gray-400">
                   <tr
-                    key={i}
-                    className="border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800"
+                    className={`border-b-2 text-lg font ${
+                      theme == "dark" ? "text-[#5bdd8f] border-[#787878]" : "text-green-900"
+                    }`}
                   >
-                    <td className="px-4 py-3 text-center">{val.period}</td>
-                    <td className="px-4 py-3 text-center">
-                      {val.by_type.Basic?.total_revenue || 0}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {val.by_type.Standard?.total_revenue || 0}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      {val.by_type.Premium?.total_revenue || 0}
-                    </td>
-                    <td className="px-4 py-3 text-center">{val.total_revenue || 0}</td>
+                    <th className="px-4 py-3 text-center">Weeks</th>
+                    <th className="px-4 py-3 text-center">Basic</th>
+                    <th className="px-4 py-3 text-center">Standard</th>
+                    <th className="px-4 py-3 text-center">Premium</th>
+                    <th className="px-4 py-3 text-center">Weekly Revenue</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {!weeklyRevenue && (
-            <div className="flex justify-center text-red-600 font-bold">
-              <p>Error fetching weekly revenue</p>
+                </thead>
+                <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
+                  {weeklyRevenue.map((val, i) => (
+                    <tr
+                      key={i}
+                      className={`border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800 h-16 ${
+                        theme == "dark" ? "border-[#787878] text-white" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-3 text-center">{val.period}</td>
+                      <td className="px-4 py-3 text-center">
+                        {val.by_type.Basic?.total_revenue || 0}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {val.by_type.Standard?.total_revenue || 0}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {val.by_type.Premium?.total_revenue || 0}
+                      </td>
+                      <td className="px-4 py-3 text-center">{val.total_revenue || 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-          <p className="flex justify-center text-green-800 font-bold text-xl mb-4 mt-16">
+          {weeklyRevenueLoading ? (
+            <div
+              className={`flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md ${
+                theme === "dark"
+                  ? "border-[#5FE996] bg-[#1B2733] text-green-400"
+                  : "border-slate-100 bg-slate-50 text-slate-400"
+              }`}
+            >
+              <Loader size={32} color={theme == "dark" ? "#5FE996" : "gray"} />
+              <p>Loading Weekly Revenue</p>
+            </div>
+          ) : (
+            !weeklyRevenue && (
+              <div
+                className={`flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md ${
+                  theme === "dark"
+                    ? "border-red-400 bg-[#1B2733] text-red-400"
+                    : "border-red-400 bg-red-50 text-red-400"
+                }`}
+              >
+                <MdOutlineErrorOutline size={32} />
+                <p className="text-lg">Error fetching weekly revenue</p>
+              </div>
+            )
+          )}
+          <p
+            className={`flex justify-center text-green-800 font-bold text-xl mb-4 mt-16 ${
+              theme == "dark" ? "text-[#5bdd8f] border-[#787878]" : "text-green-900"
+            }`}
+          >
             Predicted Revenue for the next 10 weeks
           </p>
           {futureRevenue && (
-            <LineChart
-              h={300}
-              withLegend
-              dataKey="week"
-              data={futureRevenue}
-              legendProps={{ verticalAlign: "bottom" }}
-              series={[{ name: "revenue", label: "Week from today", color: "indigo.6" }]}
-            />
+            <div
+              className={`px-3 sm:py-3 py-10 rounded-3xl text-white gradient--dark-mode overflow-x-auto ${
+                theme == "dark" ? "gradient--light-mode" : "gradient--dark-mode"
+              }`}
+            >
+              <LineChart
+                h={450}
+                withLegend
+                gridAxis="xy"
+                dataKey="week"
+                strokeWidth={3}
+                curveType="natural"
+                withDots={false}
+                className="min-w-80"
+                data={futureRevenue}
+                legendProps={{ verticalAlign: "bottom" }}
+                series={[{ name: "revenue", label: "Week from today", color: "white" }]}
+              />
+            </div>
           )}
 
-          {!weeklyRevenue && (
-            <div className="flex justify-center text-red-600 font-bold">
-              <p>Error fetching future revenue</p>
+          {futureRevenueLoading ? (
+            <div
+              className={`flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md ${
+                theme === "dark"
+                  ? "border-[#5FE996] bg-[#1B2733] text-green-400"
+                  : "border-slate-100 bg-slate-50 text-slate-400"
+              }`}
+            >
+              <Loader size={32} color={theme == "dark" ? "#5FE996" : "gray"} />
+              <p>Loading Future Revenue</p>
             </div>
+          ) : (
+            !futureRevenue && (
+              <div
+                className={`flex justify-center items-center gap-5 mt-10 py-10 mx-10 border-2 rounded-md ${
+                  theme === "dark"
+                    ? "border-red-400 bg-[#1B2733] text-red-400"
+                    : "border-red-400 bg-red-50 text-red-400"
+                }`}
+              >
+                <MdOutlineErrorOutline size={32} />
+                <p className="text-lg">Error fetching weekly revenue</p>
+              </div>
+            )
           )}
         </div>
       </div>

@@ -9,13 +9,13 @@ import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { IoIosSearch } from "react-icons/io";
 import { useDisclosure } from "@mantine/hooks";
-import React, { useState, useEffect } from "react";
-import { Button, Modal, Select, PasswordInput, TextInput, Pagination } from "@mantine/core";
-import { formatDate, showErrorMessage, showSuccessMessage } from "@/utils";
-import { useTheme } from "@/components/theme-provider";
 import { CiLock, CiUser } from "react-icons/ci";
 import { MdAlternateEmail } from "react-icons/md";
+import React, { useState, useEffect } from "react";
 import { IoCalendarOutline } from "react-icons/io5";
+import { useTheme } from "@/components/theme-provider";
+import { Button, Modal, Select, PasswordInput, TextInput, Pagination } from "@mantine/core";
+import { formatDate, showErrorMessage, showSuccessMessage } from "@/utils";
 
 export default function Admin() {
   const [userData, setUserData] = useState<
@@ -233,7 +233,7 @@ export default function Admin() {
             theme == "dark" ? "bg-[#1B2733]" : "bg-white"
           }`}
         >
-          <div className="flex flex-wrap gap-2 md:gap-4 mb-6 md:mb-10">
+          <div className="flex flex-wrap gap-5 md:gap-4 mb-6 md:mb-10">
             <Select
               size="md"
               clearable
@@ -375,128 +375,133 @@ export default function Admin() {
             </div>
           </div>
 
-          <table className="min-w-full flex-shrink rounded-md overflow-scroll">
-            <thead className="font-semibold shad-text-gray-500 dark:shad-text-gray-400">
-              <tr
-                className={`border-b-2 ${
-                  theme == "dark" ? "text-[#5FE996] border-[#787878]" : "text-green-900"
-                }`}
-              >
-                <th className="px-4 py-3 text-left">Name</th>
-                <th className="px-4 py-3 text-left">Date</th>
-                <th className="px-4 py-3 text-left">Email</th>
-                <th className="px-4 py-3 text-left">Membership Type</th>
-                <th className="px-4 py-3 text-left">Payment Method</th>
-                <th className="px-12 py-3 text-left">Action</th>
-              </tr>
-            </thead>
+          <div className="w-full overflow-x-auto">
+            <table className="min-w-full flex-shrink rounded-md">
+              <thead className="font-semibold shad-text-gray-500 dark:shad-text-gray-400">
+                <tr
+                  className={`border-b-2 ${
+                    theme == "dark" ? "text-[#5FE996] border-[#787878]" : "text-green-900"
+                  }`}
+                >
+                  <th className="px-4 py-3 text-left">Name</th>
+                  <th className="px-4 py-3 text-left">Date</th>
+                  <th className="px-4 py-3 text-left">Email</th>
+                  <th className="px-4 py-3 text-left">Membership Type</th>
+                  <th className="px-4 py-3 text-left">Payment Method</th>
+                  <th className="px-12 py-3 text-left">Action</th>
+                </tr>
+              </thead>
 
-            {filter && (method || type) ? (
-              <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
-                {userData &&
-                  userData.map((data, i) => {
-                    let renderRow = false;
-                    if (filter === "Membership Type" && data.type === type) {
-                      renderRow = true;
-                    } else if (filter === "Payment Method" && data.payment_method === method) {
-                      renderRow = true;
-                    }
+              {filter && (method || type) ? (
+                <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
+                  {userData &&
+                    userData.map((data, i) => {
+                      let renderRow = false;
+                      if (filter === "Membership Type" && data.type === type) {
+                        renderRow = true;
+                      } else if (
+                        filter === "Payment Method" &&
+                        data.payment_method === method
+                      ) {
+                        renderRow = true;
+                      }
 
-                    if (renderRow) {
-                      return (
-                        <tr
-                          key={i}
-                          className={`border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800 h-16 ${
-                            theme == "dark" ? "border-[#787878]" : ""
-                          }`}
-                        >
-                          <td className="px-4 py-3 ">{data.name}</td>
-                          <td className="px-4 py-3 ">{data.account_created}</td>
-                          <td className="px-4 py-3 ">{data.email}</td>
-                          <td className="px-4 py-3 ">{data.type}</td>
-                          <td className="px-4 py-3 ">{data.payment_method}</td>
-                          <td className="px-4 py-3">
-                            {data.id && (
-                              <Button
-                                variant="default"
-                                onClick={() => remove(data.id)}
-                                className={`${theme == "dark" ? "dark-button" : ""}`}
-                              >
-                                Remove User
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    }
-                    return null;
-                  })}
-              </tbody>
-            ) : name ? (
-              <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
-                {userData &&
-                  userData.map((data, i) => {
-                    if (nameOptions.some((option) => option.name === data.name)) {
-                      return (
-                        <tr
-                          key={i}
-                          className={`border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800 h-16 ${
-                            theme == "dark" ? "border-[#787878]" : ""
-                          }`}
-                        >
-                          <td className="px-4 py-3">{data.name}</td>
-                          <td className="px-4 py-3">{data.account_created}</td>
-                          <td className="px-4 py-3">{data.email}</td>
-                          <td className="px-4 py-3">{data.type}</td>
-                          <td className="px-4 py-3">{data.payment_method}</td>
-                          <td className="px-4 py-3">
-                            {data.id && (
-                              <Button
-                                variant="default"
-                                onClick={() => remove(data.id)}
-                                className={`${theme == "dark" ? "dark-button" : ""}`}
-                              >
-                                Remove User
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    }
-                    return null;
-                  })}
-              </tbody>
-            ) : (
-              <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
-                {userData &&
-                  userData.map((data, i) => (
-                    <tr
-                      key={i}
-                      className={`border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800 h-16 ${
-                        theme == "dark" ? "border-[#787878]" : ""
-                      }`}
-                    >
-                      <td className="px-4 py-3 ">{data.name}</td>
-                      <td className="px-4 py-3 ">{data.account_created}</td>
-                      <td className="px-4 py-3 ">{data.email}</td>
-                      <td className="px-4 py-3 ">{data.type}</td>
-                      <td className="px-4 py-3 ">{data.payment_method}</td>
-                      <td className="px-4 py-3">
-                        {data.id && (
-                          <Button
-                            variant="default"
-                            onClick={() => remove(data.id)}
-                            className={`${theme == "dark" ? "dark-button" : ""}`}
+                      if (renderRow) {
+                        return (
+                          <tr
+                            key={i}
+                            className={`border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800 h-16 ${
+                              theme == "dark" ? "border-[#787878]" : ""
+                            }`}
                           >
-                            Remove User
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            )}
-          </table>
+                            <td className="px-4 py-3 ">{data.name}</td>
+                            <td className="px-4 py-3 ">{data.account_created}</td>
+                            <td className="px-4 py-3 ">{data.email}</td>
+                            <td className="px-4 py-3 ">{data.type}</td>
+                            <td className="px-4 py-3 ">{data.payment_method}</td>
+                            <td className="px-4 py-3">
+                              {data.id && (
+                                <Button
+                                  variant="default"
+                                  onClick={() => remove(data.id)}
+                                  className={`${theme == "dark" ? "dark-button" : ""}`}
+                                >
+                                  Remove User
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      }
+                      return null;
+                    })}
+                </tbody>
+              ) : name ? (
+                <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
+                  {userData &&
+                    userData.map((data, i) => {
+                      if (nameOptions.some((option) => option.name === data.name)) {
+                        return (
+                          <tr
+                            key={i}
+                            className={`border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800 h-16 ${
+                              theme == "dark" ? "border-[#787878]" : ""
+                            }`}
+                          >
+                            <td className="px-4 py-3">{data.name}</td>
+                            <td className="px-4 py-3">{data.account_created}</td>
+                            <td className="px-4 py-3">{data.email}</td>
+                            <td className="px-4 py-3">{data.type}</td>
+                            <td className="px-4 py-3">{data.payment_method}</td>
+                            <td className="px-4 py-3">
+                              {data.id && (
+                                <Button
+                                  variant="default"
+                                  onClick={() => remove(data.id)}
+                                  className={`${theme == "dark" ? "dark-button" : ""}`}
+                                >
+                                  Remove User
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      }
+                      return null;
+                    })}
+                </tbody>
+              ) : (
+                <tbody className="shad-text-gray-500 dark:shad-text-gray-400 text-sm">
+                  {userData &&
+                    userData.map((data, i) => (
+                      <tr
+                        key={i}
+                        className={`border-b hover:shad-bg-gray-100 dark:hover:shad-bg-gray-800 h-16 ${
+                          theme == "dark" ? "border-[#787878]" : ""
+                        }`}
+                      >
+                        <td className="px-4 py-3 ">{data.name}</td>
+                        <td className="px-4 py-3 ">{data.account_created}</td>
+                        <td className="px-4 py-3 ">{data.email}</td>
+                        <td className="px-4 py-3 ">{data.type}</td>
+                        <td className="px-4 py-3 ">{data.payment_method}</td>
+                        <td className="px-4 py-3">
+                          {data.id && (
+                            <Button
+                              variant="default"
+                              onClick={() => remove(data.id)}
+                              className={`${theme == "dark" ? "dark-button" : ""}`}
+                            >
+                              Remove User
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              )}
+            </table>
+          </div>
           <div className="w-full flex justify-center mt-10">
             <Pagination
               color="green"

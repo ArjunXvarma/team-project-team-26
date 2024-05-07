@@ -28,7 +28,6 @@ export function middleware(req: NextRequest) {
     if (!req.cookies.has("isAdmin") || req.cookies.get("isAdmin")?.value !== "true") {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-    return;
   }
 
   // Need to put check for active membership on landing page, when user is logged in but does not have a memebership

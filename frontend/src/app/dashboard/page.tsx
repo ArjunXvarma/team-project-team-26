@@ -96,7 +96,7 @@ export default function Home() {
                   tickLine="none"
                   strokeWidth={5}
                   curveType="bump"
-                  className="min-w-80 min-"
+                  className="min-w-80"
                   series={[{ name: "totalDistance", color: "white" }]}
                   dotProps={{ r: 6, strokeWidth: 1, fill: "#5FE996" }}
                   activeDotProps={{ r: 8, strokeWidth: 4, stroke: "#5FE996" }}
