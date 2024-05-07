@@ -1,0 +1,51 @@
+.select-button-light {
+  width: 154px;
+  height: 45px;
+  border-radius: 20px;
+  background: white;
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24.2px;
+  color: #1c5f42;
+}
+
+.select-button-dark {
+  width: 154px;
+  height: 45px;
+  border-radius: 20px;
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24.2px;
+
+  color: #5fe996;
+  background: #1b2733;
+}
+
+.selected-button {
+  color: white;
+  background: #38965e;
+}
+
+.continue-button {
+  width: 154px;
+  height: 45px;
+  color: white;
+  border-radius: 20px;
+  background: #38965e;
+}
+
+.mantine-TextInput-input {
+  height: 56px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 20px;
+  box-shadow: 0px 4px 4px 0px #00000040;
+}
+
+.dark-input .mantine-TextInput-input {
+  border: 0;
+  color: white;
+  background-color: #1b2733;
+}

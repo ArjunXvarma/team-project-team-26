@@ -1,19 +1,18 @@
 "use client";
+import "./navbar-styles.css";
 import Link from "next/link";
-import { FaUser } from "react-icons/fa";
-import { FaUsers } from "react-icons/fa6";
+import { FaGear } from "react-icons/fa6";
 import { ActionIcon } from "@mantine/core";
-import { useTheme } from "./theme-provider";
 import { ReactNode, useState } from "react";
 import { HiMenuAlt3 } from "react-icons/hi";
-import "@/components/navbar/navbar-styles.css";
-import { FcMoneyTransfer } from "react-icons/fc";
+import { useTheme } from "../theme-provider";
+import { FaHome, FaMapMarkedAlt, FaUserFriends } from "react-icons/fa";
 
 interface NavbarProps {
   children: ReactNode;
 }
 
-export default function AdminNavbar({ children }: NavbarProps) {
+export default function Navbar({ children }: NavbarProps) {
   const { theme } = useTheme();
   const [showSidebar, setShowSidebar] = useState(false);
 
@@ -68,32 +67,40 @@ export default function AdminNavbar({ children }: NavbarProps) {
             </Link>
           </div>
           <div className="mt-16 flex flex-col h-full gap-10">
-            <Link href={"/admin"}>
+            <Link href={"/dashboard"}>
               <div
                 className={`text-white flex justify-center gap-3 font-medium w-20 p-5 rounded-lg hover:bg-${
                   theme == "dark" ? "primary" : "hover"
                 }`}
               >
-                <FaUsers size={34} />
+                <FaHome size={32} />
               </div>
             </Link>
-
-            <Link href={"/admin/revenue"}>
+            <Link href={"/journeys"}>
               <div
                 className={`text-white flex justify-center gap-3 font-medium w-20 p-5 rounded-lg hover:bg-${
                   theme == "dark" ? "primary" : "hover"
                 }`}
               >
-                <FcMoneyTransfer size={32} />
+                <FaMapMarkedAlt size={32} />
               </div>
             </Link>
-            <Link href={"/"}>
+            <Link href={"/friends"}>
               <div
                 className={`text-white flex justify-center gap-3 font-medium w-20 p-5 rounded-lg hover:bg-${
                   theme == "dark" ? "primary" : "hover"
                 }`}
               >
-                <FaUser size={26} />
+                <FaUserFriends size={32} />
+              </div>
+            </Link>
+            <Link href={"/settings"}>
+              <div
+                className={`text-white flex justify-center gap-3 font-medium w-20 p-5 rounded-lg hover:bg-${
+                  theme == "dark" ? "primary" : "hover"
+                }`}
+              >
+                <FaGear size={32} />
               </div>
             </Link>
           </div>

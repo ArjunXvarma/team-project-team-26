@@ -1,0 +1,49 @@
+.dark-modal .mantine-Modal-header,
+.dark-modal .mantine-Modal-content {
+  color: white;
+  background: #1c232b;
+}
+
+.signup .mantine-PasswordInput-input,
+.signup .mantine-TextInput-input,
+.signup .mantine-DateInput-input,
+.search .mantine-TextInput-input {
+  height: 50px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 16px;
+  box-shadow: 0px 1px 1px 0px #00000040;
+}
+
+.input--dark-mode .mantine-PasswordInput-input,
+.input--dark-mode .mantine-TextInput-input,
+.input--dark-mode .mantine-DateInput-input,
+.search--dark-mode .mantine-TextInput-input {
+  border: 0;
+  color: white;
+  background-color: #121b23;
+}
+
+.mantine-Select-input {
+  height: 50px;
+  border-radius: 20px;
+  padding-left: 15px;
+  box-shadow: 0px 1px 1px 0px #00000040;
+}
+
+.dark-select .mantine-Select-input {
+  border: 0;
+  color: #787878e5;
+  background-color: #121b23;
+}
+
+.dark-button {
+  border: 0;
+  color: #ff191d;
+  background-color: #23121c;
+}
+
+:root {
+  --pagination-active-bg: #5fe996;
+  --pagination-active-color: white;
+}
