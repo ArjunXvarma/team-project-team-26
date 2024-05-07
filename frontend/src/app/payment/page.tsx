@@ -1,9 +1,10 @@
 "use client";
-import Link from "next/link";
-import Cookie from "js-cookie";
 import "./payment-styles.css";
+import "react-credit-cards-2/dist/es/styles-compiled.css";
+import Cookie from "js-cookie";
 import { API_URL } from "@/constants";
-import { useForm } from "@mantine/form";
+import CardValidator from "card-validator";
+import Cards from "react-credit-cards-2";
 import { FaPaypal } from "react-icons/fa";
 import { FaApple } from "react-icons/fa6";
 import { FaGoogle } from "react-icons/fa6";
@@ -18,10 +19,29 @@ import { useTheme } from "@/components/theme-provider";
 import { notifications } from "@mantine/notifications";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
 
+const formatCardNumber = (value: string) =>
+  value
+    .replace(/\D/g, "")
+    .replace(/(.{4})/g, "$1 ")
+    .trim()
+    .slice(0, 19);
+
+const formatExpirationDate = (value: string) =>
+  value
+    .replace(/\D/g, "")
+    .replace(/(.{2})/g, "$1 ")
+    .trim()
+    .slice(0, 5);
+
+const formatCVV = (value: string) => value.replace(/\D/g, "").slice(0, 4);
+
 export default function Payment() {
   const router = useRouter();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState({ number: "", expiry: "", cvv: "" });
+  const [card, setCard] = useState({ name: "", number: "", expiry: "", cvv: "" });
+  const [focus, setFocus] = useState<"name" | "number" | "expiry" | "cvc">("name");
 
   interface PaymentMethodData {
     PaymentMethod: string[];
@@ -112,11 +132,6 @@ export default function Payment() {
     setLoading(false);
   };
 
-  const form = useForm({
-    initialValues: { name: "", cardNo: "", date: "", cvv: "" },
-    validate: {},
-  });
-
   return (
     <main>
       <div
@@ -181,54 +196,106 @@ export default function Payment() {
 
         <div className="flex justify-center items-center mt-6">
           {selectedPaymentMethod == "Credit Card" ? (
-            <form className="flex flex-col gap-6">
-              <TextInput
-                required
-                size="md"
-                type="Name"
-                placeholder="Name on card"
-                {...form.getInputProps("name")}
-                className={`drop-shadow-md ${theme == "dark" ? "dark-input" : "tahir"}`}
+            <div className="flex flex-row gap-5 ">
+              <Cards
+                focused={focus}
+                cvc={card.cvv}
+                name={card.name}
+                expiry={`${card.expiry.slice(0, 2)} ${card.expiry.slice(3, 5)}`}
+                number={card.number}
               />
-
-              <TextInput
-                required
-                size="md"
-                type="Card Number"
-                placeholder="Card number"
-                {...form.getInputProps("cardNo")}
-                className={`drop-shadow-md ${theme == "dark" ? "dark-input" : ""}`}
-              />
-
-              <div className="flex gap-3">
+              <form className="flex flex-col gap-6">
                 <TextInput
                   required
                   size="md"
-                  type="text"
-                  placeholder="MM/YY"
-                  {...form.getInputProps("date")}
+                  type="Name"
+                  value={card.name}
+                  placeholder="Name on card"
+                  onFocus={() => setFocus("name")}
                   className={`drop-shadow-md ${theme == "dark" ? "dark-input" : ""}`}
+                  onChange={(e) => setCard((prev) => ({ ...prev, name: e.target.value }))}
                 />
+
                 <TextInput
                   required
-                  type="CVV"
                   size="md"
-                  placeholder="CVV"
-                  {...form.getInputProps("cvv")}
+                  type="Card Number"
+                  value={card.number}
+                  error={error.number}
+                  placeholder="Card number"
+                  onFocus={() => setFocus("number")}
                   className={`drop-shadow-md ${theme == "dark" ? "dark-input" : ""}`}
+                  onChange={(e) => {
+                    let numberValidator = CardValidator.number(e.target.value);
+                    if (!numberValidator.isPotentiallyValid)
+                      setError((prev) => ({ ...prev, number: "Invalid Number" }));
+                    else setError((prev) => ({ ...prev, number: "" }));
+                    setCard((prev) => ({ ...prev, number: formatCardNumber(e.target.value) }));
+                  }}
                 />
-              </div>
-              <div className="flex justify-center w-full">
-                <Button
-                  loading={loading}
-                  onClick={submit}
-                  className="continue-button"
-                  loaderProps={{ type: "dots" }}
-                >
-                  Continue
-                </Button>
-              </div>
-            </form>
+
+                <div className="flex gap-3">
+                  <TextInput
+                    required
+                    size="md"
+                    type="text"
+                    placeholder="MM/YY"
+                    value={card.expiry}
+                    error={error.expiry}
+                    onFocus={() => setFocus("expiry")}
+                    className={`drop-shadow-md ${theme == "dark" ? "dark-input" : ""}`}
+                    onChange={(e) => {
+                      if (!CardValidator.expirationDate(e.target.value).isPotentiallyValid)
+                        setError((prev) => ({ ...prev, expiry: "Invalid Date" }));
+                      else setError((prev) => ({ ...prev, expiry: "" }));
+                      setCard((prev) => ({
+                        ...prev,
+                        expiry: formatExpirationDate(e.target.value),
+                      }));
+                    }}
+                  />
+                  <TextInput
+                    required
+                    type="CVV"
+                    size="md"
+                    value={card.cvv}
+                    error={error.cvv}
+                    placeholder="CVV"
+                    onFocus={() => setFocus("cvc")}
+                    className={`drop-shadow-md ${theme == "dark" ? "dark-input" : ""}`}
+                    onChange={(e) => {
+                      if (!CardValidator.cvv(e.target.value).isPotentiallyValid)
+                        setError((prev) => ({ ...prev, cvv: "Invalid CVV" }));
+                      else setError((prev) => ({ ...prev, cvv: "" }));
+                      setCard((prev) => ({ ...prev, cvv: formatCVV(e.target.value) }));
+                    }}
+                  />
+                </div>
+
+                <div className="flex justify-center w-full">
+                  <Button
+                    loading={loading}
+                    onClick={() => {
+                      if (
+                        card.name.trim() === "" ||
+                        card.number.trim() === "" ||
+                        card.expiry.trim() === "" ||
+                        card.cvv.trim() === ""
+                      )
+                        return;
+
+                      if (error.number || error.expiry || error.cvv) return;
+
+                      submit();
+                    }}
+                    className="continue-button"
+                    loaderProps={{ type: "dots" }}
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </form>
+            </div>
           ) : selectedPaymentMethod !== null ? (
             <div>
               <Button
