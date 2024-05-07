@@ -1,28 +1,36 @@
 "use client";
-import Link from "next/link";
 import Cookie from "js-cookie";
+import { useMemo } from "react";
 import "leaflet/dist/leaflet.css";
+import dynamic from "next/dynamic";
 import { API_URL } from "@/constants";
-import { Loader } from "@mantine/core";
-import { MdFlag, MdOutlineFileDownload } from "react-icons/md";
 import { FaClock } from "react-icons/fa";
 import { showErrorMessage } from "@/utils";
 import { RiRunFill } from "react-icons/ri";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button, Loader } from "@mantine/core";
 import { FaMountainSun } from "react-icons/fa6";
 import { PiBicycleLight } from "react-icons/pi";
 import { BsPersonWalking } from "react-icons/bs";
-import { Polyline } from "react-leaflet/Polyline";
-import { GetJourneyAPIResponse, Journey } from "@/types";
-import { Circle, MapContainer, TileLayer } from "react-leaflet";
 import { useTheme } from "@/components/theme-provider";
+import { GetJourneyAPIResponse, Journey } from "@/types";
+import { MdFlag, MdOutlineFileDownload } from "react-icons/md";
 
 export default function Page({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { theme } = useTheme();
   const [journey, setJourney] = useState<Journey>();
+  const [isDownloading, setIsDownloading] = useState(false);
   const [getJourneyLoading, setGetJourneyLoading] = useState(true);
+  const Map = useMemo(
+    () =>
+      dynamic(() => import("@/components/map/Map"), {
+        ssr: false,
+        loading: () => <p>A map is loading</p>,
+      }),
+    []
+  );
 
   const getJourney = async () => {
     setGetJourneyLoading(true);
@@ -44,6 +52,7 @@ export default function Page({ params }: { params: { id: string } }) {
           router.push("/journeys");
         } else {
           setJourney(data);
+          console.log([data.points.map((point) => [point.lat, point.lon])]);
         }
       }
     } catch (error) {
@@ -55,6 +64,33 @@ export default function Page({ params }: { params: { id: string } }) {
     }
 
     setGetJourneyLoading(false);
+  };
+
+  const downloadFile = async () => {
+    setIsDownloading(true);
+    try {
+      const token = Cookie.get("token");
+      const response = await fetch(`${API_URL}/convert_journey_to_gpx/${params.id}`, {
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/gpx+xml",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "journey.gpx"; // Specify the file name here
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+    }
+    setIsDownloading(false);
   };
 
   useEffect(() => {
@@ -73,40 +109,13 @@ export default function Page({ params }: { params: { id: string } }) {
       {journey && (
         <div className="flex flex-col justify-around md:flex-row w-full min-h-screen">
           <div className="md:w-2/3">
-            <MapContainer
+            <Map
+              tracks={[journey.points]}
               center={[
                 journey.points[Math.ceil(journey.points.length / 2)].lat,
                 journey.points[Math.ceil(journey.points.length / 2)].lon,
               ]}
-              zoom={16}
-              scrollWheelZoom={true}
-              className="w-full h-screen"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <Polyline
-                pathOptions={{ color: "#1B6D4B", weight: 5 }}
-                positions={journey.points.map((point) => [point.lat, point.lon])}
-              />
-              <Circle
-                radius={0}
-                weight={8}
-                color="#c90028"
-                center={[journey.points[0].lat, journey.points[0].lon]}
-              />
-              <Circle
-                radius={0}
-                weight={8}
-                fill={true}
-                color="#005dba"
-                center={[
-                  journey.points[journey.points.length - 1].lat,
-                  journey.points[journey.points.length - 1].lon,
-                ]}
-              />
-            </MapContainer>
+            />
           </div>
           <div className="md:w-96 flex flex-col items-center">
             <div
@@ -114,16 +123,20 @@ export default function Page({ params }: { params: { id: string } }) {
                 theme == "dark" ? "gradient--dark-mode" : "gradient--light-mode"
               }`}
             >
-              <Link href="#">
-                <div
-                  className={`flex items-center gap-3 p-5 rounded-3xl text-lg font-bold ${
-                    theme == "dark" ? "bg-[#131B23] text-[#5FE996]" : "bg-white text-primary"
-                  }`}
-                >
-                  <MdOutlineFileDownload size={36} />
-                  <p>Download Your Data</p>
-                </div>
-              </Link>
+              <Button
+                size="lg"
+                onClick={downloadFile}
+                loading={isDownloading}
+                loaderProps={{ color: "#5FE996" }}
+                leftSection={<MdOutlineFileDownload size={36} />}
+                style={{
+                  borderRadius: "16px",
+                  color: theme == "dark" ? "#5FE996" : "#1B6D4B",
+                  background: theme == "dark" ? "#131B23" : "#ffffff",
+                }}
+              >
+                Download Your Data
+              </Button>
             </div>
             <div
               className={`w-full rounded-3xl flex flex-col p-8 m-4 h-fit mt-5 ${
