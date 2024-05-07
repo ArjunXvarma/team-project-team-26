@@ -140,13 +140,13 @@ export default function Payment() {
         }`}
       >
         <header className="justify-around items-center pt-10 flex-grow">
-          <p
+          <h1
             className={`text-center text-4xl font-semibold pb-6 font-serif ${
               theme == "dark" ? "text-white" : "text-black"
             }`}
           >
             Payment Details
-          </p>
+          </h1>
         </header>
 
         <div className=" flex justify-center mt-4">
@@ -210,6 +210,7 @@ export default function Payment() {
                   size="md"
                   type="Name"
                   value={card.name}
+                  label="Name on card"
                   placeholder="Name on card"
                   onFocus={() => setFocus("name")}
                   className={`drop-shadow-md ${theme == "dark" ? "dark-input" : ""}`}
@@ -220,6 +221,7 @@ export default function Payment() {
                   required
                   size="md"
                   type="Card Number"
+                  label="Card number"
                   value={card.number}
                   error={error.number}
                   placeholder="Card number"
@@ -239,6 +241,7 @@ export default function Payment() {
                     required
                     size="md"
                     type="text"
+                    label="MM/YY"
                     placeholder="MM/YY"
                     value={card.expiry}
                     error={error.expiry}
@@ -258,6 +261,7 @@ export default function Payment() {
                     required
                     type="CVV"
                     size="md"
+                    label="CVV"
                     value={card.cvv}
                     error={error.cvv}
                     placeholder="CVV"
