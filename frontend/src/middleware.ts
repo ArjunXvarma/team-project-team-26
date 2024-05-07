@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
   const protectedRoutes =
-    /^\/(journeys|payment|thankyou|membership|settings|dashboard|statistics|friends)$/;
+    /^\/(journeys|payment|thankyou|planChanged|membership|settings|dashboard|statistics|friends)$/;
   const adminRoute = /^\/admin$/;
   const logoutRoute = /^\/logout$/;
   const loginSingupRoutes = /^\/(login|signup)$/;
