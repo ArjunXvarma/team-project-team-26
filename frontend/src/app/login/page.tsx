@@ -136,33 +136,25 @@ export default function Login() {
             <form className="w-full flex flex-col gap-10 items-center">
               <TextInput
                 size="lg"
-                size="lg"
                 type="email"
                 placeholder="Email"
                 {...form.getInputProps("email")}
                 leftSection={<CiUser size={32} />}
                 className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
-                leftSection={<CiUser size={32} />}
-                className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
               <PasswordInput
-                className="w-full mt-4"
                 size="lg"
                 id="login-pwd"
                 placeholder="Password"
                 leftSection={<CiLock size={32} />}
-                leftSection={<CiLock size={32} />}
                 {...form.getInputProps("password")}
-                className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
                 className={`w-full login ${theme == "dark" ? "input--dark-mode" : ""}`}
               />
               <div className="flex flex-col justify-center gap-3 mt-10 w-48">
                 <Button
                   color="green"
-                  color="green"
                   onClick={submit}
                   loading={loading}
-                  className="bg-green-700 h-10 text-lg rounded-2xl w-full"
                   style={{ backgroundColor: "rgb(51, 192, 116, 1)" }}
                   className={`login-button ${
                     theme == "dark" ? "login-button--dark-mode" : ""

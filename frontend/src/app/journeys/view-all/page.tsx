@@ -136,7 +136,7 @@ export default function AllJourney() {
                         </MapContainer>
                       </div>
                       <div
-                        className={`flex flex-col gap-3 rounded-2xl px-10 py-3 relative top-0 left-0 h-fit md:mt-0 mt-10 md:w-fit w-full ${
+                        className={`flex flex-col gap-3 rounded-2xl px-10 py-3 relative top-0 left-0 h-fit md:mt-0 mt-10 md:w-fit w-full drop-shadow-sharp ${
                           theme == "dark" ? "bg-[#1B2733] text-white" : "bg-white"
                         }`}
                       >
