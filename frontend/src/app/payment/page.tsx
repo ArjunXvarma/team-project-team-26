@@ -17,7 +17,6 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { notifications } from "@mantine/notifications";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
-import { number, expirationDate, cvv } from "card-validator";
 
 export default function Payment() {
   const router = useRouter();

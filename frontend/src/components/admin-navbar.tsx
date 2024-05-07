@@ -1,55 +1,105 @@
 "use client";
 import Link from "next/link";
-import { ReactNode } from "react";
-import { FaGear, FaUsers } from "react-icons/fa6";
-import { MdLogout } from "react-icons/md";
-import { FcMoneyTransfer } from "react-icons/fc";
-import { FaHome, FaMapMarkedAlt } from "react-icons/fa";
-import { CiUser } from "react-icons/ci";
 import { FaUser } from "react-icons/fa";
-import { PiMoneyThin } from "react-icons/pi";
+import { FaUsers } from "react-icons/fa6";
+import { ActionIcon } from "@mantine/core";
+import { useTheme } from "./theme-provider";
+import { ReactNode, useState } from "react";
+import { HiMenuAlt3 } from "react-icons/hi";
+import "@/components/navbar/navbar-styles.css";
+import { FcMoneyTransfer } from "react-icons/fc";
 
 interface NavbarProps {
   children: ReactNode;
 }
 
 export default function AdminNavbar({ children }: NavbarProps) {
-  const gradient = {
-    background: 'linear-gradient(#3B8B5D, #04372C)'
-  };
+  const { theme } = useTheme();
+  const [showSidebar, setShowSidebar] = useState(false);
+
   return (
-    <div className="flex bg-background">
-      <div className="m-2 rounded-3xl w-64 flex flex-col items-center fixed top-0 bottom-0 left-0 overflow-y-auto" style={gradient}>
-        <h1 className="text-white font-black text-3xl mt-28">FitFusion</h1>
-        <hr/>
-        <div className="mt-36 flex flex-col justify-center items-center gap-5">
-          <Link href={"/admin"}>
-            <div className="text-white flex gap-3 font-medium w-48 p-5 rounded-xl hover:bg-hover">
-              <FaUsers size={34} />
-              <p className="text-xl">Users</p>
-            </div>
-          </Link>
-          <Link href={"/admin/revenue"} prefetch={true}>
-            <div className="text-white flex gap-3 font-medium w-48 p-5 rounded-xl hover:bg-hover">
-              <FcMoneyTransfer size={32} />
-              <p className="text-xl">Revenue</p>
-            </div>
-          </Link>
-          <Link href={"/"}>
-            <div className="text-white flex gap-3 font-medium w-48 p-5 rounded-xl hover:bg-hover">
-              <FaUser size={26} />
-              <p className="text-xl">User Mode</p>
-            </div>
-          </Link>
+    <div className={`${theme == "dark" ? "bg-[#131B23]" : "bg-[#f1f1f1]"}`}>
+      <div className="flex w-full items-center px-3">
+        <p
+          className={`text-center text-lg font-serif flex-grow mt-5 ${
+            theme == "dark" ? "text-white" : "text-black"
+          }`}
+        >
+          "Every journey begins with a single step"
+        </p>
+        <div className="mt-2 ml-2 md:hidden visible">
+          <ActionIcon
+            size="lg"
+            color="gray"
+            variant="transparent"
+            aria-controls="sidebar"
+            aria-expanded={showSidebar}
+            onClick={() => setShowSidebar((o) => !o)}
+          >
+            <HiMenuAlt3 size={32} />
+          </ActionIcon>
         </div>
-        <Link href={"/logout"} prefetch={false} className=" mt-20">
-          <div className="text-red-500 flex gap-3 pl-8 font-medium w-48 p-5 rounded-xl hover:bg-hover">
-            <MdLogout size={32} />
-            <p className="text-xl">Logout</p>
-          </div>
-        </Link>
       </div>
-      <div className="flex-grow ml-72">{children}</div>
+
+      <aside
+        id="sidebar"
+        aria-label="Sidebar"
+        className={`fixed p-5 top-0 left-0 z-40 w-64 h-screen transition-transform ${
+          showSidebar ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0`}
+      >
+        <div
+          className={`h-full min-h-[600px] w-32 flex flex-col justify-between items-center rounded-3xl ${
+            theme == "dark"
+              ? "navbar-gradient--dark-mode border border-[#5FE996]"
+              : "navbar-gradient--light-mode"
+          }`}
+        >
+          <div>
+            <Link href={"/"}>
+              <h1
+                className={`font-semibold text-xl mt-16 font-serif ${
+                  theme == "dark" ? "text-[#5FE996]" : "text-white"
+                }`}
+              >
+                FitFusion
+              </h1>
+              <hr />
+            </Link>
+          </div>
+          <div className="mt-16 flex flex-col h-full gap-10">
+            <Link href={"/admin"}>
+              <div
+                className={`text-white flex justify-center gap-3 font-medium w-20 p-5 rounded-lg hover:bg-${
+                  theme == "dark" ? "primary" : "hover"
+                }`}
+              >
+                <FaUsers size={34} />
+              </div>
+            </Link>
+
+            <Link href={"/admin/revenue"}>
+              <div
+                className={`text-white flex justify-center gap-3 font-medium w-20 p-5 rounded-lg hover:bg-${
+                  theme == "dark" ? "primary" : "hover"
+                }`}
+              >
+                <FcMoneyTransfer size={32} />
+              </div>
+            </Link>
+            <Link href={"/"}>
+              <div
+                className={`text-white flex justify-center gap-3 font-medium w-20 p-5 rounded-lg hover:bg-${
+                  theme == "dark" ? "primary" : "hover"
+                }`}
+              >
+                <FaUser size={26} />
+              </div>
+            </Link>
+          </div>
+        </div>
+      </aside>
+      <div className="p-4 md:ml-32">{children}</div>
     </div>
   );
 }
