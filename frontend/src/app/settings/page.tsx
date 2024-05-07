@@ -194,7 +194,7 @@ export default function Settings() {
                 <div>
                   <p> Auto Renew: On</p>
                   <p>
-                    Plan Active from:
+                    Plan Active from:{" "}
                     {currentMembership?.start_date
                       ?.slice(0, 10)
                       .split("-")
@@ -202,14 +202,14 @@ export default function Settings() {
                       .join("-")}
                   </p>
                   <p>
-                    Next Billing Cycle:
+                    Next Billing Cycle:{" "}
                     {billingCycle?.next_billing_cycle_date
                       ?.slice(0, 10)
                       .split("-")
                       .reverse()
                       .join("-")}
                   </p>
-                  {pendingMembership && (
+                  {pendingMembership?.pending_membership_duration && (
                     <p>
                       Next Plan: {pendingMembership.pending_membership_type} -
                       {pendingMembership.pending_membership_duration}
@@ -269,6 +269,18 @@ export default function Settings() {
             </div>
           </div>
 
+          <div
+            className={`flex justify-between items-center drop-shadow-sharp rounded-3xl p-8 w-full ${
+              theme == "dark" ? "bg-[#1B2733] text-white" : "bg-white"
+            }`}
+          >
+            <p className="text-xl">Logout</p>
+            <Link prefetch={false} href={"/logout"}>
+              <Button color="red" className="rounded-full">
+                Sign Out
+              </Button>
+            </Link>
+          </div>
           <div
             className={`flex justify-between items-center drop-shadow-sharp rounded-3xl p-8 w-full ${
               theme == "dark" ? "bg-[#1B2733] text-white" : "bg-white"
