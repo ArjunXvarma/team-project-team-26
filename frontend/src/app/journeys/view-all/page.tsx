@@ -2,20 +2,28 @@
 import Cookie from "js-cookie";
 import "leaflet/dist/leaflet.css";
 import { Journey } from "@/types";
+import dynamic from "next/dynamic";
 import { API_URL } from "@/constants";
 import { Loader } from "@mantine/core";
 import "../../friends/friends-styles.css";
 import { showErrorMessage } from "@/utils";
 import { GetJourneyAPIResponse } from "@/types";
-import React, { useEffect, useState } from "react";
 import { useTheme } from "@/components/theme-provider";
-import { MapContainer, TileLayer, Polyline, Circle } from "react-leaflet";
+import React, { useEffect, useMemo, useState } from "react";
 
 export default function AllJourney() {
   const { theme } = useTheme();
   const [journeys, setJourneys] = useState<Journey[]>([]);
   const [getJourneyLoading, setGetJourneyLoading] = useState(true);
   const [legend, setLegend] = useState<{ color: string; name: String }[]>([]);
+  const Map = useMemo(
+    () =>
+      dynamic(() => import("@/components/map/Map"), {
+        ssr: false,
+        loading: () => <p>A map is loading</p>,
+      }),
+    []
+  );
 
   const getRandomColor = () => {
     return "#" + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0");
@@ -93,62 +101,33 @@ export default function AllJourney() {
                   {journeys && journeys.length > 0 ? (
                     <div className="w-full flex md:flex-row items-center md:items-start flex-col justify-center">
                       <div className="mt-3 h-2/3 md:w-2/3 w-full md:mx-3 mx-5">
-                        <MapContainer
-                          center={[
-                            journeys[0].points[Math.ceil(journeys[0].points.length / 2)].lat,
-                            journeys[0].points[Math.ceil(journeys[0].points.length / 2)].lon,
-                          ]}
-                          zoom={16}
-                          scrollWheelZoom={true}
-                          className="w-full h-[700px]"
-                        >
-                          <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          />
-                          {journeys.map((journey, i) => (
-                            <div key={i}>
-                              <Polyline
-                                pathOptions={{ color: legend[i].color, weight: 5 }}
-                                positions={journey.points.map((point) => [
-                                  point.lat,
-                                  point.lon,
-                                ])}
-                              />
-                              <Circle
-                                radius={0}
-                                weight={8}
-                                color="#c90028"
-                                center={[journey.points[0].lat, journey.points[0].lon]}
-                              />
-                              <Circle
-                                radius={0}
-                                weight={8}
-                                fill={true}
-                                color="#005dba"
-                                center={[
-                                  journey.points[journey.points.length - 1].lat,
-                                  journey.points[journey.points.length - 1].lon,
-                                ]}
-                              />
-                            </div>
-                          ))}
-                        </MapContainer>
+                        <Map
+                          tracks={journeys.map((journey, i) => ({
+                            data: journey.points,
+                            color: legend[i].color,
+                          }))}
+                          center={{
+                            lat: journeys[0].points[Math.ceil(journeys[0].points.length / 2)]
+                              .lat,
+                            lng: journeys[0].points[Math.ceil(journeys[0].points.length / 2)]
+                              .lon,
+                          }}
+                        />
                       </div>
                       <div
                         className={`flex flex-col gap-3 rounded-2xl px-10 py-3 relative top-0 left-0 h-fit md:mt-0 mt-10 md:w-fit w-full drop-shadow-sharp ${
                           theme == "dark" ? "bg-[#1B2733] text-white" : "bg-white"
                         }`}
                       >
-                        <h3
+                        <h2
                           className={`font-semibold text-lg ${
                             theme == "dark" ? "text-[#5FE996]" : "text-black"
                           }`}
                         >
                           Legend
-                        </h3>
+                        </h2>
                         {legend.map((val, i) => (
-                          <div className="flex items-center gap-3">
+                          <div key={i} className="flex items-center gap-3">
                             <div
                               className={`w-4 h-4 rounded-full`}
                               style={{ backgroundColor: val.color }}

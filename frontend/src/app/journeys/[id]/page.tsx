@@ -93,6 +93,10 @@ export default function Page({ params }: { params: { id: string } }) {
     setIsDownloading(false);
   };
 
+  const getRandomColor = () => {
+    return "#" + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0");
+  };
+
   useEffect(() => {
     getJourney();
   }, []);
@@ -110,11 +114,11 @@ export default function Page({ params }: { params: { id: string } }) {
         <div className="flex flex-col justify-around md:flex-row w-full min-h-screen">
           <div className="md:w-2/3">
             <Map
-              tracks={[journey.points]}
-              center={[
-                journey.points[Math.ceil(journey.points.length / 2)].lat,
-                journey.points[Math.ceil(journey.points.length / 2)].lon,
-              ]}
+              tracks={[{ color: getRandomColor(), data: journey.points }]}
+              center={{
+                lat: journey.points[Math.ceil(journey.points.length / 2)].lat,
+                lng: journey.points[Math.ceil(journey.points.length / 2)].lon,
+              }}
             />
           </div>
           <div className="md:w-96 flex flex-col items-center">
@@ -155,9 +159,9 @@ export default function Page({ params }: { params: { id: string } }) {
                         theme == "dark" ? "bg-primary" : "gradient--light-mode"
                       }`}
                     >
-                      {journey.type === "Walk" && <BsPersonWalking size={50} />}
-                      {journey.type === "Run" && <RiRunFill size={50} />}
-                      {journey.type === "Cycle" && <PiBicycleLight size={50} />}
+                      {journey.type === "walking" && <BsPersonWalking size={50} />}
+                      {journey.type === "running" && <RiRunFill size={50} />}
+                      {journey.type === "cycle" && <PiBicycleLight size={50} />}
                     </div>
 
                     <div className="flex flex-col ml-4">
@@ -169,9 +173,7 @@ export default function Page({ params }: { params: { id: string } }) {
                         {journey.name}
                       </h1>
                       <small
-                        className={`-mt-1 ${
-                          theme == "dark" ? "text-[#787878]" : "text-gray-700"
-                        }`}
+                        className={`-mt-1 ${theme == "dark" ? "text-white" : "text-gray-700"}`}
                       >
                         Distance Covered
                       </small>
@@ -210,7 +212,7 @@ export default function Page({ params }: { params: { id: string } }) {
                       </h1>
                       <small
                         className={`-mt-1 ${
-                          theme == "dark" ? "text-[#787878]" : "text-gray-700 "
+                          theme == "dark" ? "text-white" : "text-gray-700 "
                         }`}
                       >
                         Journey Duration
@@ -239,7 +241,7 @@ export default function Page({ params }: { params: { id: string } }) {
                         color={theme == "dark" ? "#5FE996" : "#0C4F40"}
                         size={26}
                       />
-                      <p className={`${theme == "dark" ? "text-[#787878]" : "text-gray-700"}`}>
+                      <p className={`${theme == "dark" ? "text-white" : "text-gray-700"}`}>
                         Average Elevation
                       </p>
                     </div>
@@ -252,7 +254,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     </p>
                     <div className="flex gap-2">
                       <MdFlag color={theme == "dark" ? "#5FE996" : "#0C4F40"} size={30} />
-                      <p className={`${theme == "dark" ? "text-[#787878]" : "text-gray-700"}`}>
+                      <p className={`${theme == "dark" ? "text-white" : "text-gray-700"}`}>
                         Highest Peak
                       </p>
                     </div>
