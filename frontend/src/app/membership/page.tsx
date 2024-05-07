@@ -48,10 +48,6 @@ export default function Home() {
     }
   };
 
-  const gradient = {
-    background: "linear-gradient(#3B8B5D, #04372C)",
-  };
-
   return (
     <main>
       <div
@@ -61,13 +57,13 @@ export default function Home() {
       >
         <div className="w-full">
           <div className="justify-around items-center pt-10 flex-grow">
-            <p
+            <h1
               className={`text-center text-4xl font-semibold pb-2 font-serif ${
                 theme == "dark" ? "text-[#5FE996]" : "text-black"
               }`}
             >
               Membership
-            </p>
+            </h1>
             <p
               className={`text-center text-lg font-serif ${
                 theme == "dark" ? "text-white" : "text-black"
@@ -77,18 +73,19 @@ export default function Home() {
             </p>
           </div>
 
-          <p
+          <h2
             className={`text-2xl text-center font-serif mt-12 mb-6 ${
               theme == "dark" ? "text-white" : "text-black"
             }`}
           >
             Choose your membership plan
-          </p>
+          </h2>
           <div className="flex justify-center">
             <Select
-              placeholder="Pick type"
               allowDeselect={false}
+              placeholder="Pick type"
               onChange={handlePlanTypeChange}
+              label={"Select Membership Type"}
               data={membershipData?.MembershipDuration || []}
               defaultValue={membershipData?.MembershipDuration[0]}
               className={`${theme == "dark" ? "dark-input" : ""}`}
@@ -107,7 +104,7 @@ export default function Home() {
                   ${selectedPlan === index ? "w-[388px] h-[561px]" : "w-[335px] h-[516px]"}`}
                 >
                   <div className="flex flex-col items-center ">
-                    <p
+                    <h1
                       className={`text-2xl font-bold mt-2
                     ${
                       selectedPlan !== index
@@ -118,7 +115,7 @@ export default function Home() {
                     }`}
                     >
                       {membershipData?.MembershipType[index]}
-                    </p>
+                    </h1>
                     <div
                       className={`flex mt-2 mb-3 justify-center font-normal
                       ${
@@ -129,18 +126,18 @@ export default function Home() {
                           : "text-white"
                       }`}
                     >
-                      <p className="text-2xl mt-6">£</p>
-                      <p className="text-4xl font-bold mt-4 ">{plan}</p>
+                      <h2 className="text-2xl mt-6">£</h2>
+                      <h2 className="text-4xl font-bold mt-4 ">{plan}</h2>
                       <p className="text-xl mt-7">/{selectedPlanType}</p>
                     </div>
                     <div className="border-t border-t-gray-500">
-                      <p
+                      <h3
                         className={`mt-20 text-3xl px-5 ${
                           selectedPlan === index ? "text-white mx-4" : "text-[#787878]"
                         }`}
                       >
                         Each plan includes access to all features
-                      </p>
+                      </h3>
                     </div>
                   </div>
                   <div className=" pt-10 py-4 flex items-center justify-center self">

@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Signup",
-  description: "Signup and join Fit Fusion Today!",
+  title: "Membership",
+  description: "Buy membership for your account.",
 };
 
-export default function SignupLayout({
+export default function MembershipLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
