@@ -44,6 +44,15 @@ class TestGPSRoutes:
         ]
         assert imports.GPSRoutes.validate_points(points_different_order)[0] == True
 
+    def validate_points_non_numerical_values(self):
+        points_non_numerical = [
+            {'lat': 10, 'lon': 20, 'ele': 5},  
+            {'lat': 'invalid', 'lon': 25, 'ele': 10},  
+            {'lat': 15, 'lon': 'invalid', 'ele': 10},  
+            {'lat': 15, 'lon': 25, 'ele': 'invalid'}  
+        ]
+        assert imports.GPSRoutes.validate_points(points_non_numerical)[0] == False
+
 
     def test_get_journeys_without_jwt(self, client):
         """Test getting user journeys without a JWT."""
@@ -59,7 +68,6 @@ class TestGPSRoutes:
         # Test if journey is returned successfuly
         response = client.get("/get_journeys_of_user", headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 200
-
 
 
     def test_get_journeys_with_no_journeys(self, client, clean_db):
@@ -98,7 +106,7 @@ class TestGPSRoutes:
         # Journey to be added
         journey_data = {
             "name": "Morning Run",
-            "type": "Running",
+            "type": "Run",
             "totalDistance": 5.0,
             "elevation": {
                 "avg": 120,
@@ -127,7 +135,7 @@ class TestGPSRoutes:
         # Make a request with JWT, invalid Points array format
         journey_data = {
             "name": "Morning Run",
-            "type": "Running",
+            "type": "Run",
             "totalDistance": 5.0,
             "elevation": {
                 "avg": 120,
@@ -147,6 +155,32 @@ class TestGPSRoutes:
         response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 400
 
+    
+    def test_create_journey_with_invalid_type(self, client, clean_db):
+        """Test creating a journey with an invalid type using JWT."""
+
+        token = imports.users.user1(self, client, clean_db)[0]
+        journey_data = {
+            "name": "Morning Adventure",
+            "type": "InvalidType",  
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        response = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 400
+        assert 'Invalid journey type' in response.json['message']
 
     def test_create_journey_invalid_date_time(self, client, clean_db):
         """Test creating a journey with JWT and invalid data."""
@@ -306,4 +340,48 @@ class TestGPSRoutes:
         # Test if updating a journey with invalid data is handled correctly
         response = client.put("/update_journey/1", json=journey_update_data, headers={"Authorization": f"Bearer {token}"})
         assert response.status_code == 400
+
+    
+    def test_convert_journey_without_jwt(self, client):
+        """Test converting journey data without JWT."""
+        
+        # Attempt to convert a journey without authentication
+        response = client.get("/convert_journey_to_gpx/1")
+        
+        assert response.status_code == 401
+
+    def test_convert_journey_with_jwt(self, client, clean_db):
+        """Test converting journey data with JWT."""
+        
+        token = imports.users.user1(self, client, clean_db)[0]
+        
+        # Assuming journey_id = 1 exists and belongs to the authenticated user
+        response = client.get("/convert_journey_to_gpx/1", headers={"Authorization": f"Bearer {token}"})
+        
+        # Check for successful response
+        assert response.status_code == 200
+        assert response.headers["Content-Type"] == "application/gpx+xml"
+
+    def test_convert_journey_not_exist(self, client, clean_db):
+        """Test converting a journey that does not exist."""
+        
+        token = imports.users.user1(self, client, clean_db)[0]
+        
+        # Attempt to convert a non-existent journey (e.g., journey_id = 9999)
+        response = client.get("/convert_journey_to_gpx/9999", headers={"Authorization": f"Bearer {token}"})
+        
+        # Check for a not found response
+        assert response.status_code == 404
+
+    def test_convert_journey_not_belong_to_user(self, client, clean_db):
+        """Test converting a journey that does not belong to the current user."""
+        
+        token, id, *_ = imports.users.user1(self, client, clean_db)
+        token2, id2 = imports.users.user3(self, client, clean_db)
+        
+        response = client.get("/convert_journey_to_gpx/4", headers={"Authorization": f"Bearer {token}"})
+        
+        print("This is the reponse status code for test convert journey not belong to user", response.status_code)
+        assert response.status_code == 403
+
 
