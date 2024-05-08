@@ -1,8 +1,9 @@
 import "./globals.css";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
-import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
+import { MantineProvider } from "@mantine/core";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export default function RootLayout({
   children,
@@ -12,10 +13,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <MantineProvider>
-          <Notifications position="top-right" limit={5} />
-          {children}
-        </MantineProvider>
+        <ThemeProvider>
+          <MantineProvider>
+            <Notifications position="top-right" limit={5} />
+            {children}
+          </MantineProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

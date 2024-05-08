@@ -44,8 +44,14 @@
 # Backend
 backend/app/views.py
 backend/app.db
+ignore.py
+backend/testFriends.py
 
 # Virtual Environment
 **/virtual_env
 **/venv
 /.venv
+
+# Docker files
+Dockerfile.backend
+Dockerfile.frontend

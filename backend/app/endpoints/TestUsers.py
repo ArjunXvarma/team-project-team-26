@@ -31,7 +31,7 @@ class users:
         # Create a Journey to test with
         journey_data = {
             "name": "Morning Run",
-            "type": "Running",
+            "type": "Run",
             "totalDistance": 5.0,
             "elevation": {
                 "avg": 120,
@@ -49,7 +49,7 @@ class users:
 
         journey_data_2 = {
             "name": "Evening Walk",
-            "type": "Walking",
+            "type": "Walk",
             "totalDistance": 3.5,
             "elevation": {
                 "avg": 90,
@@ -67,7 +67,7 @@ class users:
 
         journey_data_3 = {
             "name": "Afternoon Cycling",
-            "type": "Cycling",
+            "type": "Cycle",
             "totalDistance": 8.0,
             "elevation": {
                 "avg": 110,
@@ -145,5 +145,51 @@ class users:
         # Get token and id
         token = login_response.json['session_token']
         id = user.id
+
+        return token, id
+
+    def user3(self, client, clean_db):
+        """ function creates user Alice for testing"""
+
+        #create user
+        user = imports.models.User(
+            first_name="Alice",
+            last_name="Smith",
+            email="alice@example.com",
+            date_of_birth=imports.datetime(1990, 1, 1),
+            hashed_password=bcrypt.generate_password_hash("password").decode("utf-8")
+        )
+
+        journey_data = {
+            "name": "Morning Run",
+            "type": "Run",
+            "totalDistance": 5.0,
+            "elevation": {
+                "avg": 120,
+                "min": 100,
+                "max": 140
+            },
+            "points": [
+                {"lat": 38.5, "lon": -120.2, "ele": 100},
+                {"lat": 38.6, "lon": -120.3, "ele": 110}
+            ],
+            "startTime": "07:30:00",
+            "endTime": "08:15:00",
+            "dateCreated": "2024-03-12"
+        }
+
+        clean_db.session.add(user)
+        clean_db.session.commit()
+
+        # Login as the user
+        login_response = client.post("/login", json={
+            "email": "alice@example.com",
+            "password": "password"
+        })
+        # Get token and id
+        token = login_response.json['session_token']
+        id = user.id
+
+        r1 = client.post("/create_journey", json=journey_data, headers={"Authorization": f"Bearer {token}"})
 
         return token, id

@@ -32,6 +32,9 @@ class MembershipRoutes:
     
     get_current_membership() -> json:
         Returns the details about the active user membership
+        
+    get_pending_membership -> json:
+        Returns the details about the next user membership if it exists.
     """
 
     @app.route("/buy_membership", methods=["POST"])
@@ -224,16 +227,29 @@ class MembershipRoutes:
         if not constants.is_valid_duration(duration):
             return jsonify({"return_code": 0, "error": "Invalid duration"}), 400
 
-        # Create pending update
-        pending_update = models.PendingMembershipUpdate(
-            user_id=user.id,
-            membership_type=membership_type,
-            duration=duration,
-            auto_renew=data.get("auto_renew", False) 
-        )
-        current_membership.auto_renew = True
-        db.session.add(pending_update)
+        # Check for existing pending update
+        existing_pending_update = models.PendingMembershipUpdate.query.filter_by(user_id=user.id).first()
+
+        # If there's an existing pending update, overwrite it
+        if existing_pending_update:
+            existing_pending_update.membership_type = membership_type
+            existing_pending_update.duration = duration
+            existing_pending_update.auto_renew = data.get("auto_renew", True)
+            current_membership.auto_renew = True
+        else:
+            # Create new pending update
+            pending_update = models.PendingMembershipUpdate(
+                user_id=user.id,
+                membership_type=membership_type,
+                duration=duration,
+                auto_renew=data.get("auto_renew", True)
+            )
+            current_membership.auto_renew = True
+            db.session.add(pending_update)
+
+        # Commit changes to the database
         db.session.commit()
+
         return jsonify({"return_code": 1, "message": "Membership update scheduled successfully and auto renew is turned on"}), 200
 
     @app.route("/get_current_membership", methods=["GET"])
@@ -324,6 +340,44 @@ class MembershipRoutes:
             return jsonify({"next_billing_cycle_date": None}), 200
 
 
+    @app.route("/get_pending_membership", methods=["GET"])
+    @jwt_required()
+    def get_pending_membership() -> Tuple[Response, int]:
+        """
+        Checks if the user has a pending membership update and returns the membership type if available.
+
+        Returns
+        -------
+        json
+            A JSON response indicating the pending membership type, if available.
+            If there's a pending membership update, returns:
+                - "pending_membership_type": Type of the pending membership.
+            If no pending membership update is found, returns:
+                - "pending_membership_type": null
+
+        HTTP Status Codes
+        -----------------
+        200 : OK
+            Pending membership checked successfully.
+        401 : Unauthorized
+            Missing or invalid access token.
+        """
+        current_user_email = get_jwt_identity()
+        user = models.User.query.filter_by(email=current_user_email).first()
+
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+
+        # Check for a pending membership update
+        pending_update = models.PendingMembershipUpdate.query.filter_by(user_id=user.id).first()
+
+        if pending_update:
+            pending_membership_type = pending_update.membership_type
+            pending_membership_duration = pending_update.duration
+            return jsonify({"pending_membership_type": pending_membership_type, "pending_membership_duration": pending_membership_duration}), 200
+        else:
+            return jsonify({"pending_membership_type": None}), 200
+
     @app.route("/has_active_membership", methods=["GET"])
     @jwt_required()
     def has_active_membership() -> Tuple[Response, int]:
@@ -356,11 +410,53 @@ class MembershipRoutes:
             return jsonify({"has_active_membership": True}), 200
         else:
             return jsonify({"has_active_membership": False}), 200
+ 
 
+    def auto_renew_memberships():
+        with app.app_context():
+            print(f"Auto-renew memberships job started at {datetime.now()}")
+            current_date = datetime.now()
+            memberships_to_renew = models.Membership.query.filter(models.Membership.end_date == current_date,  models.Membership.auto_renew == True).all()
+            for membership in memberships_to_renew:
+                # Check for pending updates
+                print(f"Processing membership: {membership.id}")
+                pending_update =  models.PendingMembershipUpdate.query.filter_by(user_id=membership.user_id).first()
+                if pending_update:
+                    membership.membership_type = pending_update.membership_type
+                    membership.duration = pending_update.duration
+                    membership.auto_renew = pending_update.auto_renew 
+                    # Calculate new end_date based on duration... 
+                    if pending_update.duration.lower() == 'monthly':
+                        membership.end_date += timedelta(days=30)
+                    elif pending_update.duration.lower() == 'annually':
+                        membership.end_date += timedelta(days=365)
+                    db.session.delete(pending_update) 
 
+                else: # No pending update - proceed with normal renewal 
+                    if membership.duration.lower() == 'monthly':
+                        membership.end_date += timedelta(days=30)
+                    elif membership.duration.lower() == 'annually':
+                        membership.end_date += timedelta(days=365)
+            db.session.commit()
+            print("Auto-renew memberships job completed")
+    
+    def deactivate_expired_memberships():
+        """
+        Function to deactivate memberships if today is the end date and auto renew is False.
+        """
+        with app.app_context():
+            print(f"Deactivate expired memberships job started at {datetime.now()}")
+            current_date = datetime.now()
+
+            memberships_to_deactivate =  models.Membership.query.filter( models.Membership.end_date == current_date,  models.Membership.auto_renew == False).all()
+            for membership in memberships_to_deactivate:
+                print(f"Deactivating membership: {membership.id}")
+                membership.is_active = False
+            db.session.commit()
+            print("Deactivate expired memberships job completed")
 
 # Running the auto renew and deactivation functions every day using scheduler.
 scheduler = BackgroundScheduler()
-scheduler.add_job(models.Membership.auto_renew_memberships, 'cron', hour=16, minute=0)
-scheduler.add_job(models.Membership.deactivate_expired_memberships, 'cron', hour=16, minute=0)
+scheduler.add_job(MembershipRoutes.auto_renew_memberships, 'cron', hour=00, minute=00)
+scheduler.add_job(MembershipRoutes.deactivate_expired_memberships, 'cron', hour=00, minute=00)
 scheduler.start()

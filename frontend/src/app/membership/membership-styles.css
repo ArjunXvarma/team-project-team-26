@@ -1,0 +1,56 @@
+.mantine-Select-input {
+  height: 56px;
+  border: 0;
+  border-radius: 20px;
+  padding-left: 15px;
+}
+
+.mantine-Select-label {
+  color: black;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.dark-input .mantine-Select-input {
+  color: #787878e5;
+  background: #1b2733;
+}
+
+.dark-input .mantine-Select-label {
+  color: white;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.select-button-light {
+  width: 154px;
+  height: 45px;
+  border-radius: 20px;
+  background: #f1f1f1;
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24.2px;
+  color: #1c5f42;
+}
+
+.select-button-dark {
+  width: 154px;
+  height: 45px;
+  border-radius: 20px;
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24.2px;
+
+  color: #5fe996;
+  background: #131b23;
+}
+
+.cancel-button {
+  width: 154px;
+  height: 45px;
+  color: black;
+  border-radius: 20px;
+  background: #349661;
+}
