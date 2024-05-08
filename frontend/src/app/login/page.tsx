@@ -2,8 +2,9 @@
 import "./login-styles.css";
 import "./login-styles.css";
 import Link from "next/link";
-import Image from "next/image";
 import Cookie from "js-cookie";
+import Image from "next/image";
+import { Metadata } from "next";
 import { useState } from "react";
 import { API_URL } from "@/constants";
 import { useForm } from "@mantine/form";
@@ -95,10 +96,6 @@ export default function Login() {
     setLoading(false);
   };
 
-  const gradient = {
-    background: "linear-gradient(#3B8B5D, #04372C)",
-  };
-
   return (
     <main>
       <div
@@ -121,7 +118,12 @@ export default function Login() {
             </h1>
           </div>
           <div>
-            <Image src="/runner-1.png" alt="Runner Image" width={550} height={380} />
+            <Image
+              width={550}
+              height={380}
+              src="/runner-1.png"
+              alt="An athletic man wearing a red t-shirt and black shorts, running outdoors on a sunny day."
+            />
           </div>
         </div>
         <div
@@ -137,6 +139,7 @@ export default function Login() {
               <TextInput
                 size="lg"
                 type="email"
+                label="Email"
                 placeholder="Email"
                 {...form.getInputProps("email")}
                 leftSection={<CiUser size={32} />}
@@ -145,6 +148,7 @@ export default function Login() {
               <PasswordInput
                 size="lg"
                 id="login-pwd"
+                label="Password"
                 placeholder="Password"
                 leftSection={<CiLock size={32} />}
                 {...form.getInputProps("password")}

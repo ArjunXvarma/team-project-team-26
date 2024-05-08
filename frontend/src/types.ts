@@ -115,7 +115,7 @@ export interface Journey {
   startTime: String;
   dateCreated: String;
   totalDistance: number;
-  type: "Walk" | "Run" | "Cycle";
+  type: "walking" | "running" | "cycle";
   elevation: { avg: number; min: number; max: number };
   points: { lat: number; lon: number; ele: number }[];
 }

@@ -19,8 +19,8 @@ import { PasswordInput, Button, Divider, TextInput } from "@mantine/core";
 import { formatDate, showErrorMessage, showSuccessMessage } from "@/utils";
 
 export default function Signup() {
-  const { theme } = useTheme();
   const router = useRouter();
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
 
   const form = useForm({
@@ -149,7 +149,12 @@ export default function Signup() {
             </h1>
           </div>
           <div>
-            <Image src="/runner.png" alt="Runner Image" width={550} height={380} />
+            <Image
+              width={550}
+              height={380}
+              src="/runner.png"
+              alt="Two men wearing sports attire jogging together along a path outdoors."
+            />
           </div>
         </div>
         <div
@@ -171,6 +176,7 @@ export default function Signup() {
                 <TextInput
                   required
                   size="md"
+                  label="First Name"
                   placeholder="First Name"
                   {...form.getInputProps("fname")}
                   leftSection={<CiUser size={24} />}
@@ -179,6 +185,7 @@ export default function Signup() {
                 <TextInput
                   required
                   size="md"
+                  label="Last Name"
                   placeholder="Last Name"
                   {...form.getInputProps("lname")}
                   className={`w-full signup ${theme == "dark" ? "input--dark-mode" : ""}`}
@@ -188,6 +195,7 @@ export default function Signup() {
                 required
                 size="md"
                 type="email"
+                label="Email"
                 placeholder="Email"
                 {...form.getInputProps("email")}
                 leftSection={<MdAlternateEmail size={24} />}
@@ -198,6 +206,7 @@ export default function Signup() {
                 clearable
                 size="md"
                 valueFormat="DD MMMM YYYY"
+                label="Date of birth"
                 placeholder="Date of birth"
                 {...form.getInputProps("dob")}
                 maxDate={dayjs(new Date()).toDate()}
@@ -212,6 +221,7 @@ export default function Signup() {
               <PasswordInput
                 required
                 size="md"
+                label="Password"
                 placeholder="Password"
                 leftSection={<CiLock size={32} />}
                 {...form.getInputProps("password")}
@@ -221,6 +231,7 @@ export default function Signup() {
               <PasswordInput
                 required
                 size="md"
+                label="Confirm Password"
                 placeholder="Confirm Password"
                 leftSection={<CiLock size={32} />}
                 {...form.getInputProps("cpassword")}

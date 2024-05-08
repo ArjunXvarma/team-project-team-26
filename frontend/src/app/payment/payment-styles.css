@@ -31,7 +31,7 @@
 .continue-button {
   width: 154px;
   height: 45px;
-  color: white;
+  color: black;
   border-radius: 20px;
   background: #38965e;
 }
@@ -42,6 +42,17 @@
   padding-bottom: 5px;
   border-radius: 20px;
   box-shadow: 0px 4px 4px 0px #00000040;
+}
+
+.mantine-TextInput-label {
+  color: black;
+  font-size: 16px;
+  font-weight: 400;
+}
+.dark-input .mantine-TextInput-label {
+  color: white;
+  font-size: 16px;
+  font-weight: 400;
 }
 
 .dark-input .mantine-TextInput-input {

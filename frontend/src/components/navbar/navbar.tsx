@@ -35,6 +35,7 @@ export default function Navbar({ children }: NavbarProps) {
             aria-expanded={showSidebar}
             onClick={() => setShowSidebar((o) => !o)}
           >
+            <span className="sr-only">Menu</span>
             <HiMenuAlt3 size={32} />
           </ActionIcon>
         </div>
@@ -75,6 +76,7 @@ export default function Navbar({ children }: NavbarProps) {
               >
                 <FaHome size={32} />
               </div>
+              <span className="sr-only">Dashboard</span>
             </Link>
             <Link href={"/journeys"}>
               <div
@@ -84,6 +86,7 @@ export default function Navbar({ children }: NavbarProps) {
               >
                 <FaMapMarkedAlt size={32} />
               </div>
+              <span className="sr-only">Journeys</span>
             </Link>
             <Link href={"/friends"}>
               <div
@@ -93,6 +96,7 @@ export default function Navbar({ children }: NavbarProps) {
               >
                 <FaUserFriends size={32} />
               </div>
+              <span className="sr-only">Friends</span>
             </Link>
             <Link href={"/settings"}>
               <div
@@ -102,6 +106,7 @@ export default function Navbar({ children }: NavbarProps) {
               >
                 <FaGear size={32} />
               </div>
+              <span className="sr-only">Settings</span>
             </Link>
           </div>
         </div>

@@ -227,7 +227,7 @@ export default function Journeys() {
       >
         <div
           onClick={open}
-          className={`absolute bottom-10 right-10 z-10 w-12 h-12 rounded-3xl flex items-center justify-center text-white cursor-pointer ${
+          className={`fixed bottom-5 right-5 z-10 w-16 h-16 rounded-full flex items-center justify-center text-white cursor-pointer ${
             theme == "dark" ? "gradient--dark-mode " : "gradient--light-mode "
           }`}
         >

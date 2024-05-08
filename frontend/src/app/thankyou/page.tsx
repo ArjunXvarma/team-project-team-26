@@ -1,14 +1,18 @@
 "use client";
 import Link from "next/link";
 import Cookies from "js-cookie";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, Button } from "@mantine/core";
 import { IoFootsteps } from "react-icons/io5";
 import { useTheme } from "@/components/theme-provider";
 
 export default function Thankyou() {
   const { theme } = useTheme();
-  const [username, _] = useState(Cookies.get("username"));
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    setUsername(Cookies.get("username")!);
+  }, []);
 
   return (
     <main
@@ -22,8 +26,8 @@ export default function Thankyou() {
             theme == "dark" ? "bg-[#1B2733] text-white" : "bg-white"
           }`}
         >
-          <p className=" text-4xl font-semibold">Congratulations {username}!</p>
-          <p className=" text-4xl font-semibold mt-4 mb-20">You are now a member</p>
+          <h1 className=" text-4xl font-semibold">Congratulations {username}!</h1>
+          <h2 className=" text-4xl font-semibold mt-4 mb-20">You are now a member</h2>
           <div className="mt-5">
             <Link href={"/dashboard"}>
               <Button
@@ -45,7 +49,11 @@ export default function Thankyou() {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 z-0">
-          <Image src="/plant2.png" alt="Plant image" width={"100vw"} />
+          <Image
+            width={"100vw"}
+            src="/plant2.png"
+            alt="Assorted green plants arranged in a garden bed."
+          />
         </div>
       </div>
     </main>

@@ -2,14 +2,15 @@
 import Cookie from "js-cookie";
 import "leaflet/dist/leaflet.css";
 import { Journey } from "@/types";
+import dynamic from "next/dynamic";
 import { API_URL } from "@/constants";
 import { Loader } from "@mantine/core";
 import "../../friends/friends-styles.css";
 import { showErrorMessage } from "@/utils";
 import { GetJourneyAPIResponse } from "@/types";
-import React, { useEffect, useState } from "react";
 import { useTheme } from "@/components/theme-provider";
-import { MapContainer, TileLayer, Polyline, Circle } from "react-leaflet";
+import React, { useEffect, useMemo, useState } from "react";
+import { Circle, MapContainer, Polyline, TileLayer } from "react-leaflet";
 
 export default function AllJourney() {
   const { theme } = useTheme();
@@ -140,15 +141,15 @@ export default function AllJourney() {
                           theme == "dark" ? "bg-[#1B2733] text-white" : "bg-white"
                         }`}
                       >
-                        <h3
+                        <h2
                           className={`font-semibold text-lg ${
                             theme == "dark" ? "text-[#5FE996]" : "text-black"
                           }`}
                         >
                           Legend
-                        </h3>
+                        </h2>
                         {legend.map((val, i) => (
-                          <div className="flex items-center gap-3">
+                          <div key={i} className="flex items-center gap-3">
                             <div
                               className={`w-4 h-4 rounded-full`}
                               style={{ backgroundColor: val.color }}
