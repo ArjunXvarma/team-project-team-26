@@ -49,6 +49,7 @@ def after_request(response):
 # Importing all the modules
 from app import models
 from app.endpoints.Admin import Admin
+from constants import get_enums
 from app.endpoints.auth import Auth
 from app.endpoints.friends import Friends
 from app.endpoints.stats import Stats
