@@ -18,6 +18,7 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "@/components/theme-provider";
 import { notifications } from "@mantine/notifications";
 import { IoMdCheckmarkCircleOutline } from "react-icons/io";
+import { Suspense } from "react";
 
 const formatCardNumber = (value: string) =>
   value
@@ -35,7 +36,7 @@ const formatExpirationDate = (value: string) =>
 
 const formatCVV = (value: string) => value.replace(/\D/g, "").slice(0, 4);
 
-export default function Payment() {
+function PaymentPage() {
   const router = useRouter();
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
@@ -316,4 +317,13 @@ export default function Payment() {
       </div>
     </main>
   );
+}
+
+
+export default function Page() {
+    return (
+      <Suspense fallback={<div>Loading...</div>}>
+        <PaymentPage />
+      </Suspense>
+    )
 }
