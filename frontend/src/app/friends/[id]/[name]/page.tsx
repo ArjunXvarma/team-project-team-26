@@ -235,10 +235,10 @@ export default function FriendInfo({ params }: { params: { id: string; name: str
                               Legend
                             </h3>
                             {legend.map((val, i) => (
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-3" key={i}>
                                 <div
-                                  className={`w-4 h-4 rounded-full`}
-                                  style={{ backgroundColor: val.color }}
+                                    className="w-4 h-4 rounded-full"
+                                    style={{ backgroundColor: val.color }}
                                 ></div>
                                 <span>{val.name}</span>
                               </div>

@@ -25,7 +25,7 @@ export default function AdminNavbar({ children }: NavbarProps) {
             theme == "dark" ? "text-white" : "text-black"
           }`}
         >
-          "Every journey begins with a single step"
+          &quot;Every journey begins with a single step&quot;
         </p>
         <div className="mt-2 ml-2 md:hidden visible">
           <ActionIcon
