@@ -83,7 +83,7 @@ export default function Login() {
         Cookie.set("username", loginResponse.name!);
         Cookie.set("isAdmin", checkAdminResponse.isAdmin.toString());
         if (checkAdminResponse.isAdmin) router.push("/admin");
-        else router.push("/");
+        else router.push("/dashboard");
       }
     } catch (error) {
       console.log(error);

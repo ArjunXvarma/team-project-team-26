@@ -1,4 +1,5 @@
 "use client";
+
 import Cookie from "js-cookie";
 import "leaflet/dist/leaflet.css";
 import { Journey } from "@/types";
@@ -9,8 +10,22 @@ import "../../friends/friends-styles.css";
 import { showErrorMessage } from "@/utils";
 import { GetJourneyAPIResponse } from "@/types";
 import { useTheme } from "@/components/theme-provider";
-import React, { useEffect, useMemo, useState } from "react";
-import { Circle, MapContainer, Polyline, TileLayer } from "react-leaflet";
+import React, { useCallback, useEffect, useState } from "react";
+
+const MapContainer = dynamic(() => import("react-leaflet").then((mod) => mod.MapContainer), {
+  ssr: false,
+});
+const Polyline = dynamic(() => import("react-leaflet").then((mod) => mod.Polyline), {
+  ssr: false,
+});
+const Circle = dynamic(() => import("react-leaflet").then((mod) => mod.Circle), {
+  ssr: false,
+});
+const TileLayer = dynamic(() => import("react-leaflet").then((mod) => mod.TileLayer), {
+  ssr: false,
+});
+
+// export const dynamic = "force-dynamic";
 
 export default function AllJourney() {
   const { theme } = useTheme();
@@ -22,9 +37,8 @@ export default function AllJourney() {
     return "#" + ((Math.random() * 0xffffff) << 0).toString(16).padStart(6, "0");
   };
 
-  const getJourneys = async () => {
+  const getJourneys = useCallback(async () => {
     setGetJourneyLoading(true);
-
     const token = Cookie.get("token");
     try {
       const response = await fetch(`${API_URL}/get_journeys_of_user`, {
@@ -33,32 +47,26 @@ export default function AllJourney() {
       });
 
       const journeyData: GetJourneyAPIResponse = await response.json();
-      console.log(journeyData);
       if (response.status === 404) {
         setJourneys([]);
       } else {
         setJourneys(journeyData.data!);
         setLegend(
-          journeyData.data!.map((val, i) => {
-            let color = getRandomColor();
-            return { color: color, name: val.name };
-          })
+          journeyData.data!.map((val) => ({ color: getRandomColor(), name: val.name }))
         );
       }
     } catch (error) {
-      console.log(error);
       showErrorMessage(
         "Server Error",
         "There was a problem contacting the server. Please try again later."
       );
     }
-
     setGetJourneyLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     getJourneys();
-  }, []);
+  }, [getJourneys]);
 
   return (
     <main>

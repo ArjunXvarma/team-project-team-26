@@ -10,7 +10,6 @@ import { CurrentMembership, MembershipData} from "@/types";
 import { showErrorMessage, showSuccessMessage } from "@/utils";
 
 export default function Home(){
-
     const [membershipData, setMembershipData] = useState<MembershipData>();
     const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
     const [selectedPlanType, setSelectedPlanType] = useState<String | null>(null);
@@ -34,8 +33,10 @@ export default function Home(){
             setCurrent(currentMembershipData);
             const currentPlanIndex = membershipData?.MembershipDuration.indexOf(currentMembershipData?.membership_duration.toString());
             if (currentPlanIndex !== -1) {
+                // @ts-ignore
                 handlePlanTypeChange(membershipData?.MembershipDuration[currentPlanIndex]);
                 const index = membershipData?.MembershipType.indexOf(currentMembershipData?.membership_type.toString());
+                // @ts-ignore
                 handleSelectPlan(index);
             }
         }
@@ -69,6 +70,7 @@ export default function Home(){
             method: "POST",
             credentials: "include",
             body: JSON.stringify({ 
+                // @ts-ignore
                 membership_type: membershipData?.MembershipType[selectedPlan],
                 duration: selectedPlanType,
                 auto_renew : true}),
@@ -110,12 +112,12 @@ export default function Home(){
     }, [membershipData]);
 
     const gradient = {
-    background: 'linear-gradient(#3B8B5D, #04372C)'
+      background: 'linear-gradient(#3B8B5D, #04372C)'
     };
 
     return (
         <main> 
-         <div className="w-full min-h-screen bg-background flex justify-center items-center">
+          <div className="w-full min-h-screen bg-background flex justify-center items-center">
             <div className="max-w-screen-lg w-full mb-20">
 
                 <header className="justify-around items-center pt-10 flex-grow">
@@ -185,7 +187,7 @@ export default function Home(){
                     )}
                 </div>
             </div>
-        </div>  
+          </div>  
         </main>
     )
 }
